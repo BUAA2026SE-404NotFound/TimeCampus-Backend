@@ -7,8 +7,10 @@ public class UserEntity {
     private String openId;
     private String nickname;
     private String avatarUrl;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String identity;
+    private Integer enrollYear;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 
     public Long getId() {
         return id;
@@ -42,19 +44,53 @@ public class UserEntity {
         this.avatarUrl = avatarUrl;
     }
 
+
+    public String getIdentity() {
+        return identity;
+    }
+
+    public void setIdentity(String identity) {
+        this.identity = identity;
+    }
+
+    public Integer getEnrollYear() {
+        return enrollYear;
+    }
+
+    public void setEnrollYear(Integer enrollYear) {
+        this.enrollYear = enrollYear;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    // Backward-compatible accessors used by current server/service tests.
     public LocalDateTime getCreatedAt() {
-        return createdAt;
+        return createTime;
     }
 
     public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+        this.createTime = createdAt;
     }
 
     public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+        return updateTime;
     }
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+        this.updateTime = updatedAt;
     }
 }
