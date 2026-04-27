@@ -41,7 +41,7 @@ class EntitySchemaContractTest {
     }
 
     @Test
-    void historicalMediaEntityShouldMatchSchemaContract() throws NoSuchFieldException {
+    void mediaEntityShouldMatchSchemaContract() throws NoSuchFieldException {
         assertFieldTypes(MediaEntity.class, Map.ofEntries(
                 Map.entry("id", Long.class),
                 Map.entry("poiId", Long.class),
@@ -71,7 +71,7 @@ class EntitySchemaContractTest {
     }
 
     @Test
-    void poiCommentEntityShouldMatchSchemaContract() throws NoSuchFieldException {
+    void commentEntityShouldMatchSchemaContract() throws NoSuchFieldException {
         assertFieldTypes(CommentEntity.class, Map.ofEntries(
                 Map.entry("id", Long.class),
                 Map.entry("userId", Long.class),
@@ -88,7 +88,7 @@ class EntitySchemaContractTest {
     }
 
     @Test
-    void adminLogEntityShouldMatchSchemaContract() throws NoSuchFieldException {
+    void logEntityShouldMatchSchemaContract() throws NoSuchFieldException {
         assertFieldTypes(LogEntity.class, Map.of(
                 "id", Long.class,
                 "operatorType", String.class,
@@ -103,12 +103,12 @@ class EntitySchemaContractTest {
     }
 
     @Test
-    void adminUserEntityShouldMatchSchemaContract() throws NoSuchFieldException {
+    void adminEntityShouldMatchSchemaContract() throws NoSuchFieldException {
         assertFieldTypes(AdminEntity.class, Map.of(
                 "id", Long.class,
-                "userId", Long.class,
-                "username", String.class,
-                "passwordHash", String.class,
+                "adminId", Long.class,
+                "adminName", String.class,
+                "password", String.class,
                 "status", Integer.class,
                 "lastLoginTime", LocalDateTime.class,
                 "createTime", LocalDateTime.class,
