@@ -1,5 +1,5 @@
 -- 用户表
-CREATE TABLE `user`
+CREATE TABLE IF NOT EXISTS `user`
 (
     `id`          bigint      NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
     `openid`      varchar(64) NOT NULL COMMENT '微信 openid',
@@ -15,7 +15,7 @@ CREATE TABLE `user`
   DEFAULT CHARSET = utf8mb4 COMMENT ='用户表';
 
 -- 地点表
-CREATE TABLE `poi`
+CREATE TABLE IF NOT EXISTS `poi`
 (
     `id`          bigint         NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
     `name`        varchar(128)   NOT NULL COMMENT '地点名称（如 主楼）',
@@ -32,7 +32,7 @@ CREATE TABLE `poi`
   DEFAULT CHARSET = utf8mb4 COMMENT ='地点表';
 
 -- 媒体表
-CREATE TABLE `media`
+CREATE TABLE IF NOT EXISTS `media`
 (
     `id`             bigint       NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
     `poi_id`         bigint       NOT NULL COMMENT '关联地点 ID',
@@ -55,7 +55,7 @@ CREATE TABLE `media`
   DEFAULT CHARSET = utf8mb4 COMMENT ='媒体表';
 
 -- 收藏表
-CREATE TABLE `favorite`
+CREATE TABLE IF NOT EXISTS `favorite`
 (
     `id`          bigint      NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
     `user_id`     bigint      NOT NULL COMMENT '用户 ID',
@@ -68,7 +68,7 @@ CREATE TABLE `favorite`
   DEFAULT CHARSET = utf8mb4 COMMENT ='收藏表';
 
 -- 管理员账户表
-CREATE TABLE `admin`
+CREATE TABLE IF NOT EXISTS `admin_user`
 (
     `id`              bigint       NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
     `user_id`         bigint                DEFAULT NULL COMMENT '关联用户 ID（可选）',
@@ -86,7 +86,7 @@ CREATE TABLE `admin`
   DEFAULT CHARSET = utf8mb4 COMMENT ='管理员账户表';
 
 -- 评论表（可评论 poi 或 media）
-CREATE TABLE `comment`
+CREATE TABLE IF NOT EXISTS `comment`
 (
     `id`            bigint        NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
     `user_id`       bigint        NOT NULL COMMENT '评论用户 ID',
@@ -107,7 +107,7 @@ CREATE TABLE `comment`
   DEFAULT CHARSET = utf8mb4 COMMENT ='评论表';
 
 -- 日志表（仅管理员可查看）
-CREATE TABLE `log`
+CREATE TABLE IF NOT EXISTS `log`
 (
     `id`            bigint      NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
     `operator_type` varchar(20) NOT NULL COMMENT '操作人类型：admin / user / system',
