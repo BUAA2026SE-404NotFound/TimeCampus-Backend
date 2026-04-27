@@ -64,7 +64,7 @@
 ## 快速启动
 
 1. 启动本机 MySQL 与 Redis-server
-2. 执行数据库初始化脚本 `test_db.sql`
+2. 执行数据库初始化脚本 `timetrack-server/src/main/resources/sql/schema.sql`
 3. 按需修改 `application-dev.yaml` 的本地连接信息
 4. 在项目根目录执行构建与测试
 5. 启动服务模块
