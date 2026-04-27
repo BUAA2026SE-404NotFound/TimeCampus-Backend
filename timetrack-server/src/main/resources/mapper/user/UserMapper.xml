@@ -6,37 +6,40 @@
 
     <resultMap id="BaseResultMap" type="com.notfound.timetrackpojo.entity.UserEntity">
         <id column="id" property="id"/>
-        <result column="open_id" property="openId"/>
+        <result column="openid" property="openId"/>
         <result column="nickname" property="nickname"/>
         <result column="avatar_url" property="avatarUrl"/>
-        <result column="created_at" property="createdAt"/>
-        <result column="updated_at" property="updatedAt"/>
+        <result column="identity" property="identity"/>
+        <result column="enroll_year" property="enrollYear"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
     </resultMap>
 
     <select id="findById" resultMap="BaseResultMap">
-        select id, open_id, nickname, avatar_url, created_at, updated_at
+        select id, openid, nickname, avatar_url, identity, enroll_year, create_time, update_time
         from `user`
         where id = #{id}
     </select>
 
     <select id="findByOpenId" resultMap="BaseResultMap">
-        select id, open_id, nickname, avatar_url, created_at, updated_at
+        select id, openid, nickname, avatar_url, identity, enroll_year, create_time, update_time
         from `user`
-        where open_id = #{openId}
+        where openid = #{openId}
         limit 1
     </select>
 
     <insert id="insert" parameterType="com.notfound.timetrackpojo.entity.UserEntity"
             useGeneratedKeys="true" keyProperty="id">
-        insert into `user` (open_id, nickname, avatar_url, created_at, updated_at)
-        values (#{openId}, #{nickname}, #{avatarUrl}, #{createdAt}, #{updatedAt})
+        insert into `user` (openid, nickname, avatar_url, identity, enroll_year)
+        values (#{openId}, #{nickname}, #{avatarUrl}, #{identity}, #{enrollYear})
     </insert>
 
     <update id="updateById" parameterType="com.notfound.timetrackpojo.entity.UserEntity">
         update `user`
         set nickname = #{nickname},
             avatar_url = #{avatarUrl},
-            updated_at = #{updatedAt}
+            identity = #{identity},
+            enroll_year = #{enrollYear}
         where id = #{id}
     </update>
 </mapper>

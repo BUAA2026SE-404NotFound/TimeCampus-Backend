@@ -43,17 +43,13 @@
 
 敏感信息（数据库密码、Redis 密码、服务器 IP/账号/密码、第三方 AK）使用 GitHub Secrets 或服务器环境变量管理。
 
-## 数据库初始化（连接测试）
+## 数据库初始化
 
 初始化脚本位置：
 
-- `timetrack-server/src/main/resources/sql/test_db.sql`
+- [`timetrack-server/src/main/resources/sql/schema.sql`](timetrack-server/src/main/resources/sql/schema.sql)
 
-脚本会创建：
-
-- 数据库：`test_db`
-- 表：`user`
-- 一条测试数据（便于联通性验证）
+详情请见[数据库文档](docs/database.md)。
 
 ## CI/CD 工作流
 
@@ -68,7 +64,7 @@
 ## 快速启动
 
 1. 启动本机 MySQL 与 Redis-server
-2. 执行数据库初始化脚本 `test_db.sql`
+2. 执行数据库初始化脚本 `timetrack-server/src/main/resources/sql/schema.sql`
 3. 按需修改 `application-dev.yaml` 的本地连接信息
 4. 在项目根目录执行构建与测试
 5. 启动服务模块
