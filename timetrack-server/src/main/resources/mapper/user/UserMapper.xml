@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.notfound.timetrackserver.mapper.UserMapper">
+
+    <resultMap id="BaseResultMap" type="com.notfound.timetrackpojo.entity.UserEntity">
+        <id column="id" property="id"/>
+        <result column="open_id" property="openId"/>
+        <result column="nickname" property="nickname"/>
+        <result column="avatar_url" property="avatarUrl"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="findById" resultMap="BaseResultMap">
+        select id, open_id, nickname, avatar_url, created_at, updated_at
+        from `user`
+        where id = #{id}
+    </select>
+
+    <select id="findByOpenId" resultMap="BaseResultMap">
+        select id, open_id, nickname, avatar_url, created_at, updated_at
+        from `user`
+        where open_id = #{openId}
+        limit 1
+    </select>
+
+    <insert id="insert" parameterType="com.notfound.timetrackpojo.entity.UserEntity"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into `user` (open_id, nickname, avatar_url, created_at, updated_at)
+        values (#{openId}, #{nickname}, #{avatarUrl}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <update id="updateById" parameterType="com.notfound.timetrackpojo.entity.UserEntity">
+        update `user`
+        set nickname = #{nickname},
+            avatar_url = #{avatarUrl},
+            updated_at = #{updatedAt}
+        where id = #{id}
+    </update>
+</mapper>
+

@@ -1,0 +1,21 @@
+package com.notfound.timetrackserver.service.impl;
+
+import com.notfound.timetrackpojo.entity.UserEntity;
+import com.notfound.timetrackpojo.vo.UserProfileVO;
+import org.springframework.stereotype.Component;
+
+@Component
+public class UserStructMapper {
+
+    public UserProfileVO toProfileVO(UserEntity entity) {
+        if (entity == null) {
+            return null;
+        }
+
+        UserProfileVO vo = new UserProfileVO();
+        vo.setId(entity.getId());
+        vo.setNickname(entity.getNickname());
+        vo.setAvatarUrl(entity.getAvatarUrl());
+        return vo;
+    }
+}
