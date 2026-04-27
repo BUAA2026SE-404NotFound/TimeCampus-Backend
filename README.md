@@ -27,13 +27,13 @@
 - `timetrack-server/src/main/java/com/notfound/timetrackserver/mapper`
 - `timetrack-server/src/main/resources/mapper`
 
-## 运行环境基线
+## 服务器运行环境
 
 - JDK：**21**
-- Maven：3.9+
-- Spring Boot：**3.3.10**
-- MySQL：**8.4.7**
-- Redis：**3.0.504**
+- Maven：3.8
+- Spring Boot：**3.3.11**
+- MySQL：**8.0**
+- Redis：**7.0**
 
 ## 配置文件说明
 
