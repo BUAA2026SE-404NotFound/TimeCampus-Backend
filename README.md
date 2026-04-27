@@ -75,7 +75,7 @@
 
 ```shell
 mvn clean test
-mvn -pl timetrack-server spring-boot:run
+mvn -pl timetrack-server -am spring-boot:run
 ```
 
 ## 接口文档
