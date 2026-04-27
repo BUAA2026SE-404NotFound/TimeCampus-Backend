@@ -68,19 +68,19 @@ CREATE TABLE IF NOT EXISTS `favorite`
   DEFAULT CHARSET = utf8mb4 COMMENT ='收藏表';
 
 -- 管理员账户表
-CREATE TABLE IF NOT EXISTS `admin_user`
+CREATE TABLE IF NOT EXISTS `admin`
 (
     `id`              bigint       NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
-    `user_id`         bigint                DEFAULT NULL COMMENT '关联用户 ID（可选）',
-    `username`        varchar(64)  NOT NULL COMMENT '管理员登录名（唯一）',
-    `password_hash`   varchar(255) NOT NULL COMMENT '密码哈希',
+    `admin_id`         bigint                DEFAULT NULL COMMENT '关联用户 ID',
+    `admin_name`        varchar(64)  NOT NULL COMMENT '管理员登录名（唯一）',
+    `password`   varchar(255) NOT NULL COMMENT '密码',
     `status`          tinyint      NOT NULL DEFAULT '1' COMMENT '状态：1 启用，0 禁用',
     `last_login_time` datetime              DEFAULT NULL COMMENT '最后登录时间',
     `create_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间（自动更新）',
     PRIMARY KEY (`id`),
-    UNIQUE KEY `uk_admin_username` (`username`),
-    UNIQUE KEY `uk_admin_user_id` (`user_id`),
+    UNIQUE KEY `uk_admin_name` (`admin_name`),
+    UNIQUE KEY `uk_admin_id` (`admin_id`),
     KEY `idx_admin_status` (`status`)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4 COMMENT ='管理员账户表';

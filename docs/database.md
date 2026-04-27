@@ -1,6 +1,8 @@
 ## 数据库设计
 
-> 说明：本文档保留外键设计用于建模说明；开发/测试初始化脚本 [schema.sql](../timetrack-server/src/main/resources/sql/schema.sql) 默认不实际创建外键约束，以降低联调和数据准备成本。
+>
+说明：本文档保留外键设计用于建模说明；开发/测试初始化脚本 [schema.sql](../timetrack-server/src/main/resources/sql/schema.sql)
+默认不实际创建外键约束，以降低联调和数据准备成本。
 
 ### 1. 用户表 `user`
 
@@ -83,24 +85,23 @@
 
 ------
 
-### 5. 管理员账户表 `admin_user`
+### 5. 管理员账户表 `admin`
 
-| 字段名             | 类型           | 允许 NULL | 默认值               | 说明                  |
-|:----------------|:-------------|:--------|:------------------|:--------------------|
-| id              | bigint       | 否       | AUTO_INCREMENT    | 主键 ID               |
-| user_id         | bigint       | 是       | NULL              | 关联用户 ID（可选）         |
-| username        | varchar(64)  | 否       | -                 | 管理员登录名（唯一）          |
-| password_hash   | varchar(255) | 否       | -                 | 密码哈希（BCrypt/Argon2） |
-| status          | tinyint      | 否       | 1                 | 状态：1 启用，0 禁用        |
-| last_login_time | datetime     | 是       | NULL              | 最后登录时间              |
-| create_time     | datetime     | 否       | CURRENT_TIMESTAMP | 创建时间                |
-| update_time     | datetime     | 否       | CURRENT_TIMESTAMP | 更新时间（自动更新）          |
+| 字段名             | 类型           | 允许 NULL | 默认值               | 说明           |
+|:----------------|:-------------|:--------|:------------------|:-------------|
+| id              | bigint       | 否       | AUTO_INCREMENT    | 主键 ID        |
+| admin_id        | bigint       | 是       | NULL              | 关联用户 ID（可选）  |
+| admin_name      | varchar(64)  | 否       | -                 | 管理员登录名（唯一）   |
+| password        | varchar(255) | 否       | -                 | 密码           |
+| status          | tinyint      | 否       | 1                 | 状态：1 启用，0 禁用 |
+| last_login_time | datetime     | 是       | NULL              | 最后登录时间       |
+| create_time     | datetime     | 否       | CURRENT_TIMESTAMP | 创建时间         |
+| update_time     | datetime     | 否       | CURRENT_TIMESTAMP | 更新时间（自动更新）   |
 
 - 主键：`id`
-- 唯一索引：`uk_admin_username` (`username`)
-- 唯一索引：`uk_admin_user_id` (`user_id`)
+- 唯一索引：`uk_admin_name` (`admin_name`)
+- 唯一索引：`uk_admin_id` (`admin_id`)
 - 普通索引：`idx_admin_status` (`status`)
-- 外键：`fk_admin_user_user` (`user_id` -> `user.id`)，`ON DELETE SET NULL ON UPDATE CASCADE`
 
 ------
 
