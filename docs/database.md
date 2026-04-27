@@ -117,7 +117,7 @@
 | review_status | varchar(20)   | 否       | 'pending'         | 审核状态：pending / approved / rejected |
 | reject_reason | varchar(255)  | 是       | NULL              | 驳回原因                               |
 | review_time   | datetime      | 是       | NULL              | 审核时间                               |
-| reviewer_id   | bigint        | 是       | NULL              | 审核人 ID（关联 admin_user.id）           |
+| reviewer_id   | bigint        | 是       | NULL              | 审核人 ID（关联 admin.id）                |
 | create_time   | datetime      | 否       | CURRENT_TIMESTAMP | 创建时间                               |
 | update_time   | datetime      | 否       | CURRENT_TIMESTAMP | 更新时间（自动更新）                         |
 
@@ -126,7 +126,7 @@
 - 普通索引：`idx_comment_target` (`target_type`, `target_id`)
 - 普通索引：`idx_comment_review_status` (`review_status`)
 - 外键：`fk_comment_user` (`user_id` -> `user.id`)，`ON DELETE CASCADE ON UPDATE CASCADE`
-- 外键：`fk_comment_reviewer` (`reviewer_id` -> `admin_user.id`)，`ON DELETE SET NULL ON UPDATE CASCADE`
+- 外键：`fk_comment_reviewer` (`reviewer_id` -> `admin.id`)，`ON DELETE SET NULL ON UPDATE CASCADE`
 - 说明：`target_id` 与 `target_type` 形成多态关联，数据库层不加外键，由业务层保证目标存在性
 
 ------
@@ -137,11 +137,11 @@
 |:--------------|:------------|:--------|:------------------|:-------------------------------------------------|
 | id            | bigint      | 否       | AUTO_INCREMENT    | 主键 ID                                            |
 | operator_type | varchar(20) | 否       | -                 | 操作人类型：admin / user / system                      |
-| operator_id   | bigint      | 是       | NULL              | 操作人 ID（admin_user.id 或 user.id）                  |
+| operator_id   | bigint      | 是       | NULL              | 操作人 ID（admin.id 或 user.id）                       |
 | type          | varchar(32) | 否       | -                 | 日志分类：auth / content / review / behavior / system |
 | action        | varchar(64) | 否       | -                 | 操作动作                                             |
 | target_type   | varchar(32) | 是       | NULL              | 操作对象类型                                           |
-| target_id     | bigint      | 是       | NULL              | 操作对象 ID                                          |
+| target_id     | bigint      | 是       | NULL              | 操作对象 ID（关联 target_type 中的对象 ID）                  |
 | detail        | text        | 是       | NULL              | 详细信息（JSON）                                       |
 | create_time   | datetime    | 否       | CURRENT_TIMESTAMP | 操作时间                                             |
 

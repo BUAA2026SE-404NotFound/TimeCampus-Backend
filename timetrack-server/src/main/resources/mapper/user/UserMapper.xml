@@ -30,8 +30,8 @@
 
     <insert id="insert" parameterType="com.notfound.timetrackpojo.entity.UserEntity"
             useGeneratedKeys="true" keyProperty="id">
-        insert into `user` (openid, nickname, avatar_url, identity, enroll_year, create_time, update_time)
-        values (#{openId}, #{nickname}, #{avatarUrl}, #{identity}, #{enrollYear}, #{createTime}, #{updateTime})
+        insert into `user` (openid, nickname, avatar_url, identity, enroll_year)
+        values (#{openId}, #{nickname}, #{avatarUrl}, #{identity}, #{enrollYear})
     </insert>
 
     <update id="updateById" parameterType="com.notfound.timetrackpojo.entity.UserEntity">
@@ -39,8 +39,7 @@
         set nickname = #{nickname},
             avatar_url = #{avatarUrl},
             identity = #{identity},
-            enroll_year = #{enrollYear},
-            update_time = #{updateTime}
+            enroll_year = #{enrollYear}
         where id = #{id}
     </update>
 </mapper>

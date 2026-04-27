@@ -4,9 +4,9 @@ import java.time.LocalDateTime;
 
 public class AdminEntity {
     private Long id;
-    private Long userId;
-    private String username;
-    private String passwordHash;
+    private Long adminId;
+    private String adminName;
+    private String password;
     private Integer status;
     private LocalDateTime lastLoginTime;
     private LocalDateTime createTime;
@@ -20,28 +20,28 @@ public class AdminEntity {
         this.id = id;
     }
 
-    public Long getUserId() {
-        return userId;
+    public Long getAdminId() {
+        return adminId;
     }
 
-    public void setUserId(Long userId) {
-        this.userId = userId;
+    public void setAdminId(Long adminId) {
+        this.adminId = adminId;
     }
 
-    public String getUsername() {
-        return username;
+    public String getAdminName() {
+        return adminName;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setAdminName(String adminName) {
+        this.adminName = adminName;
     }
 
-    public String getPasswordHash() {
-        return passwordHash;
+    public String getPassword() {
+        return password;
     }
 
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Integer getStatus() {

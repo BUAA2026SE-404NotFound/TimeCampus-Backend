@@ -1,3 +1,5 @@
+CREATE DATABASE IF NOT EXISTS `timetrack` DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
+USE `timetrack`;
 -- 用户表
 CREATE TABLE IF NOT EXISTS `user`
 (
@@ -71,9 +73,9 @@ CREATE TABLE IF NOT EXISTS `favorite`
 CREATE TABLE IF NOT EXISTS `admin`
 (
     `id`              bigint       NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
-    `admin_id`         bigint                DEFAULT NULL COMMENT '关联用户 ID',
-    `admin_name`        varchar(64)  NOT NULL COMMENT '管理员登录名（唯一）',
-    `password`   varchar(255) NOT NULL COMMENT '密码',
+    `admin_id`        bigint                DEFAULT NULL COMMENT '关联用户 ID',
+    `admin_name`      varchar(64)  NOT NULL COMMENT '管理员登录名（唯一）',
+    `password`        varchar(255) NOT NULL COMMENT '密码',
     `status`          tinyint      NOT NULL DEFAULT '1' COMMENT '状态：1 启用，0 禁用',
     `last_login_time` datetime              DEFAULT NULL COMMENT '最后登录时间',
     `create_time`     datetime     NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
@@ -96,7 +98,7 @@ CREATE TABLE IF NOT EXISTS `comment`
     `review_status` varchar(20)   NOT NULL DEFAULT 'pending' COMMENT '审核状态：pending / approved / rejected',
     `reject_reason` varchar(255)           DEFAULT NULL COMMENT '驳回原因',
     `review_time`   datetime               DEFAULT NULL COMMENT '审核时间',
-    `reviewer_id`   bigint                 DEFAULT NULL COMMENT '审核人 ID（关联 admin_user.id）',
+    `reviewer_id`   bigint                 DEFAULT NULL COMMENT '审核人 ID（关联 admin.id）',
     `create_time`   datetime      NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     `update_time`   datetime      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间（自动更新）',
     PRIMARY KEY (`id`),
@@ -111,7 +113,7 @@ CREATE TABLE IF NOT EXISTS `log`
 (
     `id`            bigint      NOT NULL AUTO_INCREMENT COMMENT '主键 ID',
     `operator_type` varchar(20) NOT NULL COMMENT '操作人类型：admin / user / system',
-    `operator_id`   bigint               DEFAULT NULL COMMENT '操作人 ID（admin_user.id 或 user.id）',
+    `operator_id`   bigint               DEFAULT NULL COMMENT '操作人 ID（admin.id 或 user.id）',
     `type`          varchar(32) NOT NULL COMMENT '日志分类：auth / content / review / behavior / system',
     `action`        varchar(64) NOT NULL COMMENT '操作动作',
     `target_type`   varchar(32)          DEFAULT NULL COMMENT '操作对象类型',
