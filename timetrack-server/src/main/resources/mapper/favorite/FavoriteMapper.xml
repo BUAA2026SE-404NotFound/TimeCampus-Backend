@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.notfound.timetrackserver.mapper.FavoriteMapper">
+
+    <resultMap id="BaseResultMap" type="com.notfound.timetrackpojo.entity.FavoriteEntity">
+        <id column="id" property="id"/>
+        <result column="user_id" property="userId"/>
+        <result column="target_type" property="targetType"/>
+        <result column="target_id" property="targetId"/>
+        <result column="create_time" property="createTime"/>
+    </resultMap>
+
+    <insert id="insert" parameterType="com.notfound.timetrackpojo.entity.FavoriteEntity"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into favorite (user_id, target_type, target_id)
+        values (#{userId}, #{targetType}, #{targetId})
+    </insert>
+
+    <delete id="deleteByUserAndTarget">
+        delete from favorite
+        where user_id = #{userId}
+          and target_type = #{targetType}
+          and target_id = #{targetId}
+    </delete>
+
+    <select id="existsByUserAndTarget" resultType="boolean">
+        select count(1) > 0
+        from favorite
+        where user_id = #{userId}
+          and target_type = #{targetType}
+          and target_id = #{targetId}
+            limit 1
+    </select>
+
+    <select id="listByUser" resultMap="BaseResultMap">
+        select id, user_id, target_type, target_id, create_time
+        from favorite
+        where user_id = #{userId}
+        <if test="targetType != null and targetType != ''">
+            and target_type = #{targetType}
+        </if>
+        order by create_time desc
+    </select>
+
+</mapper>

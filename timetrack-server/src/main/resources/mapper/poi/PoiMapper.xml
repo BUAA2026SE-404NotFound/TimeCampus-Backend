@@ -16,6 +16,15 @@
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
+    <select id="listByIds" resultMap="BaseResultMap">
+        select id, name, latitude, longitude, description, fun_fact, status, create_time, update_time
+        from poi
+        where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
     <select id="findById" resultMap="BaseResultMap">
         select id, name, latitude, longitude, description, fun_fact, status, create_time, update_time
         from poi

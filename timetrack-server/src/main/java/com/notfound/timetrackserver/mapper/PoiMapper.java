@@ -20,5 +20,7 @@ public interface PoiMapper {
     boolean existsById(Long id);
 
     List<PoiEntity> list(@Param("status") Integer status, @Param("keyword") String keyword);
+
+    List<PoiEntity> listByIds(@Param("ids") List<Long> ids);
 }
 

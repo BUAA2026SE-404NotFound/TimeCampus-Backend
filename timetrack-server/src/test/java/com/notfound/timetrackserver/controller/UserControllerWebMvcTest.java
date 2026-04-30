@@ -4,6 +4,7 @@ import com.notfound.timetrackcommon.exception.BizException;
 import com.notfound.timetrackcommon.api.ResultCode;
 import com.notfound.timetrackpojo.vo.UserLoginVO;
 import com.notfound.timetrackpojo.vo.UserProfileVO;
+import com.notfound.timetrackserver.service.FavoriteService;
 import com.notfound.timetrackserver.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,11 +26,13 @@ class UserControllerWebMvcTest {
     private MockMvc mockMvc;
 
     private UserService userService;
+    private FavoriteService favoriteService;
 
     @BeforeEach
     void setUp() {
         userService = mock(UserService.class);
-        UserController userController = new UserController(userService);
+        favoriteService = mock(FavoriteService.class);
+        UserController userController = new UserController(userService, favoriteService);
         mockMvc = MockMvcBuilders.standaloneSetup(userController)
                 .setControllerAdvice(new com.notfound.timetrackcommon.exception.GlobalExceptionHandler())
                 .build();
