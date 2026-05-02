@@ -26,5 +26,7 @@ public interface MediaMapper {
     List<MediaEntity> listByPoiIds(@Param("poiIds") List<Long> poiIds,
                                    @Param("type") String type,
                                    @Param("reviewStatus") String reviewStatus);
+
+    List<MediaEntity> listByIds(@Param("ids") List<Long> ids);
 }
 
