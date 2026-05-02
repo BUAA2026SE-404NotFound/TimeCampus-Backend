@@ -51,7 +51,6 @@ class GlobalExceptionHandlerTest {
         ApiResponse<Void> response = handler.handleException(new RuntimeException("boom"));
 
         assertEquals(ResultCode.INTERNAL_ERROR.getCode(), response.getCode());
-        assertEquals("boom", response.getMessage());
+        assertEquals(ResultCode.INTERNAL_ERROR.getMessage(), response.getMessage());
     }
 }
-

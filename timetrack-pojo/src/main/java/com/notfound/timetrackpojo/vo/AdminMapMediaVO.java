@@ -1,21 +1,21 @@
-package com.notfound.timetrackpojo.entity;
+package com.notfound.timetrackpojo.vo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-public class MediaEntity {
+@Schema(description = "管理端地图影像记录")
+public class AdminMapMediaVO {
     private Long id;
     private Long poiId;
     private String type;
     private String imagePath;
+    private String previewUrl;
     private Integer year;
     private String description;
     private Long uploadUserId;
     private String reviewStatus;
-    private String rejectReason;
-    private LocalDateTime reviewTime;
-    private Long reviewerId;
     private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 
     public Long getId() {
         return id;
@@ -47,6 +47,14 @@ public class MediaEntity {
 
     public void setImagePath(String imagePath) {
         this.imagePath = imagePath;
+    }
+
+    public String getPreviewUrl() {
+        return previewUrl;
+    }
+
+    public void setPreviewUrl(String previewUrl) {
+        this.previewUrl = previewUrl;
     }
 
     public Integer getYear() {
@@ -81,30 +89,6 @@ public class MediaEntity {
         this.reviewStatus = reviewStatus;
     }
 
-    public String getRejectReason() {
-        return rejectReason;
-    }
-
-    public void setRejectReason(String rejectReason) {
-        this.rejectReason = rejectReason;
-    }
-
-    public LocalDateTime getReviewTime() {
-        return reviewTime;
-    }
-
-    public void setReviewTime(LocalDateTime reviewTime) {
-        this.reviewTime = reviewTime;
-    }
-
-    public Long getReviewerId() {
-        return reviewerId;
-    }
-
-    public void setReviewerId(Long reviewerId) {
-        this.reviewerId = reviewerId;
-    }
-
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -112,13 +96,4 @@ public class MediaEntity {
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
-
-    public LocalDateTime getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(LocalDateTime updateTime) {
-        this.updateTime = updateTime;
-    }
 }
-

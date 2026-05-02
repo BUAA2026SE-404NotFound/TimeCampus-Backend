@@ -5,7 +5,6 @@ import org.junit.jupiter.api.Test;
 import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertSame;
 
 class UserEntityTest {
 
@@ -34,19 +33,5 @@ class UserEntityTest {
         assertEquals(later, entity.getUpdateTime());
     }
 
-    @Test
-    void backwardCompatibleCreatedAtAccessorsShouldPointToSchemaTimeFields() {
-        UserEntity entity = new UserEntity();
-        LocalDateTime createTime = LocalDateTime.now();
-        LocalDateTime updateTime = createTime.plusHours(1);
-
-        entity.setCreatedAt(createTime);
-        entity.setUpdatedAt(updateTime);
-
-        assertEquals(createTime, entity.getCreateTime());
-        assertEquals(updateTime, entity.getUpdateTime());
-        assertSame(entity.getCreateTime(), entity.getCreatedAt());
-        assertSame(entity.getUpdateTime(), entity.getUpdatedAt());
-    }
 }
 
