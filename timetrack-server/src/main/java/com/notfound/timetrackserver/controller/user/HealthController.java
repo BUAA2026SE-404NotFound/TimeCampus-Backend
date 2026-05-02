@@ -1,4 +1,4 @@
-package com.notfound.timetrackserver.controller;
+package com.notfound.timetrackserver.controller.user;
 
 import com.notfound.timetrackcommon.api.ApiResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,4 +25,3 @@ public class HealthController {
         ));
     }
 }
-

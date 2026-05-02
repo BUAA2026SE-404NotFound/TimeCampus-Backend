@@ -73,4 +73,3 @@ public class AdminPoiController {
         return ApiResponse.success(poiService.list(status, keyword));
     }
 }
-

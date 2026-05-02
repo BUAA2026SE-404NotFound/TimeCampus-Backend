@@ -17,6 +17,11 @@ public interface MediaMapper {
 
     int deleteById(Long id);
 
+    int updateReview(@Param("id") Long id,
+                     @Param("reviewStatus") String reviewStatus,
+                     @Param("rejectReason") String rejectReason,
+                     @Param("reviewerId") Long reviewerId);
+
     List<MediaEntity> list(@Param("poiId") Long poiId,
                            @Param("type") String type,
                            @Param("reviewStatus") String reviewStatus,
@@ -28,5 +33,9 @@ public interface MediaMapper {
                                    @Param("reviewStatus") String reviewStatus);
 
     List<MediaEntity> listByIds(@Param("ids") List<Long> ids);
-}
 
+    MediaEntity findBestByPoiAndYear(@Param("poiId") Long poiId,
+                                     @Param("year") Integer year,
+                                     @Param("type") String type,
+                                     @Param("reviewStatus") String reviewStatus);
+}

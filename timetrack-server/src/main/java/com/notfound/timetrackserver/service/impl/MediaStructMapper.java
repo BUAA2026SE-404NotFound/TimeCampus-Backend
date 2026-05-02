@@ -7,6 +7,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class MediaStructMapper {
 
+    private final com.notfound.timetrackserver.service.MediaFileService mediaFileService;
+
+    public MediaStructMapper(com.notfound.timetrackserver.service.MediaFileService mediaFileService) {
+        this.mediaFileService = mediaFileService;
+    }
+
     public MediaVO toVO(MediaEntity entity) {
         if (entity == null) {
             return null;
@@ -16,6 +22,7 @@ public class MediaStructMapper {
         vo.setPoiId(entity.getPoiId());
         vo.setType(entity.getType());
         vo.setImagePath(entity.getImagePath());
+        vo.setPreviewUrl(mediaFileService.previewUrl(entity.getId(), entity.getImagePath()));
         vo.setYear(entity.getYear());
         vo.setDescription(entity.getDescription());
         vo.setUploadUserId(entity.getUploadUserId());
@@ -28,4 +35,3 @@ public class MediaStructMapper {
         return vo;
     }
 }
-

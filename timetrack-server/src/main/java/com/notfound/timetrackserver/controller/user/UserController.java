@@ -1,10 +1,8 @@
-package com.notfound.timetrackserver.controller;
+package com.notfound.timetrackserver.controller.user;
 
 import com.notfound.timetrackcommon.api.ApiResponse;
 import com.notfound.timetrackcommon.api.ResultCode;
 import com.notfound.timetrackcommon.exception.BizException;
-import com.notfound.timetrackpojo.dto.WechatLoginRequest;
-import com.notfound.timetrackpojo.vo.UserLoginVO;
 import com.notfound.timetrackpojo.vo.UserProfileVO;
 import com.notfound.timetrackserver.security.UserContext;
 import com.notfound.timetrackserver.service.UserService;
@@ -18,7 +16,6 @@ import org.springframework.web.bind.annotation.*;
 import com.notfound.timetrackpojo.dto.FavoriteRequest;
 import com.notfound.timetrackpojo.vo.FavoriteItemVO;
 import com.notfound.timetrackserver.service.FavoriteService;
-import jakarta.validation.Valid;
 
 import java.util.List;
 
@@ -34,12 +31,6 @@ public class UserController {
     public UserController(UserService userService, FavoriteService favoriteService) {
         this.userService = userService;
         this.favoriteService = favoriteService;
-    }
-
-    @PostMapping("/wx-login")
-    @Operation(summary = "微信登录/注册", description = "使用小程序 wx.login 获取的 code 登录；若用户不存在则自动创建。")
-    public ApiResponse<UserLoginVO> wxLogin(@Valid @RequestBody WechatLoginRequest request) {
-        return ApiResponse.success(userService.wxLogin(request));
     }
 
     @GetMapping("/{id}")
@@ -79,4 +70,5 @@ public class UserController {
         Long userId = UserContext.getUserId();
         return ApiResponse.success(favoriteService.listFavorites(userId, targetType));
     }
+
 }

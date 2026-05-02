@@ -5,14 +5,22 @@ import com.notfound.timetrackpojo.entity.PoiEntity;
 import com.notfound.timetrackpojo.vo.MapHomeVO;
 import com.notfound.timetrackpojo.vo.MapMediaVO;
 import com.notfound.timetrackpojo.vo.MapPoiVO;
+import com.notfound.timetrackcommon.api.ResultCode;
+import com.notfound.timetrackcommon.exception.BizException;
+import com.notfound.timetrackserver.config.TencentMapProperties;
 import com.notfound.timetrackserver.mapper.MediaMapper;
 import com.notfound.timetrackserver.mapper.PoiMapper;
 import com.notfound.timetrackserver.service.MapService;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.web.client.RestClient;
 import org.springframework.stereotype.Service;
+
+import java.net.URI;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -25,10 +33,19 @@ public class MapServiceImpl implements MapService {
 
     private final PoiMapper poiMapper;
     private final MediaMapper mediaMapper;
+    private final TencentMapProperties tencentMapProperties;
+    private final RestClient restClient;
+    private final TencentMapSignature tencentMapSignature;
 
-    public MapServiceImpl(PoiMapper poiMapper, MediaMapper mediaMapper) {
+    public MapServiceImpl(PoiMapper poiMapper,
+                          MediaMapper mediaMapper,
+                          TencentMapProperties tencentMapProperties,
+                          TencentMapSignature tencentMapSignature) {
         this.poiMapper = poiMapper;
         this.mediaMapper = mediaMapper;
+        this.tencentMapProperties = tencentMapProperties;
+        this.tencentMapSignature = tencentMapSignature;
+        this.restClient = RestClient.create();
     }
 
     @Override
@@ -70,6 +87,89 @@ public class MapServiceImpl implements MapService {
         return homeVO;
     }
 
+    @Override
+    public Map<String, Object> reverseGeocode(Double lat, Double lng) {
+        if (lat == null || lng == null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "invalid lat/lng");
+        }
+        requireTencentKey();
+        LinkedHashMap<String, String> params = new LinkedHashMap<>();
+        params.put("key", tencentMapProperties.key());
+        params.put("location", lat + "," + lng);
+        params.put("get_poi", "1");
+        URI uri = tencentMapSignature.buildSignedUri(tencentMapProperties.geocoderUrl(), params, tencentMapProperties.sk());
+        Map<String, Object> response = restClient.get()
+                .uri(uri)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+        enrichCoordinateMeta(response, lat, lng);
+        return response;
+    }
+
+    @Override
+    public Map<String, Object> poiSearch(String keyword, String region) {
+        if (keyword == null || keyword.isBlank()) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "keyword is required");
+        }
+        requireTencentKey();
+        LinkedHashMap<String, String> params = new LinkedHashMap<>();
+        params.put("key", tencentMapProperties.key());
+        params.put("keyword", keyword);
+        params.put("boundary", "region(" + (region == null || region.isBlank() ? "全国" : region) + ",0)");
+        URI uri = tencentMapSignature.buildSignedUri(tencentMapProperties.placeSearchUrl(), params, tencentMapProperties.sk());
+        Map<String, Object> response = restClient.get()
+                .uri(uri)
+                .retrieve()
+                .body(new ParameterizedTypeReference<>() {});
+        enrichPoiSearchCoordinates(response);
+        return response;
+    }
+
+    private void enrichCoordinateMeta(Map<String, Object> response,
+                                      double gcj02Lat,
+                                      double gcj02Lng) {
+        if (response == null) {
+            return;
+        }
+        response.put("coordinateSystem", "GCJ02");
+        response.put("requestLocation", coordinateMap(gcj02Lat, gcj02Lng));
+    }
+
+    @SuppressWarnings("unchecked")
+    private void enrichPoiSearchCoordinates(Map<String, Object> response) {
+        if (response == null) {
+            return;
+        }
+        Object results = response.get("results");
+        if (!(results instanceof List<?> list)) {
+            return;
+        }
+        for (Object item : list) {
+            if (!(item instanceof Map<?, ?> rawItem)) {
+                continue;
+            }
+            Map<String, Object> result = (Map<String, Object>) rawItem;
+            Object location = result.get("location");
+            if (!(location instanceof Map<?, ?> rawLocation)) {
+                continue;
+            }
+            Object latValue = rawLocation.get("lat");
+            Object lngValue = rawLocation.get("lng");
+            if (!(latValue instanceof Number latNumber) || !(lngValue instanceof Number lngNumber)) {
+                continue;
+            }
+            result.put("coordinateSystem", "GCJ02");
+            result.put("gcj02Location", coordinateMap(latNumber.doubleValue(), lngNumber.doubleValue()));
+        }
+    }
+
+    private Map<String, Object> coordinateMap(double lat, double lng) {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("lat", lat);
+        result.put("lng", lng);
+        return result;
+    }
+
     private String selectCover(List<MediaEntity> list, Integer year) {
         if (list == null || list.isEmpty()) {
             return null;
@@ -92,5 +192,10 @@ public class MapServiceImpl implements MapService {
         vo.setType(entity.getType());
         return vo;
     }
-}
 
+    private void requireTencentKey() {
+        if (tencentMapProperties.key() == null || tencentMapProperties.key().isBlank()) {
+            throw new BizException(ResultCode.BIZ_ERROR, "tencent map key not configured");
+        }
+    }
+}

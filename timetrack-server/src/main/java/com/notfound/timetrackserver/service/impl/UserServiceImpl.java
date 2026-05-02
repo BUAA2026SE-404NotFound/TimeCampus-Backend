@@ -42,12 +42,14 @@ public class UserServiceImpl implements UserService {
             entity.setOpenId(openId);
             entity.setNickname(defaultIfBlank(request.getNickname(), "TimeTrack User"));
             entity.setAvatarUrl(request.getAvatarUrl());
+            entity.setIdentity(request.getIdentityType());
             entity.setCreateTime(LocalDateTime.now());
             entity.setUpdateTime(LocalDateTime.now());
             userMapper.insert(entity);
         } else {
             entity.setNickname(defaultIfBlank(request.getNickname(), entity.getNickname()));
             entity.setAvatarUrl(defaultIfBlank(request.getAvatarUrl(), entity.getAvatarUrl()));
+            entity.setIdentity(defaultIfBlank(request.getIdentityType(), entity.getIdentity()));
             entity.setUpdateTime(LocalDateTime.now());
             userMapper.updateById(entity);
         }

@@ -4,7 +4,8 @@ import com.notfound.timetrackcommon.api.ResultCode;
 import com.notfound.timetrackcommon.exception.BizException;
 import com.notfound.timetrackserver.config.WechatProperties;
 import com.notfound.timetrackserver.service.WechatAuthService;
-import org.springframework.http.MediaType;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -13,12 +14,14 @@ public class WechatAuthServiceImpl implements WechatAuthService {
 
     private final WechatProperties wechatProperties;
     private final RestClient restClient;
+    private final ObjectMapper objectMapper;
 
     public WechatAuthServiceImpl(WechatProperties wechatProperties) {
         this.wechatProperties = wechatProperties;
         this.restClient = RestClient.builder()
                 .baseUrl("https://api.weixin.qq.com")
                 .build();
+        this.objectMapper = new ObjectMapper();
     }
 
     @Override
@@ -31,7 +34,7 @@ public class WechatAuthServiceImpl implements WechatAuthService {
             throw new BizException(ResultCode.BIZ_ERROR, "wechat appid/secret not configured");
         }
 
-        Code2SessionResponse response = restClient.get()
+        String rawResponse = restClient.get()
                 .uri(uriBuilder -> uriBuilder
                         .path("/sns/jscode2session")
                         .queryParam("appid", wechatProperties.appid())
@@ -39,9 +42,10 @@ public class WechatAuthServiceImpl implements WechatAuthService {
                         .queryParam("js_code", code)
                         .queryParam("grant_type", "authorization_code")
                         .build())
-                .accept(MediaType.APPLICATION_JSON)
                 .retrieve()
-                .body(Code2SessionResponse.class);
+                .body(String.class);
+
+        Code2SessionResponse response = parseResponse(rawResponse);
 
         if (response == null) {
             throw new BizException(ResultCode.INTERNAL_ERROR, "wechat code2Session returned empty response");
@@ -56,6 +60,17 @@ public class WechatAuthServiceImpl implements WechatAuthService {
         return response.openid;
     }
 
+    private Code2SessionResponse parseResponse(String rawResponse) {
+        if (rawResponse == null || rawResponse.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readValue(rawResponse, Code2SessionResponse.class);
+        } catch (JsonProcessingException e) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "wechat code2Session invalid response: " + e.getMessage());
+        }
+    }
+
     @SuppressWarnings("unused")
     static class Code2SessionResponse {
         public String openid;
@@ -65,4 +80,3 @@ public class WechatAuthServiceImpl implements WechatAuthService {
         public String errmsg;
     }
 }
-

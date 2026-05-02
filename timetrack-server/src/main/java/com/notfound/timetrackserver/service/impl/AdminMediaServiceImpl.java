@@ -9,6 +9,8 @@ import com.notfound.timetrackpojo.vo.MediaVO;
 import com.notfound.timetrackserver.mapper.MediaMapper;
 import com.notfound.timetrackserver.mapper.PoiMapper;
 import com.notfound.timetrackserver.service.AdminMediaService;
+import com.notfound.timetrackserver.security.AdminContext;
+import com.notfound.timetrackserver.service.LogService;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,11 +28,13 @@ public class AdminMediaServiceImpl implements AdminMediaService {
     private final MediaMapper mediaMapper;
     private final PoiMapper poiMapper;
     private final MediaStructMapper mediaStructMapper;
+    private final LogService logService;
 
-    public AdminMediaServiceImpl(MediaMapper mediaMapper, PoiMapper poiMapper, MediaStructMapper mediaStructMapper) {
+    public AdminMediaServiceImpl(MediaMapper mediaMapper, PoiMapper poiMapper, MediaStructMapper mediaStructMapper, LogService logService) {
         this.mediaMapper = mediaMapper;
         this.poiMapper = poiMapper;
         this.mediaStructMapper = mediaStructMapper;
+        this.logService = logService;
     }
 
     @Override
@@ -72,6 +76,8 @@ public class AdminMediaServiceImpl implements AdminMediaService {
 
         if (!toInsert.isEmpty()) {
             mediaMapper.insertBatch(toInsert);
+            logService.record("ADMIN", AdminContext.getAdminId(), "content", "batch_import_official",
+                    "media", null, "success=" + toInsert.size());
         }
 
         result.setFailCount(result.getFailures() == null ? 0 : result.getFailures().size());
@@ -99,6 +105,7 @@ public class AdminMediaServiceImpl implements AdminMediaService {
     @Override
     public void deleteById(Long id) {
         mediaMapper.deleteById(id);
+        logService.record("ADMIN", AdminContext.getAdminId(), "content", "delete_media", "media", id, null);
     }
 
     private String validateItem(OfficialMediaImportRequest.OfficialMediaItem item) {
@@ -127,4 +134,3 @@ public class AdminMediaServiceImpl implements AdminMediaService {
         return REVIEW_APPROVED;
     }
 }
-

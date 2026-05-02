@@ -1,4 +1,4 @@
-package com.notfound.timetrackserver.controller;
+package com.notfound.timetrackserver.controller.user;
 
 import com.notfound.timetrackcommon.api.ApiResponse;
 import com.notfound.timetrackpojo.vo.MapHomeVO;
@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.Map;
 
 @Tag(name = "Map", description = "小程序地图相关接口")
 @RestController
@@ -28,5 +30,17 @@ public class MapController {
                                        @RequestParam(required = false) Integer year) {
         return ApiResponse.success(mapService.getHome(year));
     }
-}
 
+    @GetMapping("/reverse-geocode")
+    @Operation(summary = "腾讯地图逆地理编码")
+    public ApiResponse<Map<String, Object>> reverseGeocode(@RequestParam Double lat, @RequestParam Double lng) {
+        return ApiResponse.success(mapService.reverseGeocode(lat, lng));
+    }
+
+    @GetMapping("/poi-search")
+    @Operation(summary = "腾讯地图地点搜索")
+    public ApiResponse<Map<String, Object>> poiSearch(@RequestParam String keyword,
+                                                      @RequestParam(required = false) String region) {
+        return ApiResponse.success(mapService.poiSearch(keyword, region));
+    }
+}
