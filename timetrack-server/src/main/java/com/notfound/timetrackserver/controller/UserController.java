@@ -3,7 +3,9 @@ package com.notfound.timetrackserver.controller;
 import com.notfound.timetrackcommon.api.ApiResponse;
 import com.notfound.timetrackcommon.api.ResultCode;
 import com.notfound.timetrackcommon.exception.BizException;
+import com.notfound.timetrackpojo.dto.UgcUploadRequest;
 import com.notfound.timetrackpojo.dto.WechatLoginRequest;
+import com.notfound.timetrackpojo.vo.MediaVO;
 import com.notfound.timetrackpojo.vo.UserLoginVO;
 import com.notfound.timetrackpojo.vo.UserProfileVO;
 import com.notfound.timetrackserver.security.UserContext;
@@ -19,6 +21,7 @@ import com.notfound.timetrackpojo.dto.FavoriteRequest;
 import com.notfound.timetrackpojo.vo.FavoriteItemVO;
 import com.notfound.timetrackserver.service.FavoriteService;
 import jakarta.validation.Valid;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -78,5 +81,16 @@ public class UserController {
             @RequestParam(required = false) @Parameter(description = "目标类型：poi / media") String targetType) {
         Long userId = UserContext.getUserId();
         return ApiResponse.success(favoriteService.listFavorites(userId, targetType));
+    }
+
+    @PostMapping("/ugc/media")
+    @Operation(summary = "用户上传 UGC 影像", description = "上传图片，需登录，待审核")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<MediaVO> uploadUgc(
+            @RequestPart("file") MultipartFile file,
+            @RequestPart("request") @Valid UgcUploadRequest request) {
+        Long userId = UserContext.getUserId();
+        MediaVO vo = userService.uploadUgc(request, file, userId);
+        return ApiResponse.success(vo);
     }
 }

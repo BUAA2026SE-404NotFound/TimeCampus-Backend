@@ -6,8 +6,11 @@ import com.notfound.timetrackpojo.dto.WechatLoginRequest;
 import com.notfound.timetrackpojo.entity.UserEntity;
 import com.notfound.timetrackpojo.vo.UserLoginVO;
 import com.notfound.timetrackpojo.vo.UserProfileVO;
+import com.notfound.timetrackserver.mapper.MediaMapper;
+import com.notfound.timetrackserver.mapper.PoiMapper;
 import com.notfound.timetrackserver.mapper.UserMapper;
 import com.notfound.timetrackserver.security.UserAuthInterceptor;
+import com.notfound.timetrackserver.service.FileStorageService;
 import com.notfound.timetrackserver.service.WechatAuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,11 +40,16 @@ class UserServiceImplTest {
     @Mock
     private UserAuthInterceptor userAuthInterceptor;
 
+    @Mock private FileStorageService fileStorageService;
+    @Mock private MediaMapper mediaMapper;
+    @Mock private PoiMapper poiMapper;
+
     private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userMapper, new UserStructMapper(), wechatAuthService, userAuthInterceptor);
+        userService = new UserServiceImpl(userMapper, new UserStructMapper(), wechatAuthService, userAuthInterceptor,
+                fileStorageService, mediaMapper, poiMapper);
     }
 
     @Test

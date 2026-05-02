@@ -2,22 +2,17 @@ package com.notfound.timetrackserver.controller.admin;
 
 import com.notfound.timetrackcommon.api.ApiResponse;
 import com.notfound.timetrackpojo.dto.OfficialMediaImportRequest;
+import com.notfound.timetrackpojo.dto.RejectRequest;
 import com.notfound.timetrackpojo.vo.ImportResultVO;
 import com.notfound.timetrackpojo.vo.MediaVO;
+import com.notfound.timetrackserver.security.AdminContext;
 import com.notfound.timetrackserver.service.AdminMediaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -68,6 +63,25 @@ public class AdminMediaController {
                                           @Parameter(description = "年份上界（可选）", example = "2020")
                                           @RequestParam(required = false) Integer yearTo) {
         return ApiResponse.success(adminMediaService.list(poiId, type, reviewStatus, yearFrom, yearTo));
+    }
+
+    @PutMapping("/{id}/approve")
+    @Operation(summary = "审核通过影像", description = "管理员通过UGC影像的审核")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<Void> approveMedia(@PathVariable Long id) {
+        Long reviewerId = AdminContext.getAdminId();
+        adminMediaService.approveMedia(id, reviewerId);
+        return ApiResponse.success();
+    }
+
+    @PutMapping("/{id}/reject")
+    @Operation(summary = "审核驳回影像", description = "管理员驳回UGC影像，需提供驳回原因")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<Void> rejectMedia(@PathVariable Long id,
+                                         @RequestBody @Valid RejectRequest request) {
+        Long reviewerId = AdminContext.getAdminId();
+        adminMediaService.rejectMedia(id, reviewerId, request.getRejectReason());
+        return ApiResponse.success();
     }
 }
 
