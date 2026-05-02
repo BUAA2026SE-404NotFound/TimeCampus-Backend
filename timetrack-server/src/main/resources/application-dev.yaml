@@ -23,10 +23,3 @@ wechat:
 storage:
   local-root-dir: ./uploads
   max-file-size-mb: 20
-
-baidu:
-  map:
-    ak: HGhU4IUAsSHlmO0khfcBJcqczmug2Xd3
-    geocoder-url: https://api.map.baidu.com/geocoding/v3/
-    place-search-url: https://api.map.baidu.com/place/v2/search
-
