@@ -2,6 +2,7 @@ package com.notfound.timetrackserver.controller;
 
 import com.notfound.timetrackcommon.exception.BizException;
 import com.notfound.timetrackcommon.api.ResultCode;
+import com.notfound.timetrackpojo.vo.UserLoginVO;
 import com.notfound.timetrackpojo.vo.UserProfileVO;
 import com.notfound.timetrackserver.service.UserService;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,15 +42,19 @@ class UserControllerWebMvcTest {
         vo.setNickname("nick");
         vo.setAvatarUrl("avatar");
 
-        when(userService.wxLogin(any())).thenReturn(vo);
+        UserLoginVO loginVO = new UserLoginVO();
+        loginVO.setToken("t1");
+        loginVO.setProfile(vo);
+        when(userService.wxLogin(any())).thenReturn(loginVO);
 
         mockMvc.perform(post("/api/v1/users/wx-login")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"code\":\"abc\",\"nickname\":\"nick\",\"avatarUrl\":\"avatar\"}"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.nickname").value("nick"));
+                .andExpect(jsonPath("$.data.token").value("t1"))
+                .andExpect(jsonPath("$.data.profile.id").value(1))
+                .andExpect(jsonPath("$.data.profile.nickname").value("nick"));
     }
 
     @Test
@@ -70,7 +75,7 @@ class UserControllerWebMvcTest {
 
         when(userService.getById(2L)).thenReturn(vo);
 
-        mockMvc.perform(get("/api/v1/users/2"))
+        mockMvc.perform(get("/api/v1/users/2").header("Authorization", "Bearer t"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.id").value(2));
@@ -80,7 +85,7 @@ class UserControllerWebMvcTest {
     void getUserReturnsNotFoundWhenServiceThrowsBizException() throws Exception {
         when(userService.getById(9L)).thenThrow(new BizException(ResultCode.NOT_FOUND, "user not found: 9"));
 
-        mockMvc.perform(get("/api/v1/users/9"))
+        mockMvc.perform(get("/api/v1/users/9").header("Authorization", "Bearer t"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(ResultCode.NOT_FOUND.getCode()))
                 .andExpect(jsonPath("$.message").value("user not found: 9"));
