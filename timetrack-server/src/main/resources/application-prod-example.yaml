@@ -15,6 +15,10 @@ spring:
 server:
   port: ${SERVER_PORT:8080}
 
+storage:
+  local-root-dir: ${TIMETRACK_STORAGE_DIR:/opt/timecampus/storage/uploads}
+  max-file-size-mb: ${TIMETRACK_MAX_FILE_SIZE_MB:10}
+
 logging:
   level:
     root: info

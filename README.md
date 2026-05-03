@@ -176,10 +176,11 @@ tencent-map:
 主要配置文件：
 
 - `timetrack-server/src/main/resources/application.yaml`
+- `timetrack-server/src/main/resources/application-example.yaml`
 - `timetrack-server/src/main/resources/application-dev-example.yaml`
-- `timetrack-server/src/main/resources/application-prod.yaml`
+- `timetrack-server/src/main/resources/application-prod-example.yaml`
 
-`application-dev.yaml` 包含本地数据库密码、Redis 密码、微信密钥、腾讯地图 SK 等敏感信息，已取消版本管理。首次本地运行时请从示例文件复制：
+`application-dev.yaml` 和 `application-prod.yaml` 包含数据库密码、Redis 密码、微信密钥、腾讯地图 SK 等敏感信息，已取消版本管理。首次本地运行时请从示例文件复制：
 
 ```shell
 copy timetrack-server\src\main\resources\application-dev-example.yaml timetrack-server\src\main\resources\application-dev.yaml
@@ -192,6 +193,12 @@ cp timetrack-server/src/main/resources/application-dev-example.yaml timetrack-se
 ```
 
 然后在本机的 `application-dev.yaml` 或环境变量中填入真实值。不要提交 `application-dev.yaml`。
+
+生产服务器使用 `prod` profile，推荐在服务器 `~/TimeTrack-Backend/app/config/application-prod.yaml` 放置真实配置，并从 `application-prod-example.yaml` 复制后修改。Spring Boot 启动命令为：
+
+```shell
+java -jar app.jar --spring.profiles.active=prod
+```
 
 ### 最小运行配置
 

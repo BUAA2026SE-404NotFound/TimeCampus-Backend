@@ -16,6 +16,7 @@
 .env
 .env.*
 **/application-dev.yaml
+**/application-prod.yaml
 
 # Logs
 *.log

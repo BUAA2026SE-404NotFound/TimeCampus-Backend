@@ -8,13 +8,23 @@ on:
     branches:
       - "**"
   workflow_dispatch:
+    inputs:
+      run_smoke:
+        description: "Run third-party smoke tests with repository secrets"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  build-and-test:
-    name: Build And Test (Java 21)
+  backend:
+    name: Backend Test And Package (Java 21)
     runs-on: ubuntu-latest
 
     steps:
@@ -41,3 +51,62 @@ jobs:
           path: timetrack-server/target/*.jar
           if-no-files-found: error
 
+  frontend:
+    name: Frontend Build (Vue 3)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: timetrack-ui/package-lock.json
+
+      - name: Install Frontend Dependencies
+        working-directory: timetrack-ui
+        run: npm ci
+
+      - name: Build Frontend
+        working-directory: timetrack-ui
+        run: npm run build
+
+      - name: Upload Frontend Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: timetrack-ui-dist
+          path: timetrack-ui/dist
+          if-no-files-found: error
+
+  third-party-smoke:
+    name: Third Party Smoke Tests
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_smoke }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+
+      - name: Run Tencent Map Smoke Test
+        env:
+          RUN_TENCENT_SMOKE: "true"
+          TENCENT_MAP_KEY: ${{ secrets.TENCENT_MAP_KEY }}
+          TENCENT_MAP_SK: ${{ secrets.TENCENT_MAP_SK }}
+        run: mvn -B -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.TencentMapSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
+
+      - name: Run WeChat Smoke Test
+        env:
+          RUN_WECHAT_SMOKE: "true"
+          WECHAT_APPID: ${{ secrets.WECHAT_APPID }}
+          WECHAT_SECRET: ${{ secrets.WECHAT_SECRET }}
+        run: mvn -B -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.WechatAuthSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
