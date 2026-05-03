@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: timetrack-server
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  servlet:
+    multipart:
+      max-file-size: 20MB
+      max-request-size: 25MB
+
+server:
+  port: ${SERVER_PORT:8080}
+
+mybatis:
+  mapper-locations: classpath*:mapper/**/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+storage:
+  local-root-dir: ${TIMETRACK_STORAGE_DIR:storage/uploads}
+  max-file-size-mb: ${TIMETRACK_MAX_FILE_SIZE_MB:10}
+
+tencent-map:
+  key: ${TENCENT_MAP_KEY:}
+  sk: ${TENCENT_MAP_SK:}
+  geocoder-url: https://apis.map.qq.com/ws/geocoder/v1/
+  place-search-url: https://apis.map.qq.com/ws/place/v1/search
+
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} [requestId=%X{requestId}] - %msg%n"

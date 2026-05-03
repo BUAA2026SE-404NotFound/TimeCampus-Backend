@@ -7,6 +7,8 @@ import com.notfound.timetrackpojo.dto.PoiUpdateRequest;
 import com.notfound.timetrackpojo.entity.PoiEntity;
 import com.notfound.timetrackpojo.vo.PoiVO;
 import com.notfound.timetrackserver.mapper.PoiMapper;
+import com.notfound.timetrackserver.security.AdminContext;
+import com.notfound.timetrackserver.service.LogService;
 import com.notfound.timetrackserver.service.PoiService;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +21,12 @@ public class PoiServiceImpl implements PoiService {
 
     private final PoiMapper poiMapper;
     private final PoiStructMapper poiStructMapper;
+    private final LogService logService;
 
-    public PoiServiceImpl(PoiMapper poiMapper, PoiStructMapper poiStructMapper) {
+    public PoiServiceImpl(PoiMapper poiMapper, PoiStructMapper poiStructMapper, LogService logService) {
         this.poiMapper = poiMapper;
         this.poiStructMapper = poiStructMapper;
+        this.logService = logService;
     }
 
     @Override
@@ -37,6 +41,7 @@ public class PoiServiceImpl implements PoiService {
         entity.setCreateTime(LocalDateTime.now());
         entity.setUpdateTime(LocalDateTime.now());
         poiMapper.insert(entity);
+        logService.record("ADMIN", AdminContext.getAdminId(), "content", "create_poi", "poi", entity.getId(), entity.getName());
         return poiStructMapper.toVO(entity);
     }
 
@@ -54,12 +59,14 @@ public class PoiServiceImpl implements PoiService {
         existing.setStatus(request.getStatus() == null ? existing.getStatus() : request.getStatus());
         existing.setUpdateTime(LocalDateTime.now());
         poiMapper.updateById(existing);
+        logService.record("ADMIN", AdminContext.getAdminId(), "content", "update_poi", "poi", existing.getId(), existing.getName());
         return poiStructMapper.toVO(existing);
     }
 
     @Override
     public void delete(Long id) {
         poiMapper.deleteById(id);
+        logService.record("ADMIN", AdminContext.getAdminId(), "content", "delete_poi", "poi", id, null);
     }
 
     @Override
@@ -79,4 +86,3 @@ public class PoiServiceImpl implements PoiService {
                 .collect(Collectors.toList());
     }
 }
-

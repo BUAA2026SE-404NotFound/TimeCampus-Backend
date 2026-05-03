@@ -52,4 +52,3 @@ public class AdminAuthController {
         return token.isBlank() ? null : token;
     }
 }
-

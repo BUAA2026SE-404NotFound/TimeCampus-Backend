@@ -76,21 +76,4 @@ public class UserEntity {
     public void setUpdateTime(LocalDateTime updateTime) {
         this.updateTime = updateTime;
     }
-
-    // Backward-compatible accessors used by current server/service tests.
-    public LocalDateTime getCreatedAt() {
-        return createTime;
-    }
-
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createTime = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updateTime;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updateTime = updatedAt;
-    }
 }

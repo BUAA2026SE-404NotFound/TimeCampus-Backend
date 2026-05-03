@@ -49,15 +49,6 @@ public class MediaEntity {
         this.imagePath = imagePath;
     }
 
-    // Backward-compatible accessors for earlier imageUrl-based code paths.
-    public String getImageUrl() {
-        return imagePath;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imagePath = imageUrl;
-    }
-
     public Integer getYear() {
         return year;
     }

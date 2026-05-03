@@ -6,11 +6,8 @@ import com.notfound.timetrackpojo.dto.WechatLoginRequest;
 import com.notfound.timetrackpojo.entity.UserEntity;
 import com.notfound.timetrackpojo.vo.UserLoginVO;
 import com.notfound.timetrackpojo.vo.UserProfileVO;
-import com.notfound.timetrackserver.mapper.MediaMapper;
-import com.notfound.timetrackserver.mapper.PoiMapper;
 import com.notfound.timetrackserver.mapper.UserMapper;
 import com.notfound.timetrackserver.security.UserAuthInterceptor;
-import com.notfound.timetrackserver.service.FileStorageService;
 import com.notfound.timetrackserver.service.WechatAuthService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,16 +37,11 @@ class UserServiceImplTest {
     @Mock
     private UserAuthInterceptor userAuthInterceptor;
 
-    @Mock private FileStorageService fileStorageService;
-    @Mock private MediaMapper mediaMapper;
-    @Mock private PoiMapper poiMapper;
-
     private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userMapper, new UserStructMapper(), wechatAuthService, userAuthInterceptor,
-                fileStorageService, mediaMapper, poiMapper);
+        userService = new UserServiceImpl(userMapper, new UserStructMapper(), wechatAuthService, userAuthInterceptor);
     }
 
     @Test
@@ -58,6 +50,7 @@ class UserServiceImplTest {
         request.setCode("abc");
         request.setNickname(" ");
         request.setAvatarUrl("https://img/avatar.png");
+        request.setIdentityType("STUDENT");
 
         when(wechatAuthService.code2SessionOpenId("abc")).thenReturn("openid_abc");
         when(userMapper.findByOpenId("openid_abc")).thenReturn(null);
@@ -79,8 +72,9 @@ class UserServiceImplTest {
         assertEquals("openid_abc", inserted.getOpenId());
         assertEquals("TimeTrack User", inserted.getNickname());
         assertEquals("https://img/avatar.png", inserted.getAvatarUrl());
-        assertNotNull(inserted.getCreatedAt());
-        assertNotNull(inserted.getUpdatedAt());
+        assertEquals("STUDENT", inserted.getIdentity());
+        assertNotNull(inserted.getCreateTime());
+        assertNotNull(inserted.getUpdateTime());
 
         assertEquals("token-1", result.getToken());
         assertEquals(1L, result.getProfile().getId());
@@ -94,12 +88,14 @@ class UserServiceImplTest {
         request.setCode("abc");
         request.setNickname("new-name");
         request.setAvatarUrl("");
+        request.setIdentityType("ALUMNI");
 
         UserEntity existing = new UserEntity();
         existing.setId(2L);
         existing.setOpenId("openid_abc");
         existing.setNickname("old-name");
         existing.setAvatarUrl("old-avatar");
+        existing.setIdentity("STUDENT");
 
         when(wechatAuthService.code2SessionOpenId("abc")).thenReturn("openid_abc");
         when(userMapper.findByOpenId("openid_abc")).thenReturn(existing);
@@ -115,7 +111,8 @@ class UserServiceImplTest {
         UserEntity updated = captor.getValue();
         assertEquals("new-name", updated.getNickname());
         assertEquals("old-avatar", updated.getAvatarUrl());
-        assertNotNull(updated.getUpdatedAt());
+        assertEquals("ALUMNI", updated.getIdentity());
+        assertNotNull(updated.getUpdateTime());
 
         assertEquals("token-2", result.getToken());
         assertEquals(2L, result.getProfile().getId());
@@ -149,4 +146,3 @@ class UserServiceImplTest {
         assertEquals("user not found: 99", ex.getMessage());
     }
 }
-

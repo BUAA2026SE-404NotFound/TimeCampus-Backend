@@ -1,6 +1,10 @@
 # Maven
 **/target/
 
+# Frontend
+**/node_modules/
+**/dist/
+
 # IntelliJ IDEA
 .idea/
 *.iml
@@ -11,6 +15,8 @@
 # Local environment files
 .env
 .env.*
+**/application-dev.yaml
+**/application-prod.yaml
 
 # Logs
 *.log
@@ -22,3 +28,6 @@ Thumbs.db
 
 # Runtime data
 /data/
+
+AGENTS.md
+openapi-alpha.yaml

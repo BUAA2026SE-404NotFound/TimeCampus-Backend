@@ -1,7 +1,9 @@
 package com.notfound.timetrackpojo.dto;
 
+import com.notfound.timetrackpojo.constant.IdentityTypes;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 
 @Schema(description = "微信登录请求")
 public class WechatLoginRequest {
@@ -15,6 +17,11 @@ public class WechatLoginRequest {
 
     @Schema(description = "用户头像 URL（可选）", example = "https://example.com/avatar.png")
     private String avatarUrl;
+
+    @NotBlank(message = "identityType cannot be blank")
+    @Pattern(regexp = IdentityTypes.PATTERN, message = "identityType must be FRESHMAN, STUDENT or ALUMNI")
+    @Schema(description = "用户身份", example = "STUDENT", allowableValues = {"FRESHMAN", "STUDENT", "ALUMNI"})
+    private String identityType;
 
     public String getCode() {
         return code;
@@ -38,5 +45,13 @@ public class WechatLoginRequest {
 
     public void setAvatarUrl(String avatarUrl) {
         this.avatarUrl = avatarUrl;
+    }
+
+    public String getIdentityType() {
+        return identityType;
+    }
+
+    public void setIdentityType(String identityType) {
+        this.identityType = identityType;
     }
 }

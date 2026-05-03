@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="540" viewBox="0 0 900 540">
+  <rect width="900" height="540" fill="#f5f7fb"/>
+  <path d="M150 380 L450 120 L750 380 Z" fill="#2f5fcb"/>
+  <path d="M230 385 L450 200 L670 385 Z" fill="#ffffff" opacity=".85"/>
+  <rect x="210" y="380" width="480" height="40" fill="#17233d"/>
+  <text x="450" y="478" text-anchor="middle" font-family="Arial, sans-serif" font-size="34" fill="#17233d">BUAA Concert Hall</text>
+</svg>
