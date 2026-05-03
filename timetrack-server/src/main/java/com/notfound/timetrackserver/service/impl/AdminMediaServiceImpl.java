@@ -117,6 +117,40 @@ public class AdminMediaServiceImpl implements AdminMediaService {
         return null;
     }
 
+    @Override
+    public void approveMedia(Long id, Long reviewerId) {
+        MediaEntity media = mediaMapper.findById(id);
+        if (media == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "影像不存在: " + id);
+        }
+        // 仅对 pending 状态进行审核
+        if (!"pending".equalsIgnoreCase(media.getReviewStatus())) {
+            throw new BizException(ResultCode.BIZ_ERROR, "该影像已经审核过，无法重复审核");
+        }
+        int rows = mediaMapper.updateReviewStatus(id, "approved", null, LocalDateTime.now(), reviewerId);
+        if (rows != 1) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "审核更新失败");
+        }
+    }
+
+    @Override
+    public void rejectMedia(Long id, Long reviewerId, String rejectReason) {
+        if (rejectReason == null || rejectReason.isBlank()) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "驳回原因不能为空");
+        }
+        MediaEntity media = mediaMapper.findById(id);
+        if (media == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "影像不存在: " + id);
+        }
+        if (!"pending".equalsIgnoreCase(media.getReviewStatus())) {
+            throw new BizException(ResultCode.BIZ_ERROR, "该影像已经审核过，无法重复审核");
+        }
+        int rows = mediaMapper.updateReviewStatus(id, "rejected", rejectReason, LocalDateTime.now(), reviewerId);
+        if (rows != 1) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "审核更新失败");
+        }
+    }
+
     private String normalizeReviewStatus(String value) {
         if (value == null || value.isBlank()) {
             return REVIEW_APPROVED;

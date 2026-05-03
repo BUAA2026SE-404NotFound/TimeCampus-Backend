@@ -20,13 +20,35 @@
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
+    <!-- 按单个 ID 查询 -->
     <select id="findById" resultMap="BaseResultMap">
         select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
-               review_time, reviewer_id, create_time, update_time
+            review_time, reviewer_id, create_time, update_time
         from media
         where id = #{id}
-        limit 1
+            limit 1
     </select>
+
+    <!-- 按 ID 列表批量查询 -->
+    <select id="listByIds" resultMap="BaseResultMap">
+        select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+        review_time, reviewer_id, create_time, update_time
+        from media
+        where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <update id="updateReviewStatus">
+        update media
+        set review_status = #{reviewStatus},
+            reject_reason = #{rejectReason},
+            review_time = #{reviewTime},
+            reviewer_id = #{reviewerId},
+            update_time = now()
+        where id = #{id}
+    </update>
 
     <insert id="insert" parameterType="com.notfound.timetrackpojo.entity.MediaEntity"
             useGeneratedKeys="true" keyProperty="id">
@@ -38,11 +60,11 @@
 
     <insert id="insertBatch">
         insert into media (poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
-                           review_time, reviewer_id)
+        review_time, reviewer_id)
         values
         <foreach collection="list" item="item" separator=",">
             (#{item.poiId}, #{item.type}, #{item.imagePath}, #{item.year}, #{item.description}, #{item.uploadUserId},
-             #{item.reviewStatus}, #{item.rejectReason}, #{item.reviewTime}, #{item.reviewerId})
+            #{item.reviewStatus}, #{item.rejectReason}, #{item.reviewTime}, #{item.reviewerId})
         </foreach>
     </insert>
 
@@ -52,7 +74,7 @@
 
     <select id="list" resultMap="BaseResultMap">
         select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
-               review_time, reviewer_id, create_time, update_time
+        review_time, reviewer_id, create_time, update_time
         from media
         <where>
             <if test="poiId != null">
@@ -76,7 +98,7 @@
 
     <select id="listByPoiIds" resultMap="BaseResultMap">
         select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
-               review_time, reviewer_id, create_time, update_time
+        review_time, reviewer_id, create_time, update_time
         from media
         <where>
             <if test="poiIds != null and poiIds.size() &gt; 0">
@@ -94,5 +116,5 @@
         </where>
         order by poi_id asc, year asc, id asc
     </select>
-</mapper>
 
+</mapper>

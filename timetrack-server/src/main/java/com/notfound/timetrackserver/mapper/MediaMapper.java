@@ -4,6 +4,7 @@ import com.notfound.timetrackpojo.entity.MediaEntity;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -28,5 +29,11 @@ public interface MediaMapper {
                                    @Param("reviewStatus") String reviewStatus);
 
     List<MediaEntity> listByIds(@Param("ids") List<Long> ids);
+
+    int updateReviewStatus(@Param("id") Long id,
+                           @Param("reviewStatus") String reviewStatus,
+                           @Param("rejectReason") String rejectReason,
+                           @Param("reviewTime") LocalDateTime reviewTime,
+                           @Param("reviewerId") Long reviewerId);
 }
 

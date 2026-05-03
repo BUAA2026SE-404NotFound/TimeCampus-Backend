@@ -1,5 +1,7 @@
 package com.notfound.timetrackserver.service.impl;
 
+import com.notfound.timetrackcommon.api.ResultCode;
+import com.notfound.timetrackcommon.exception.BizException;
 import com.notfound.timetrackpojo.entity.MediaEntity;
 import com.notfound.timetrackpojo.entity.PoiEntity;
 import com.notfound.timetrackpojo.vo.MapHomeVO;
@@ -68,6 +70,40 @@ public class MapServiceImpl implements MapService {
 
         homeVO.setPois(mapPois);
         return homeVO;
+    }
+
+    @Override
+    public MapMediaVO getTimeMachineMedia(Long poiId, Integer year) {
+        // 1. 校验 poi 存在且上架
+        PoiEntity poi = poiMapper.findById(poiId);
+        if (poi == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "地点不存在: " + poiId);
+        }
+        if (poi.getStatus() == null || poi.getStatus() != 1) {
+            throw new BizException(ResultCode.BIZ_ERROR, "该地点已下架，无法查看历史影像");
+        }
+
+        // 2. 查询该地点的所有官方已通过影像
+        List<MediaEntity> medias = mediaMapper.list(poiId, "official", "approved", null, null);
+        if (medias.isEmpty()) {
+            throw new BizException(ResultCode.NOT_FOUND, "该地点暂无历史影像");
+        }
+
+        // 3. 如果 year 为 null，返回最近的（按年份降序，取最新的）
+        if (year == null) {
+            // 按年份降序，取第一个（最新）
+            medias.sort((a, b) -> b.getYear().compareTo(a.getYear()));
+            return toMapMediaVO(medias.get(0));
+        }
+
+        // 4. 否则找与 year 最接近的
+        MediaEntity closest = medias.stream()
+                .min(Comparator.comparingInt(m -> Math.abs(m.getYear() - year)))
+                .orElse(null);
+        if (closest == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "未找到合适的影像");
+        }
+        return toMapMediaVO(closest);
     }
 
     private String selectCover(List<MediaEntity> list, Integer year) {
