@@ -30,9 +30,9 @@ public class WebConfig implements WebMvcConfigurer {
                 );
 
         registry.addInterceptor(userAuthInterceptor)
-                .addPathPatterns("/api/v1/users/**")
+                .addPathPatterns("/api/v1/users/**", "/api/v1/me", "/api/v1/favorites/**", "/api/v1/ugc")
                 .excludePathPatterns(
-                        "/api/v1/users/wx-login",
+                        "/api/v1/auth/wechat/login",
                         "/api/v1/health",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
@@ -40,4 +40,3 @@ public class WebConfig implements WebMvcConfigurer {
                 );
     }
 }
-

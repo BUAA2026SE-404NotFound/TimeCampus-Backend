@@ -1,6 +1,6 @@
 package com.notfound.timetrackserver;
 
-import com.notfound.timetrackserver.controller.HealthController;
+import com.notfound.timetrackserver.controller.user.HealthController;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.MockMvc;
