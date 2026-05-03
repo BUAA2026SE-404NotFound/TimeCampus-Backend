@@ -74,14 +74,17 @@ public class MediaFileServiceImpl implements MediaFileService {
         }
         Path configuredRoot = Path.of(defaultIfBlank(storageProperties.localRootDir(), "storage/uploads"));
         Path root = resolveStorageRoot(configuredRoot);
+        Path resolved;
         if (value.startsWith("/uploads/")) {
-            return root.resolve(value.substring("/uploads/".length())).normalize();
+            resolved = root.resolve(value.substring("/uploads/".length())).normalize();
+            return requireInsideRoot(resolved, root);
         }
         Path path = Path.of(value);
         if (path.isAbsolute()) {
             return path.normalize();
         }
-        return root.resolve(value).normalize();
+        resolved = root.resolve(value).normalize();
+        return requireInsideRoot(resolved, root);
     }
 
     private Path resolveStorageRoot(Path configuredRoot) {
@@ -97,6 +100,13 @@ public class MediaFileServiceImpl implements MediaFileService {
             cursor = cursor.getParent();
         }
         return configuredRoot.toAbsolutePath().normalize();
+    }
+
+    private Path requireInsideRoot(Path path, Path root) {
+        if (!path.startsWith(root)) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "media file path escapes storage root");
+        }
+        return path;
     }
 
     private String defaultIfBlank(String value, String fallback) {

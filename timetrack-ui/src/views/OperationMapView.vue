@@ -36,7 +36,6 @@
               :min-zoom="14"
               :max-zoom="19"
               :control="mapControl"
-              @map_inited="handleMapInited"
             >
               <tlbs-multi-marker
                 v-if="markerGeometries.length"
@@ -157,7 +156,6 @@ const selectedPoi = ref(null)
 const mapKey = ref('')
 const mapCenter = ref({ ...BUAA_CENTER })
 const mapZoom = ref(16)
-const mapInstance = ref(null)
 const mapControl = { zoom: true, scale: true, rotation: false }
 const overview = reactive({
   pois: [],
@@ -192,8 +190,12 @@ const markerGeometries = computed(() => {
 })
 
 async function loadMapConfig() {
-  const config = await getAdminMapConfig()
-  mapKey.value = config.tencentMapKey || import.meta.env.VITE_TENCENT_MAP_KEY || ''
+  try {
+    const config = await getAdminMapConfig()
+    mapKey.value = config.tencentMapKey || import.meta.env.VITE_TENCENT_MAP_KEY || ''
+  } catch {
+    mapKey.value = import.meta.env.VITE_TENCENT_MAP_KEY || ''
+  }
 }
 
 async function loadData() {
@@ -212,10 +214,6 @@ async function loadData() {
   } finally {
     loading.value = false
   }
-}
-
-function handleMapInited(map) {
-  mapInstance.value = map
 }
 
 function handleMarkerClick(event) {
