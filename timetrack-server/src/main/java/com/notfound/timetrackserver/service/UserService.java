@@ -10,4 +10,3 @@ public interface UserService {
 
     UserProfileVO getById(Long id);
 }
-

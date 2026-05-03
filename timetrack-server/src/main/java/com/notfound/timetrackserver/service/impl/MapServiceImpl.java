@@ -88,6 +88,28 @@ public class MapServiceImpl implements MapService {
     }
 
     @Override
+    public MapMediaVO getTimeMachineMedia(Long poiId, Integer year) {
+        PoiEntity poi = poiMapper.findById(poiId);
+        if (poi == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "poi not found: " + poiId);
+        }
+        if (poi.getStatus() == null || poi.getStatus() != 1) {
+            throw new BizException(ResultCode.BIZ_ERROR, "poi is inactive: " + poiId);
+        }
+        MediaEntity media = year == null
+                ? mediaMapper.list(poiId, TYPE_OFFICIAL, REVIEW_APPROVED, null, null)
+                        .stream()
+                        .max(Comparator.comparing(MediaEntity::getYear)
+                                .thenComparing(MediaEntity::getId))
+                        .orElse(null)
+                : mediaMapper.findBestByPoiAndYear(poiId, year, TYPE_OFFICIAL, REVIEW_APPROVED);
+        if (media == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "content not found for poi: " + poiId);
+        }
+        return toMapMediaVO(media);
+    }
+
+    @Override
     public Map<String, Object> reverseGeocode(Double lat, Double lng) {
         if (lat == null || lng == null || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
             throw new BizException(ResultCode.VALIDATION_ERROR, "invalid lat/lng");

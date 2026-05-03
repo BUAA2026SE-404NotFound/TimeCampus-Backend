@@ -20,12 +20,13 @@
         <result column="update_time" property="updateTime"/>
     </resultMap>
 
+    <!-- 按单个 ID 查询 -->
     <select id="findById" resultMap="BaseResultMap">
         select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
-               review_time, reviewer_id, create_time, update_time
+            review_time, reviewer_id, create_time, update_time
         from media
         where id = #{id}
-        limit 1
+            limit 1
     </select>
 
     <insert id="insert" parameterType="com.notfound.timetrackpojo.entity.MediaEntity"
@@ -63,7 +64,7 @@
 
     <select id="list" resultMap="BaseResultMap">
         select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
-               review_time, reviewer_id, create_time, update_time
+        review_time, reviewer_id, create_time, update_time
         from media
         <where>
             <if test="poiId != null">
@@ -87,7 +88,7 @@
 
     <select id="listByPoiIds" resultMap="BaseResultMap">
         select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
-               review_time, reviewer_id, create_time, update_time
+        review_time, reviewer_id, create_time, update_time
         from media
         <where>
             <if test="poiIds != null and poiIds.size() &gt; 0">

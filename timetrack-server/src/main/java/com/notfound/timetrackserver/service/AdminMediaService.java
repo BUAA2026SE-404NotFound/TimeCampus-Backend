@@ -15,5 +15,9 @@ public interface AdminMediaService {
     List<MediaVO> list(Long poiId, String type, String reviewStatus, Integer yearFrom, Integer yearTo);
 
     void deleteById(Long id);
+
+    void approveMedia(Long id, Long reviewerId);
+
+    void rejectMedia(Long id, Long reviewerId, String rejectReason);
 }
 

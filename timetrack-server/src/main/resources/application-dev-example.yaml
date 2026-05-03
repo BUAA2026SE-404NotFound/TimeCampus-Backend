@@ -21,6 +21,10 @@ wechat:
   appid: ${WECHAT_APPID:}
   secret: ${WECHAT_SECRET:}
 
+storage:
+  local-root-dir: ${TIMETRACK_STORAGE_DIR:./uploads}
+  max-file-size-mb: ${TIMETRACK_MAX_FILE_SIZE_MB:20}
+
 tencent-map:
   key: ${TENCENT_MAP_KEY:}
   sk: ${TENCENT_MAP_SK:}
