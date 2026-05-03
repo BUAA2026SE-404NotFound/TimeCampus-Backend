@@ -27,7 +27,7 @@ service.interceptors.response.use(
       return body.data
     }
     const message = body?.message || body?.msg || '请求失败'
-    if (code === 401) {
+    if (code === 4010) {
       removeToken()
       clearAdmin()
       ElMessageBox.alert('登录状态已过期，请重新登录。', '会话过期', { type: 'warning' }).finally(() => {

@@ -39,8 +39,20 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Override
     public Resource loadMediaFile(Long mediaId) {
+        return loadMediaFileInternal(mediaId, true);
+    }
+
+    @Override
+    public Resource loadMediaFileAdmin(Long mediaId) {
+        return loadMediaFileInternal(mediaId, false);
+    }
+
+    private Resource loadMediaFileInternal(Long mediaId, boolean approvedOnly) {
         MediaEntity media = mediaMapper.findById(mediaId);
         if (media == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "media not found: " + mediaId);
+        }
+        if (approvedOnly && !"approved".equals(media.getReviewStatus())) {
             throw new BizException(ResultCode.NOT_FOUND, "media not found: " + mediaId);
         }
         Path path = resolvePath(media.getImagePath());
@@ -81,7 +93,8 @@ public class MediaFileServiceImpl implements MediaFileService {
         }
         Path path = Path.of(value);
         if (path.isAbsolute()) {
-            return path.normalize();
+            resolved = path.normalize();
+            return requireInsideRoot(resolved, root);
         }
         resolved = root.resolve(value).normalize();
         return requireInsideRoot(resolved, root);

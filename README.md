@@ -14,7 +14,7 @@
 {"code":0,"message":"ok","data":{}}
 ```
 
-状态码与状态信息定义在 `timetrack-common` 模块的 `ResponseCode` 中
+状态码与状态信息定义在 `timetrack-common` 模块的 `ResultCode` 中
 
 ## 技术栈
 
@@ -339,7 +339,8 @@ mvn -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.WechatAu
   - 打包服务模块
   - 上传构建产物
 - CD：`.github/workflows/cd.yml`
-  - 当前面向 `main` 分支部署
+  - 触发条件：向 `main` 发起 PR 且来源分支为 `release`，或手动（`workflow_dispatch`）触发
+  - 不会在向 `main` 直接 push 时自动运行
 
 ## 分支策略
 

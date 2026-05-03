@@ -55,7 +55,7 @@ public class AdminMediaController {
     @Operation(summary = "读取本地影像文件", description = "用于管理端预览保存在文件系统中的 media.image_path。远程 URL 直接由前端访问。")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Resource> file(@Parameter(description = "影像 ID", example = "1") @PathVariable Long id) {
-        Resource resource = mediaFileService.loadMediaFile(id);
+        Resource resource = mediaFileService.loadMediaFileAdmin(id);
         return ResponseEntity.ok()
                 .header("Content-Type", mediaFileService.contentType(resource))
                 .body(resource);

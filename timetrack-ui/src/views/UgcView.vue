@@ -18,9 +18,10 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="poiId" label="POI" width="90" />
         <el-table-column prop="year" label="年份" width="90" />
-        <el-table-column prop="imagePath" label="图片" min-width="180">
+        <el-table-column prop="previewUrl" label="图片" min-width="180">
           <template #default="{ row }">
-            <el-link :href="row.imagePath" target="_blank" type="primary">查看图片</el-link>
+            <el-link v-if="row.previewUrl" :href="row.previewUrl" target="_blank" type="primary">查看图片</el-link>
+            <span v-else class="tc-muted">暂无图片</span>
           </template>
         </el-table-column>
         <el-table-column prop="description" label="说明" min-width="220" show-overflow-tooltip />
