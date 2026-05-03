@@ -24,3 +24,6 @@ wechat:
   appid: ${WECHAT_APPID}
   secret: ${WECHAT_SECRET}
 
+tencent-map:
+  key: ${TENCENT_MAP_KEY}
+  sk: ${TENCENT_MAP_SK}

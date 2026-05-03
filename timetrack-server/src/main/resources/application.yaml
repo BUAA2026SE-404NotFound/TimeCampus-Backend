@@ -22,6 +22,16 @@ management:
       exposure:
         include: health,info
 
+storage:
+  local-root-dir: ${TIMETRACK_STORAGE_DIR:storage/uploads}
+  max-file-size-mb: 10
+
+tencent-map:
+  key: ${TENCENT_MAP_KEY:}
+  sk: ${TENCENT_MAP_SK:}
+  geocoder-url: https://apis.map.qq.com/ws/geocoder/v1/
+  place-search-url: https://apis.map.qq.com/ws/place/v1/search
+
 logging:
   pattern:
     # requestId is injected by RequestIdFilter for traceability across logs.
