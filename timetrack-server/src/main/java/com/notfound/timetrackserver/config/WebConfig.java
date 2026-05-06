@@ -33,7 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
                 );
 
         registry.addInterceptor(userAuthInterceptor)
-                .addPathPatterns("/api/v1/users/**", "/api/v1/me", "/api/v1/favorites/**", "/api/v1/ugc")
+                .addPathPatterns("/api/v1/users/**", "/api/v1/me", "/api/v1/favorites/**", "/api/v1/ugc", "/api/v1/comments", "/api/v1/comments/mine")
                 .excludePathPatterns(
                         "/api/v1/auth/wechat/login",
                         "/api/v1/health",
@@ -46,7 +46,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // 映射 /uploads/** 到本地目录
-        String uploadPath = "file:" + Paths.get("./uploads").toAbsolutePath().normalize().toString() + "/";
+        String uploadPath = "file:" + Paths.get("./uploads").toAbsolutePath().normalize() + "/";
         registry.addResourceHandler("/uploads/**")
                 .addResourceLocations(uploadPath);
     }

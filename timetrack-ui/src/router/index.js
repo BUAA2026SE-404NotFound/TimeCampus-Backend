@@ -24,7 +24,8 @@ export const menuItems = [
     icon: 'Picture',
     children: [
       { path: '/content/media', title: '官方内容', icon: 'Collection' },
-      { path: '/content/ugc', title: 'UGC 审核', icon: 'UploadFilled' }
+      { path: '/content/ugc', title: 'UGC 审核', icon: 'UploadFilled' },
+      { path: '/content/comments', title: '评论审核', icon: 'ChatDotRound' }
     ]
   },
   {
@@ -55,6 +56,7 @@ const routes = [
       { path: 'operation-map', name: 'OperationMap', component: () => import('@/views/OperationMapView.vue'), meta: { title: '运营地图' } },
       { path: 'content/media', name: 'MediaManage', component: () => import('@/views/MediaView.vue'), meta: { title: '官方内容' } },
       { path: 'content/ugc', name: 'UgcReview', component: () => import('@/views/UgcView.vue'), meta: { title: 'UGC 审核' } },
+      { path: 'content/comments', name: 'CommentReview', component: () => import('@/views/CommentView.vue'), meta: { title: '评论审核' } },
       { path: 'map-tools', name: 'MapTools', component: () => import('@/views/MapToolsView.vue'), meta: { title: '地图工具' } },
       { path: 'logs', name: 'AuditLog', component: () => import('@/views/LogView.vue'), meta: { title: '审计日志' } }
     ]
