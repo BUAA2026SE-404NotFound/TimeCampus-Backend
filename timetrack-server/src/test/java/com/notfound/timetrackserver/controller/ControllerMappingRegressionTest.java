@@ -1,12 +1,14 @@
 package com.notfound.timetrackserver.controller;
 
 import com.notfound.timetrackserver.controller.admin.AdminContentController;
+import com.notfound.timetrackserver.controller.admin.AdminCommentController;
 import com.notfound.timetrackserver.controller.admin.AdminLogController;
 import com.notfound.timetrackserver.controller.admin.AdminMapController;
 import com.notfound.timetrackserver.controller.admin.AdminMediaController;
 import com.notfound.timetrackserver.controller.admin.AdminUgcController;
 import com.notfound.timetrackserver.config.TencentMapProperties;
 import com.notfound.timetrackserver.controller.user.AuthController;
+import com.notfound.timetrackserver.controller.user.CommentController;
 import com.notfound.timetrackserver.controller.user.ContentController;
 import com.notfound.timetrackserver.controller.user.FavoriteController;
 import com.notfound.timetrackserver.controller.user.MapController;
@@ -18,6 +20,7 @@ import com.notfound.timetrackserver.controller.user.UserController;
 import com.notfound.timetrackserver.mapper.MediaMapper;
 import com.notfound.timetrackserver.service.AdminMediaService;
 import com.notfound.timetrackserver.service.AdminMapService;
+import com.notfound.timetrackserver.service.CommentService;
 import com.notfound.timetrackserver.service.FavoriteService;
 import com.notfound.timetrackserver.service.LogService;
 import com.notfound.timetrackserver.service.MapService;
@@ -37,6 +40,7 @@ class ControllerMappingRegressionTest {
     void userAndAdminControllersHaveNoAmbiguousMappings() {
         UserService userService = mock(UserService.class);
         FavoriteService favoriteService = mock(FavoriteService.class);
+        CommentService commentService = mock(CommentService.class);
         PoiService poiService = mock(PoiService.class);
         MediaMapper mediaMapper = mock(MediaMapper.class);
         MediaFileService mediaFileService = mock(MediaFileService.class);
@@ -51,6 +55,7 @@ class ControllerMappingRegressionTest {
                 new UserController(userService, favoriteService),
                 new MeController(userService),
                 new FavoriteController(favoriteService),
+                new CommentController(commentService),
                 new PoiController(poiService),
                 new ContentController(mediaMapper, new MediaStructMapper(mediaFileService)),
                 new MapController(mapService),
@@ -59,6 +64,7 @@ class ControllerMappingRegressionTest {
                 new AdminContentController(adminMediaService),
                 new AdminMapController(adminMapService, new TencentMapProperties("test-map-key", "test-sk", null, null)),
                 new AdminMediaController(adminMediaService, mediaFileService),
+                new AdminCommentController(commentService),
                 new AdminUgcController(ugcService),
                 new AdminLogController(logService)
         ).build();
