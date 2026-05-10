@@ -1,5 +1,7 @@
 # 时光航迹后端与管理端
 
+当前交付版本：`0.1.0-alpha`
+
 “时光航迹”（TimeCampus / Time Track）是面向校园历史影像浏览与共创的小程序后端项目，并配套提供 Web 管理端。当前实现聚焦 Alpha 阶段最小可交付内容：微信登录、POI 管理、官方内容导入、地图聚合、时间切换、收藏、UGC 上传与审核、审计日志、腾讯地图 WebService 封装、管理端web页面。
 团队使用 ApiFox 进行 API 文档管理，后续会持续完善接口定义、示例请求与响应、错误码说明等内容。
 
@@ -8,6 +10,7 @@
 - 后端：Spring Boot 3.3.11，Java 21，多模块 Maven 工程。
 - 管理端：Vue 3 + Vite + Element Plus。
 - API 路径统一为 `/api/v1/...`。
+- Alpha 交付状态：核心后端接口、Vue3 管理端、评论审核、运营地图、文件上传、腾讯地图接入、部署文档和测试报告已进入交付前确认。
 - 响应格式统一为：
 
 ```json
@@ -38,7 +41,7 @@ time-track-backend
 ├─ timetrack-pojo         # DTO / Entity / VO / 模型常量
 ├─ timetrack-server       # Spring Boot 服务端：Controller / Service / Mapper / 配置
 ├─ timetrack-ui           # Vue3 管理端
-├─ docs                   # 数据库与重构说明文档（暂无）
+├─ docs                   # 数据库、部署、测试与 Alpha 交付文档
 └─ .github/workflows      # CI/CD
 ```
 
@@ -61,6 +64,7 @@ timetrack-server/src/main/java/com/notfound/timetrackserver/controller
 - 时间切换：`GET /api/v1/pois/{id}/time-switch?year=YYYY`
 - 收藏：`POST /api/v1/favorites/{targetType}/{targetId}`、`DELETE /api/v1/favorites/{targetType}/{targetId}`、`GET /api/v1/favorites`
 - UGC 上传：`POST /api/v1/ugc`
+- 评论：`POST /api/v1/comments`、`GET /api/v1/comments`、`GET /api/v1/my/comments`
 - 地图聚合与辅助：`GET /api/v1/map/home`、`GET /api/v1/map/reverse-geocode`、`GET /api/v1/map/poi-search`
 
 ### 管理端
@@ -69,6 +73,7 @@ timetrack-server/src/main/java/com/notfound/timetrackserver/controller
 - POI 管理：`/api/v1/admin/pois`
 - 官方内容批量导入：`POST /api/v1/admin/contents/batch-import`
 - UGC 审核：`GET /api/v1/admin/ugc`、`POST /api/v1/admin/ugc/{id}/approve`、`POST /api/v1/admin/ugc/{id}/reject`
+- 评论审核：`GET /api/v1/admin/comments`、`POST /api/v1/admin/comments/{id}/approve`、`POST /api/v1/admin/comments/{id}/reject`
 - 审计日志查看：`GET /api/v1/admin/logs`
 
 ## 管理端能力
@@ -146,6 +151,18 @@ Mapper XML 显式写入 `create_time` / `update_time`，避免依赖数据库隐
 
 管理端通过 `/api/v1/admin/logs` 查询。
 
+### 文件存储
+
+上传文件默认写入服务器本地挂载路径：
+
+```yaml
+storage:
+  local-root-dir: ${TIMETRACK_STORAGE_DIR:/home/ubuntu/cos}
+  max-file-size-mb: 10
+```
+
+生产环境建议保持 `/home/ubuntu/cos` 为 COS 挂载或同步目录。数据库中的媒体路径使用绝对路径保存，后端读取文件时会校验路径必须位于 `storage.local-root-dir` 下，以避免相对路径受 Jar 启动目录影响或发生路径穿越。
+
 ### 腾讯地图 Sig
 
 腾讯地图配置支持 Key + SK：
@@ -157,19 +174,6 @@ tencent-map:
 ```
 
 当 `sk` 为空时，后端使用普通 Key 请求；当 `sk` 存在时，后端会根据腾讯位置服务规则按参数名排序、拼接原始参数并追加 `sig`。签名逻辑位于 `TencentMapSignature`，并覆盖了单元测试。
-
-### common / pojo 模块重构
-
-`common` 和 `pojo` 已清理为纯库模块：
-
-- 删除库模块中的 Spring Boot 启动类
-- `common` 不再暴露未知异常原始消息
-- `pojo` 新增模型常量与更严格的 DTO 校验
-- 删除临时兼容访问器，如 `createdAt/updatedAt/imageUrl`
-
-详见：
-
-- [`docs/common-pojo-refactor.md`](docs/common-pojo-refactor.md)
 
 ## 配置项
 
@@ -304,8 +308,10 @@ mvn test
 - common 统一响应、异常处理、请求 ID
 - pojo DTO 校验与实体字段契约
 - 用户登录服务
+- 评论创建、查询、审核与统一响应回归
 - 收藏逻辑
 - UGC 上传与审核规则
+- 文件上传校验、绝对路径存储、媒体文件访问路径安全
 - AOP 时间填充
 - `/api/v1` 回归接口
 - 管理端日志接口
@@ -341,6 +347,13 @@ mvn -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.WechatAu
 - CD：`.github/workflows/cd.yml`
   - 触发条件：向 `main` 发起 PR 且来源分支为 `release`，或手动（`workflow_dispatch`）触发
   - 不会在向 `main` 直接 push 时自动运行
+  - 服务器侧执行 `git pull origin main` 后本地构建并以 `prod` profile 运行
+
+## Alpha 交付文档
+
+- [`docs/alpha-release-notes.md`](docs/alpha-release-notes.md)：Alpha 版本范围、已知限制与交付检查清单。
+- [`docs/alpha-test-report.md`](docs/alpha-test-report.md)：测试计划、测试过程、测试矩阵、压测结果与 Alpha 出口条件。
+- [`docs/deploy.md`](docs/deploy.md)：Ubuntu 24.04 LTS 生产部署、Nginx、配置文件和常见排查。
 
 ## 分支策略
 
@@ -354,28 +367,19 @@ mvn -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.WechatAu
 ### 认证与权限
 
 - 将当前 Redis token 升级为更完整的 JWT + Refresh Token 或统一会话模型。
-- 管理端增加 RBAC：角色、菜单、按钮级权限。
 - 增加登录失败次数限制、验证码、管理员密码重置流程。
 
 ### 数据模型
 
-- 将当前 `media` 演进为更贴近 Alpha 文档的 `content_item` / `content_review` 模型。
-- 明确 `publish_status` 与 `review_status` 的职责边界。
-- 增加数据库迁移工具，如 Flyway 或 Liquibase。
-- 生产环境恢复物理外键或增加更完整的应用层一致性检查。
-
 ### 内容与 UGC
 
-- 增加 UGC 上传频率限制，目前可基于 Redis 计数器实现。
-- 增加图片安全审核、敏感内容检测、重复图片检测。
-- 支持视频、音频、文档等更多内容类型。
-- 增加内容版本管理和审核历史。
+- 增加内容标签体系，支持官方内容和 UGC 的多维度标签分类。
+- 增加内容版本管理，支持内容的历史版本回滚和差异对比。
+- UGC 增加编辑功能，允许用户修改待审核或已驳回的内容，并重新提交审核。
+- 增加内容推荐算法，基于用户行为和内容特征进行个性化推荐。
+- 增加举报和并引入自动审核机制。
 
-### 存储
-
-- 当前文件上传支持本地存储回退，后续可完善 COS 挂载路径、访问 URL、清理策略。
-- 增加缩略图生成、图片压缩、EXIF 清洗。
-- 增加对象存储可用性冒烟测试。
+### 存储能力
 
 ### 地图能力
 
@@ -384,19 +388,13 @@ mvn -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.WechatAu
 - 支持地点搜索结果一键转 POI 草稿。
 - 增加地图坐标合法性和边界校验工具。
 
-### 管理端
+### 管理端页面优化
 
 - 完善分页、排序、批量操作。
 - 增加用户管理、评论审核、日志详情页。
 - 接入 ECharts，做内容增长、审核效率、POI 热度等运营看板。
-- 增加 OpenAPI 生成的前端 API 类型。
 
 ### 测试与质量
-
-- 增加 Testcontainers，使用临时 MySQL/Redis 做 mapper 与集成测试。
-- 增加 JaCoCo 覆盖率门禁。
-- 将第三方冒烟测试纳入独立 CI job，按手动或定时触发。
-- 增加管理端组件测试和 Playwright 冒烟测试。
 
 ### API 文档
 

@@ -13,7 +13,7 @@
 
     <groupId>com.notfound</groupId>
     <artifactId>timetrack</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <version>0.1.0-alpha</version>
     <packaging>pom</packaging>
     <name>time-track-backend</name>
     <description>Multi-module backend prototype for Time Track mini program.</description>
