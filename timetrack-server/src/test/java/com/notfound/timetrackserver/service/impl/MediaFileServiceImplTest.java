@@ -32,6 +32,27 @@ class MediaFileServiceImplTest {
     }
 
     @Test
+    void loadMediaFileServesAbsolutePathUnderStorageRoot() throws Exception {
+        Path root = Files.createDirectories(tempDir.resolve("cos"));
+        Path mediaFile = Files.writeString(root.resolve("photo.jpg"), "img");
+        MediaFileServiceImpl service = serviceWithMedia(mediaFile.toString(), root, "approved");
+
+        var resource = service.loadMediaFile(9L);
+
+        assertThat(resource.getFile().toPath()).isEqualTo(mediaFile);
+    }
+
+    @Test
+    void loadMediaFileRejectsRemoteUrlBecauseFrontendShouldOpenItDirectly() throws Exception {
+        Path root = Files.createDirectories(tempDir.resolve("cos"));
+        MediaFileServiceImpl service = serviceWithMedia("https://example.com/photo.jpg", root, "approved");
+
+        assertThatThrownBy(() -> service.loadMediaFile(9L))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("remote media should be accessed by url");
+    }
+
+    @Test
     void loadMediaFileRejectsNonApprovedContent() throws Exception {
         Path root = Files.createDirectories(tempDir.resolve("storage/uploads"));
         Files.writeString(root.resolve("photo.svg"), "<svg/>");
