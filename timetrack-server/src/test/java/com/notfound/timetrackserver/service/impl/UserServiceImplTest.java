@@ -16,6 +16,8 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -126,6 +128,12 @@ class UserServiceImplTest {
         existing.setId(3L);
         existing.setNickname("u3");
         existing.setAvatarUrl("a3");
+        existing.setIdentity("STUDENT");
+        existing.setEnrollYear(2022);
+        LocalDateTime createTime = LocalDateTime.of(2026, 5, 10, 17, 0);
+        LocalDateTime updateTime = LocalDateTime.of(2026, 5, 10, 18, 0);
+        existing.setCreateTime(createTime);
+        existing.setUpdateTime(updateTime);
 
         when(userMapper.findById(3L)).thenReturn(existing);
 
@@ -134,6 +142,10 @@ class UserServiceImplTest {
         assertEquals(3L, result.getId());
         assertEquals("u3", result.getNickname());
         assertEquals("a3", result.getAvatarUrl());
+        assertEquals("STUDENT", result.getIdentity());
+        assertEquals(2022, result.getEnrollYear());
+        assertEquals(createTime, result.getCreateTime());
+        assertEquals(updateTime, result.getUpdateTime());
     }
 
     @Test

@@ -117,6 +117,20 @@
         </foreach>
     </select>
 
+    <select id="listByUploadUser" resultMap="BaseResultMap">
+        select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+               review_time, reviewer_id, create_time, update_time
+        from media
+        where upload_user_id = #{uploadUserId}
+        <if test="type != null and type != ''">
+            and type = #{type}
+        </if>
+        <if test="reviewStatus != null and reviewStatus != ''">
+            and review_status = #{reviewStatus}
+        </if>
+        order by create_time desc, id desc
+    </select>
+
     <select id="findBestByPoiAndYear" resultMap="BaseResultMap">
         select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
                review_time, reviewer_id, create_time, update_time
@@ -126,7 +140,7 @@
         <if test="type != null and type != ''">
           and type = #{type}
         </if>
-        order by abs(year - #{year}) asc, year desc, id desc
+        order by abs(year - #{year}) , year desc, id desc
         limit 1
     </select>
 </mapper>
