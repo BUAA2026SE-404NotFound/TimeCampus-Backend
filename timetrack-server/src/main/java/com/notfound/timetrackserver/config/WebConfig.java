@@ -33,7 +33,7 @@ public class WebConfig implements WebMvcConfigurer {
                 );
 
         registry.addInterceptor(userAuthInterceptor)
-                .addPathPatterns("/api/v1/users/**", "/api/v1/me", "/api/v1/favorites/**", "/api/v1/ugc", "/api/v1/comments", "/api/v1/comments/mine")
+                .addPathPatterns("/api/v1/users/**", "/api/v1/me", "/api/v1/me/**", "/api/v1/favorites/**", "/api/v1/ugc", "/api/v1/comments", "/api/v1/comments/mine")
                 .excludePathPatterns(
                         "/api/v1/auth/wechat/login",
                         "/api/v1/health",

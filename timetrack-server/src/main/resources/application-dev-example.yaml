@@ -22,7 +22,7 @@ wechat:
   secret: ${WECHAT_SECRET:}
 
 storage:
-  local-root-dir: ${TIMETRACK_STORAGE_DIR:./uploads}
+  local-root-dir: ${TIMETRACK_STORAGE_DIR:/home/ubuntu/cos}
   max-file-size-mb: ${TIMETRACK_MAX_FILE_SIZE_MB:20}
 
 tencent-map:

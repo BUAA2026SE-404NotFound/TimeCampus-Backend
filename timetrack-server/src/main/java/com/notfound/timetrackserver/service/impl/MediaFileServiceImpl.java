@@ -17,6 +17,8 @@ import java.nio.file.Path;
 @Service
 public class MediaFileServiceImpl implements MediaFileService {
 
+    private static final String DEFAULT_STORAGE_ROOT = LocalStorageService.DEFAULT_STORAGE_ROOT;
+
     private final MediaMapper mediaMapper;
     private final StorageProperties storageProperties;
 
@@ -84,7 +86,8 @@ public class MediaFileServiceImpl implements MediaFileService {
         if (value.startsWith("http://") || value.startsWith("https://")) {
             throw new BizException(ResultCode.VALIDATION_ERROR, "remote media should be accessed by url");
         }
-        Path configuredRoot = Path.of(defaultIfBlank(storageProperties.localRootDir(), "storage/uploads"));
+        String configuredRootValue = storageProperties == null ? null : storageProperties.localRootDir();
+        Path configuredRoot = Path.of(defaultIfBlank(configuredRootValue, DEFAULT_STORAGE_ROOT));
         Path root = resolveStorageRoot(configuredRoot);
         Path resolved;
         if (value.startsWith("/uploads/")) {

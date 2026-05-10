@@ -3,8 +3,12 @@ package com.notfound.timetrackserver.controller.user;
 import com.notfound.timetrackcommon.api.ApiResponse;
 import com.notfound.timetrackcommon.api.ResultCode;
 import com.notfound.timetrackcommon.exception.BizException;
+import com.notfound.timetrackpojo.vo.CommentVO;
+import com.notfound.timetrackpojo.vo.MediaVO;
 import com.notfound.timetrackpojo.vo.UserProfileVO;
+import com.notfound.timetrackpojo.vo.UserReviewResultVO;
 import com.notfound.timetrackserver.security.UserContext;
+import com.notfound.timetrackserver.service.ReviewResultService;
 import com.notfound.timetrackserver.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -27,10 +31,14 @@ public class UserController {
 
     private final UserService userService;
     private final FavoriteService favoriteService;
+    private final ReviewResultService reviewResultService;
 
-    public UserController(UserService userService, FavoriteService favoriteService) {
+    public UserController(UserService userService,
+                          FavoriteService favoriteService,
+                          ReviewResultService reviewResultService) {
         this.userService = userService;
         this.favoriteService = favoriteService;
+        this.reviewResultService = reviewResultService;
     }
 
     @GetMapping("/{id}")
@@ -42,6 +50,39 @@ public class UserController {
             throw new BizException(ResultCode.FORBIDDEN, "forbidden");
         }
         return ApiResponse.success(userService.getById(id));
+    }
+
+    @GetMapping("/{id}/review-results")
+    @Operation(summary = "按用户 ID 查询审核结果", description = "仅允许查询当前登录用户提交的 UGC 与评论审核结果，可用 status 过滤 pending/approved/rejected。")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<UserReviewResultVO> reviewResults(@PathVariable Long id,
+                                                         @RequestParam(required = false) String status) {
+        Long currentUserId = UserContext.getUserId();
+        if (currentUserId == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "missing user token");
+        }
+        if (!currentUserId.equals(id)) {
+            throw new BizException(ResultCode.FORBIDDEN, "forbidden");
+        }
+        return ApiResponse.success(reviewResultService.listByUser(id, status));
+    }
+
+    @GetMapping("/{id}/review-results/ugc")
+    @Operation(summary = "按用户 ID 查询 UGC 审核结果", description = "仅允许查询当前登录用户上传的 UGC 影像审核结果，可用 status 过滤 pending/approved/rejected。")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<List<MediaVO>> ugcReviewResults(@PathVariable Long id,
+                                                       @RequestParam(required = false) String status) {
+        requireSameUser(id);
+        return ApiResponse.success(reviewResultService.listUgcByUser(id, status));
+    }
+
+    @GetMapping("/{id}/review-results/comments")
+    @Operation(summary = "按用户 ID 查询评论审核结果", description = "仅允许查询当前登录用户发布的评论审核结果，可用 status 过滤 pending/approved/rejected。")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<List<CommentVO>> commentReviewResults(@PathVariable Long id,
+                                                             @RequestParam(required = false) String status) {
+        requireSameUser(id);
+        return ApiResponse.success(reviewResultService.listCommentsByUser(id, status));
     }
 
     @PostMapping("/favorites")
@@ -71,4 +112,13 @@ public class UserController {
         return ApiResponse.success(favoriteService.listFavorites(userId, targetType));
     }
 
+    private void requireSameUser(Long id) {
+        Long currentUserId = UserContext.getUserId();
+        if (currentUserId == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "missing user token");
+        }
+        if (!currentUserId.equals(id)) {
+            throw new BizException(ResultCode.FORBIDDEN, "forbidden");
+        }
+    }
 }

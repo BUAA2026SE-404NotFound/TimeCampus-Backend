@@ -27,7 +27,7 @@ git clone git@github.com:<owner>/<repo>.git TimeTrack-Backend
 cd ~/TimeTrack-Backend
 mkdir -p ~/TimeTrack-Backend/app/config
 mkdir -p ~/TimeTrack-Backend/app/ui
-mkdir -p /opt/timecampus/storage/uploads
+mkdir -p /home/ubuntu/cos
 ```
 
 如果 GitHub SSH 拉取尚未配置，需要先在服务器生成 SSH key，并把公钥加入 GitHub Deploy keys：
@@ -69,7 +69,7 @@ server:
   port: 8080
 
 storage:
-  local-root-dir: /opt/timecampus/storage/uploads
+  local-root-dir: /home/ubuntu/cos
   max-file-size-mb: 10
 
 wechat:
@@ -108,7 +108,7 @@ mysql -h 127.0.0.1 -u your_mysql_user -p timetrack < \
 仓库提供模板：
 
 ```text
-deploy/nginx/timecampus.conf.template
+deploy/nginx/timetrack.conf.template
 ```
 
 一键安装并启用：

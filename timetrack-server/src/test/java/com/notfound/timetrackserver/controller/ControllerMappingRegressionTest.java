@@ -26,6 +26,7 @@ import com.notfound.timetrackserver.service.LogService;
 import com.notfound.timetrackserver.service.MapService;
 import com.notfound.timetrackserver.service.MediaFileService;
 import com.notfound.timetrackserver.service.PoiService;
+import com.notfound.timetrackserver.service.ReviewResultService;
 import com.notfound.timetrackserver.service.UgcService;
 import com.notfound.timetrackserver.service.UserService;
 import com.notfound.timetrackserver.service.impl.MediaStructMapper;
@@ -40,6 +41,7 @@ class ControllerMappingRegressionTest {
     void userAndAdminControllersHaveNoAmbiguousMappings() {
         UserService userService = mock(UserService.class);
         FavoriteService favoriteService = mock(FavoriteService.class);
+        ReviewResultService reviewResultService = mock(ReviewResultService.class);
         CommentService commentService = mock(CommentService.class);
         PoiService poiService = mock(PoiService.class);
         MediaMapper mediaMapper = mock(MediaMapper.class);
@@ -52,8 +54,8 @@ class ControllerMappingRegressionTest {
 
         MockMvcBuilders.standaloneSetup(
                 new AuthController(userService),
-                new UserController(userService, favoriteService),
-                new MeController(userService),
+                new UserController(userService, favoriteService, reviewResultService),
+                new MeController(userService, reviewResultService),
                 new FavoriteController(favoriteService),
                 new CommentController(commentService),
                 new PoiController(poiService),

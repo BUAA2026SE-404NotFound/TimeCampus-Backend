@@ -23,7 +23,7 @@ management:
         include: health,info
 
 storage:
-  local-root-dir: ${TIMETRACK_STORAGE_DIR:storage/uploads}
+  local-root-dir: ${TIMETRACK_STORAGE_DIR:/home/ubuntu/cos}
   max-file-size-mb: 10
 
 tencent-map:

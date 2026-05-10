@@ -34,6 +34,10 @@ public interface MediaMapper {
 
     List<MediaEntity> listByIds(@Param("ids") List<Long> ids);
 
+    List<MediaEntity> listByUploadUser(@Param("uploadUserId") Long uploadUserId,
+                                       @Param("type") String type,
+                                       @Param("reviewStatus") String reviewStatus);
+
     MediaEntity findBestByPoiAndYear(@Param("poiId") Long poiId,
                                      @Param("year") Integer year,
                                      @Param("type") String type,

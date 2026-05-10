@@ -10,6 +10,7 @@ import com.notfound.timetrackserver.mapper.MediaMapper;
 import com.notfound.timetrackserver.service.MediaFileService;
 import com.notfound.timetrackserver.security.UserContext;
 import com.notfound.timetrackserver.service.PoiService;
+import com.notfound.timetrackserver.service.ReviewResultService;
 import com.notfound.timetrackserver.service.UserService;
 import com.notfound.timetrackserver.service.impl.MediaStructMapper;
 import org.junit.jupiter.api.AfterEach;
@@ -53,7 +54,8 @@ class UserApiRegressionTest {
     @Test
     void meRequiresUserContextAndReturnsUnifiedError() throws Exception {
         UserService userService = mock(UserService.class);
-        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new MeController(userService))
+        ReviewResultService reviewResultService = mock(ReviewResultService.class);
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new MeController(userService, reviewResultService))
                 .setControllerAdvice(new com.notfound.timetrackcommon.exception.GlobalExceptionHandler())
                 .build();
 
@@ -66,13 +68,14 @@ class UserApiRegressionTest {
     @Test
     void meReturnsCurrentUserWhenAuthenticated() throws Exception {
         UserService userService = mock(UserService.class);
+        ReviewResultService reviewResultService = mock(ReviewResultService.class);
         UserContext.setUserId(9L);
         UserProfileVO profile = new UserProfileVO();
         profile.setId(9L);
         profile.setNickname("student");
         when(userService.getById(9L)).thenReturn(profile);
 
-        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new MeController(userService)).build();
+        MockMvc mockMvc = MockMvcBuilders.standaloneSetup(new MeController(userService, reviewResultService)).build();
 
         mockMvc.perform(get("/api/v1/me"))
                 .andExpect(status().isOk())
