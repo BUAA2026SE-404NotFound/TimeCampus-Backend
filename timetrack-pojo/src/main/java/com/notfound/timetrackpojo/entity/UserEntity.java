@@ -7,8 +7,10 @@ public class UserEntity {
     private String openId;
     private String nickname;
     private String avatarUrl;
-    private LocalDateTime createdAt;
-    private LocalDateTime updatedAt;
+    private String identity;
+    private Integer enrollYear;
+    private LocalDateTime createTime;
+    private LocalDateTime updateTime;
 
     public Long getId() {
         return id;
@@ -42,19 +44,36 @@ public class UserEntity {
         this.avatarUrl = avatarUrl;
     }
 
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
+
+    public String getIdentity() {
+        return identity;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
+    public void setIdentity(String identity) {
+        this.identity = identity;
     }
 
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
+    public Integer getEnrollYear() {
+        return enrollYear;
     }
 
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
+    public void setEnrollYear(Integer enrollYear) {
+        this.enrollYear = enrollYear;
+    }
+
+    public LocalDateTime getCreateTime() {
+        return createTime;
+    }
+
+    public void setCreateTime(LocalDateTime createTime) {
+        this.createTime = createTime;
+    }
+
+    public LocalDateTime getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(LocalDateTime updateTime) {
+        this.updateTime = updateTime;
     }
 }
