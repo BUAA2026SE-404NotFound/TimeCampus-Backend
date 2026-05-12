@@ -44,12 +44,12 @@ jobs:
       - name: Package Server Module
         run: mvn -B -pl timetrack-server -am package -DskipTests
 
-      - name: Upload Server Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: timetrack-server-jar
-          path: timetrack-server/target/*.jar
-          if-no-files-found: error
+#      - name: Upload Server Artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: timetrack-server-jar
+#          path: timetrack-server/target/*.jar
+#          if-no-files-found: error
 
   frontend:
     name: Frontend Build (Vue 3)
@@ -74,12 +74,12 @@ jobs:
         working-directory: timetrack-ui
         run: npm run build
 
-      - name: Upload Frontend Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: timetrack-ui-dist
-          path: timetrack-ui/dist
-          if-no-files-found: error
+#      - name: Upload Frontend Artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: timetrack-ui-dist
+#          path: timetrack-ui/dist
+#          if-no-files-found: error
 
   third-party-smoke:
     name: Third Party Smoke Tests
