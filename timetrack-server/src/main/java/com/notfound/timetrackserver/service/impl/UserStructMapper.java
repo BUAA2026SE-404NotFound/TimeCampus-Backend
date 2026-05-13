@@ -16,6 +16,10 @@ public class UserStructMapper {
         vo.setId(entity.getId());
         vo.setNickname(entity.getNickname());
         vo.setAvatarUrl(entity.getAvatarUrl());
+        vo.setIdentity(entity.getIdentity());
+        vo.setEnrollYear(entity.getEnrollYear());
+        vo.setCreateTime(entity.getCreateTime());
+        vo.setUpdateTime(entity.getUpdateTime());
         return vo;
     }
 }

@@ -1,6 +1,7 @@
 package com.notfound.timetrackpojo.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import org.junit.jupiter.api.Test;
 
 import java.lang.reflect.Field;
@@ -20,15 +21,29 @@ class WechatLoginRequestTest {
     }
 
     @Test
+    void identityTypeFieldShouldRequireKnownIdentity() throws NoSuchFieldException {
+        Field identityTypeField = WechatLoginRequest.class.getDeclaredField("identityType");
+
+        NotBlank notBlank = identityTypeField.getAnnotation(NotBlank.class);
+        Pattern pattern = identityTypeField.getAnnotation(Pattern.class);
+
+        assertNotNull(notBlank);
+        assertEquals("identityType cannot be blank", notBlank.message());
+        assertNotNull(pattern);
+        assertEquals("FRESHMAN|STUDENT|ALUMNI", pattern.regexp());
+    }
+
+    @Test
     void gettersAndSettersShouldWork() {
         WechatLoginRequest request = new WechatLoginRequest();
         request.setCode("wx-code");
         request.setNickname("nick");
         request.setAvatarUrl("avatar");
+        request.setIdentityType("STUDENT");
 
         assertEquals("wx-code", request.getCode());
         assertEquals("nick", request.getNickname());
         assertEquals("avatar", request.getAvatarUrl());
+        assertEquals("STUDENT", request.getIdentityType());
     }
 }
-

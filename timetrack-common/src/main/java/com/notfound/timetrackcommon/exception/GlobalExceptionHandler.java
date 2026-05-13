@@ -3,6 +3,8 @@ package com.notfound.timetrackcommon.exception;
 import com.notfound.timetrackcommon.api.ApiResponse;
 import com.notfound.timetrackcommon.api.ResultCode;
 import jakarta.validation.ConstraintViolationException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -13,6 +15,8 @@ import java.util.stream.Collectors;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     @ExceptionHandler(BizException.class)
     public ApiResponse<Void> handleBizException(BizException ex) {
@@ -46,11 +50,11 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ApiResponse<Void> handleException(Exception ex) {
-        return ApiResponse.fail(ResultCode.INTERNAL_ERROR, ex.getMessage());
+        log.error("Unhandled exception", ex);
+        return ApiResponse.fail(ResultCode.INTERNAL_ERROR, ResultCode.INTERNAL_ERROR.getMessage());
     }
 
     private String formatFieldError(FieldError error) {
         return error.getField() + ": " + error.getDefaultMessage();
     }
 }
-

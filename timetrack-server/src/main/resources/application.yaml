@@ -2,7 +2,7 @@ spring:
   application:
     name: timetrack-server
   profiles:
-    active: dev
+    active: ${SPRING_PROFILES_ACTIVE:dev}
   servlet:
     multipart:
       max-file-size: 20MB
@@ -21,6 +21,16 @@ management:
     web:
       exposure:
         include: health,info
+
+storage:
+  local-root-dir: ${TIMETRACK_STORAGE_DIR:/home/ubuntu/cos}
+  max-file-size-mb: 10
+
+tencent-map:
+  key: ${TENCENT_MAP_KEY:}
+  sk: ${TENCENT_MAP_SK:}
+  geocoder-url: https://apis.map.qq.com/ws/geocoder/v1/
+  place-search-url: https://apis.map.qq.com/ws/place/v1/search
 
 logging:
   pattern:
