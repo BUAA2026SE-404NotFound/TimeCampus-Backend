@@ -12,16 +12,16 @@
     </parent>
 
     <groupId>com.notfound</groupId>
-    <artifactId>timetrack</artifactId>
+    <artifactId>timecampus</artifactId>
     <version>0.1.0-alpha</version>
     <packaging>pom</packaging>
-    <name>time-track-backend</name>
-    <description>Multi-module backend prototype for Time Track mini program.</description>
+    <name>timecampus-backend</name>
+    <description>Multi-module backend prototype for TimeCampus mini program.</description>
 
     <modules>
-        <module>timetrack-common</module>
-        <module>timetrack-pojo</module>
-        <module>timetrack-server</module>
+        <module>timecampus-common</module>
+        <module>timecampus-pojo</module>
+        <module>timecampus-server</module>
     </modules>
 
     <properties>

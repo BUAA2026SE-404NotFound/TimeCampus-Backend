@@ -1,23 +1,23 @@
-# 时光航迹后端与管理端
+# 时光航迹后端
 
 当前交付版本：`0.1.0-alpha`
 
-“时光航迹”（TimeCampus / Time Track）是面向校园历史影像浏览与共创的小程序后端项目，并配套提供 Web 管理端。当前实现聚焦 Alpha 阶段最小可交付内容：微信登录、POI 管理、官方内容导入、地图聚合、时间切换、收藏、UGC 上传与审核、审计日志、腾讯地图 WebService 封装、管理端web页面。
+“时光航迹”（TimeCampus）是面向校园历史影像浏览与共创的小程序后端项目，并为 Web 管理端提供 API。当前实现聚焦 Alpha 阶段最小可交付内容：微信登录、POI 管理、官方内容导入、地图聚合、时间切换、收藏、UGC 上传与审核、审计日志、腾讯地图 WebService 封装、管理端 API。
 团队使用 ApiFox 进行 API 文档管理，后续会持续完善接口定义、示例请求与响应、错误码说明等内容。
 
 ## 当前状态
 
 - 后端：Spring Boot 3.3.11，Java 21，多模块 Maven 工程。
-- 管理端：Vue 3 + Vite + Element Plus。
+- 管理端：Vue 3 + Vite + Element Plus，已迁出本后端仓库独立管理。
 - API 路径统一为 `/api/v1/...`。
-- Alpha 交付状态：核心后端接口、Vue3 管理端、评论审核、运营地图、文件上传、腾讯地图接入、部署文档和测试报告已进入交付前确认。
+- Alpha 交付状态：核心后端接口、管理端 API、评论审核、运营地图、文件上传、腾讯地图接入、部署文档和测试报告已进入交付前确认。
 - 响应格式统一为：
 
 ```json
 {"code":0,"message":"ok","data":{}}
 ```
 
-状态码与状态信息定义在 `timetrack-common` 模块的 `ResultCode` 中
+状态码与状态信息定义在 `timecampus-common` 模块的 `ResultCode` 中
 
 ## 技术栈
 
@@ -36,11 +36,10 @@
 ## 项目结构
 
 ```text
-time-track-backend
-├─ timetrack-common       # 通用基础设施：统一响应、错误码、业务异常、全局异常、请求 ID
-├─ timetrack-pojo         # DTO / Entity / VO / 模型常量
-├─ timetrack-server       # Spring Boot 服务端：Controller / Service / Mapper / 配置
-├─ timetrack-ui           # Vue3 管理端
+timecampus-backend
+├─ timecampus-common       # 通用基础设施：统一响应、错误码、业务异常、全局异常、请求 ID
+├─ timecampus-pojo         # DTO / Entity / VO / 模型常量
+├─ timecampus-server       # Spring Boot 服务端：Controller / Service / Mapper / 配置
 ├─ docs                   # 数据库、部署、测试与 Alpha 交付文档
 └─ .github/workflows      # CI/CD
 ```
@@ -48,7 +47,7 @@ time-track-backend
 后端 controller 已按使用端拆分：
 
 ```text
-timetrack-server/src/main/java/com/notfound/timetrackserver/controller
+timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 ├─ admin                  # 管理端接口
 └─ user                   # 用户端/小程序接口
 ```
@@ -83,7 +82,7 @@ timetrack-server/src/main/java/com/notfound/timetrackserver/controller
 
 ## 管理端能力
 
-管理端位于 `timetrack-ui`，当前页面包括：
+管理端前端已迁出本后端仓库，独立仓库建议使用 `timecampus-ui` 命名。后端当前提供这些管理端 API 能力：
 
 - 登录
 - 运营首页
@@ -94,7 +93,7 @@ timetrack-server/src/main/java/com/notfound/timetrackserver/controller
 - 腾讯地图辅助搜索
 - 审计日志查看
 
-管理端默认通过 Vite dev server 代理访问后端：
+前端本地开发时可通过 Vite dev server 代理访问后端：
 
 ```text
 /api/v1 -> http://localhost:8080/api/v1
@@ -106,7 +105,7 @@ timetrack-server/src/main/java/com/notfound/timetrackserver/controller
 
 建库脚本是数据库结构的真源：
 
-- [`timetrack-server/src/main/resources/sql/schema.sql`](timetrack-server/src/main/resources/sql/schema.sql)
+- [`timecampus-server/src/main/resources/sql/schema.sql`](timecampus-server/src/main/resources/sql/schema.sql)
 
 当前核心表：
 
@@ -138,7 +137,7 @@ timetrack-server/src/main/java/com/notfound/timetrackserver/controller
 
 ### AOP 时间填充
 
-`timetrack-server` 使用 `TimeFillAspect` 拦截 MyBatis mapper 的 `insert*` / `update*` 方法：
+`timecampus-server` 使用 `TimeFillAspect` 拦截 MyBatis mapper 的 `insert*` / `update*` 方法：
 
 - 新增时自动填充 `createTime`、`updateTime`
 - 修改时自动刷新 `updateTime`
@@ -162,7 +161,7 @@ Mapper XML 显式写入 `create_time` / `update_time`，避免依赖数据库隐
 
 ```yaml
 storage:
-  local-root-dir: ${TIMETRACK_STORAGE_DIR:/home/ubuntu/cos}
+  local-root-dir: ${TIMECAMPUS_STORAGE_DIR:/home/ubuntu/cos}
   max-file-size-mb: 10
 ```
 
@@ -184,26 +183,26 @@ tencent-map:
 
 主要配置文件：
 
-- `timetrack-server/src/main/resources/application.yaml`
-- `timetrack-server/src/main/resources/application-example.yaml`
-- `timetrack-server/src/main/resources/application-dev-example.yaml`
-- `timetrack-server/src/main/resources/application-prod-example.yaml`
+- `timecampus-server/src/main/resources/application.yaml`
+- `timecampus-server/src/main/resources/application-example.yaml`
+- `timecampus-server/src/main/resources/application-dev-example.yaml`
+- `timecampus-server/src/main/resources/application-prod-example.yaml`
 
 `application-dev.yaml` 和 `application-prod.yaml` 包含数据库密码、Redis 密码、微信密钥、腾讯地图 SK 等敏感信息，已取消版本管理。首次本地运行时请从示例文件复制：
 
 ```shell
-copy timetrack-server\src\main\resources\application-dev-example.yaml timetrack-server\src\main\resources\application-dev.yaml
+copy timecampus-server\src\main\resources\application-dev-example.yaml timecampus-server\src\main\resources\application-dev.yaml
 ```
 
 Linux/macOS：
 
 ```shell
-cp timetrack-server/src/main/resources/application-dev-example.yaml timetrack-server/src/main/resources/application-dev.yaml
+cp timecampus-server/src/main/resources/application-dev-example.yaml timecampus-server/src/main/resources/application-dev.yaml
 ```
 
 然后在本机的 `application-dev.yaml` 或环境变量中填入真实值。不要提交 `application-dev.yaml`。
 
-生产服务器使用 `prod` profile，推荐在服务器 `~/TimeTrack-Backend/app/config/application-prod.yaml` 放置真实配置，并从 `application-prod-example.yaml` 复制后修改。Spring Boot 启动命令为：
+生产服务器使用 `prod` profile，推荐在服务器 `~/TimeCampus-Backend/app/config/application-prod.yaml` 放置真实配置，并从 `application-prod-example.yaml` 复制后修改。Spring Boot 启动命令为：
 
 ```shell
 java -jar app.jar --spring.profiles.active=prod
@@ -216,7 +215,7 @@ java -jar app.jar --spring.profiles.active=prod
 ```yaml
 spring:
   datasource:
-    url: jdbc:mysql://127.0.0.1:3306/timetrack?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
+    url: jdbc:mysql://127.0.0.1:3306/timecampus?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true&useSSL=false
     username: root
     password: your-db-password
   data:
@@ -265,7 +264,7 @@ TENCENT_MAP_SK
 
 ```shell
 mvn clean test
-mvn -pl timetrack-server -am spring-boot:run
+mvn -pl timecampus-server -am spring-boot:run
 ```
 
 服务默认端口：
@@ -282,8 +281,10 @@ http://localhost:8080/swagger-ui/index.html
 
 ### 管理端
 
+前端已迁出本仓库。请在独立的 `timecampus-ui` 仓库中运行：
+
 ```shell
-cd timetrack-ui
+cd timecampus-ui
 npm install
 npm run dev
 ```
@@ -331,7 +332,7 @@ mvn test
 set RUN_TENCENT_SMOKE=true
 set TENCENT_MAP_KEY=your-key
 set TENCENT_MAP_SK=your-sk
-mvn -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.TencentMapSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
+mvn -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.TencentMapSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
 ```
 
 微信冒烟测试：
@@ -340,7 +341,7 @@ mvn -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.TencentM
 set RUN_WECHAT_SMOKE=true
 set WECHAT_APPID=your-appid
 set WECHAT_SECRET=your-secret
-mvn -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.WechatAuthSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
+mvn -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.WechatAuthSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
 ```
 
 ## CI/CD

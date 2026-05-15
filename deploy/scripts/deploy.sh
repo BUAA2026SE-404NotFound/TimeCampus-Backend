@@ -4,9 +4,10 @@
 set -euo pipefail
 
 PROJECT_VERSION="${1:-}"
-REPO_DIR="${REPO_DIR:-$HOME/TimeTrack-Backend}"
+REPO_DIR="${REPO_DIR:-$HOME/TimeCampus-Backend}"
 APP_DIR="${APP_DIR:-$REPO_DIR/app}"
 SPRING_PROFILE="${SPRING_PROFILE:-prod}"
+UI_DIST_DIR="${UI_DIST_DIR:-}"
 
 if [ -z "$PROJECT_VERSION" ]; then
     echo "Usage: ./deploy/scripts/deploy.sh <project-version>"
@@ -21,29 +22,32 @@ if [ -f "$APP_DIR/app.pid" ] && kill -0 "$(cat "$APP_DIR/app.pid")" 2>/dev/null;
     sleep 2
 fi
 
-mvn -B -pl timetrack-server -am package -DskipTests
+mvn -B -pl timecampus-server -am package -DskipTests
 
-APP_JAR="timetrack-server/target/timetrack-server-${PROJECT_VERSION}.jar"
+APP_JAR="timecampus-server/target/timecampus-server-${PROJECT_VERSION}.jar"
 if [ ! -f "$APP_JAR" ]; then
     echo "Expected jar not found: $APP_JAR"
     echo "Current target files:"
-    ls -lah timetrack-server/target || true
+    ls -lah timecampus-server/target || true
     exit 1
 fi
 
-cd timetrack-ui
-npm ci
-npm run build
-cd ..
-
 mkdir -p "$APP_DIR/ui" "$APP_DIR/config"
 cp "$APP_JAR" "$APP_DIR/app.jar"
-rm -rf "$APP_DIR/ui"/*
-cp -R timetrack-ui/dist/. "$APP_DIR/ui/"
+if [ -n "$UI_DIST_DIR" ]; then
+    if [ ! -d "$UI_DIST_DIR" ]; then
+        echo "UI_DIST_DIR does not exist: $UI_DIST_DIR"
+        exit 1
+    fi
+    rm -rf "$APP_DIR/ui"/*
+    cp -R "$UI_DIST_DIR"/. "$APP_DIR/ui/"
+else
+    echo "UI_DIST_DIR not set; keeping existing UI files in $APP_DIR/ui"
+fi
 
 if [ ! -f "$APP_DIR/config/application-${SPRING_PROFILE}.yaml" ]; then
     echo "Missing $APP_DIR/config/application-${SPRING_PROFILE}.yaml"
-    echo "Create it from timetrack-server/src/main/resources/application-${SPRING_PROFILE}-example.yaml before deployment."
+    echo "Create it from timecampus-server/src/main/resources/application-${SPRING_PROFILE}-example.yaml before deployment."
     exit 1
 fi
 
