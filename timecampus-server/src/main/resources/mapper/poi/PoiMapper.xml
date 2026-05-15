@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.notfound.timecampusserver.mapper.PoiMapper">
+
+    <resultMap id="BaseResultMap" type="com.notfound.timecampuspojo.entity.PoiEntity">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="latitude" property="latitude"/>
+        <result column="longitude" property="longitude"/>
+        <result column="description" property="description"/>
+        <result column="fun_fact" property="funFact"/>
+        <result column="status" property="status"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="listByIds" resultMap="BaseResultMap">
+        select id, name, latitude, longitude, description, fun_fact, status, create_time, update_time
+        from poi
+        where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        select id, name, latitude, longitude, description, fun_fact, status, create_time, update_time
+        from poi
+        where id = #{id}
+        limit 1
+    </select>
+
+    <select id="existsById" resultType="boolean">
+        select (count(1) > 0)
+        from poi
+        where id = #{id}
+    </select>
+
+    <select id="list" resultMap="BaseResultMap">
+        select id, name, latitude, longitude, description, fun_fact, status, create_time, update_time
+        from poi
+        <where>
+            <if test="status != null">
+                and status = #{status}
+            </if>
+            <if test="keyword != null and keyword != ''">
+                and name like concat('%', #{keyword}, '%')
+            </if>
+        </where>
+        order by id desc
+    </select>
+
+    <insert id="insert" parameterType="com.notfound.timecampuspojo.entity.PoiEntity"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into poi (name, latitude, longitude, description, fun_fact, status, create_time, update_time)
+        values (#{name}, #{latitude}, #{longitude}, #{description}, #{funFact}, #{status}, #{createTime}, #{updateTime})
+    </insert>
+
+    <update id="updateById" parameterType="com.notfound.timecampuspojo.entity.PoiEntity">
+        update poi
+        set name = #{name},
+            latitude = #{latitude},
+            longitude = #{longitude},
+            description = #{description},
+            fun_fact = #{funFact},
+            status = #{status},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from poi where id = #{id}
+    </delete>
+</mapper>

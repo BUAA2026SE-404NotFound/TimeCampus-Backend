@@ -42,43 +42,13 @@ jobs:
         run: mvn -B clean test
 
       - name: Package Server Module
-        run: mvn -B -pl timetrack-server -am package -DskipTests
+        run: mvn -B -pl timecampus-server -am package -DskipTests
 
 #      - name: Upload Server Artifact
 #        uses: actions/upload-artifact@v4
 #        with:
-#          name: timetrack-server-jar
-#          path: timetrack-server/target/*.jar
-#          if-no-files-found: error
-
-  frontend:
-    name: Frontend Build (Vue 3)
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: timetrack-ui/package-lock.json
-
-      - name: Install Frontend Dependencies
-        working-directory: timetrack-ui
-        run: npm ci
-
-      - name: Build Frontend
-        working-directory: timetrack-ui
-        run: npm run build
-
-#      - name: Upload Frontend Artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: timetrack-ui-dist
-#          path: timetrack-ui/dist
+#          name: timecampus-server-jar
+#          path: timecampus-server/target/*.jar
 #          if-no-files-found: error
 
   third-party-smoke:
@@ -102,11 +72,11 @@ jobs:
           RUN_TENCENT_SMOKE: "true"
           TENCENT_MAP_KEY: ${{ secrets.TENCENT_MAP_KEY }}
           TENCENT_MAP_SK: ${{ secrets.TENCENT_MAP_SK }}
-        run: mvn -B -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.TencentMapSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
+        run: mvn -B -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.TencentMapSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
 
       - name: Run WeChat Smoke Test
         env:
           RUN_WECHAT_SMOKE: "true"
           WECHAT_APPID: ${{ secrets.WECHAT_APPID }}
           WECHAT_SECRET: ${{ secrets.WECHAT_SECRET }}
-        run: mvn -B -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.WechatAuthSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
+        run: mvn -B -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.WechatAuthSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test

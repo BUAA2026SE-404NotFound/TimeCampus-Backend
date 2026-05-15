@@ -1,7 +1,7 @@
 ## 数据库设计
 
 >
-说明：本文档保留外键设计用于建模说明；开发/测试初始化脚本 [schema.sql](../timetrack-server/src/main/resources/sql/schema.sql)
+说明：本文档保留外键设计用于建模说明；开发/测试初始化脚本 [schema.sql](../timecampus-server/src/main/resources/sql/schema.sql)
 默认不实际创建外键约束，以降低联调和数据准备成本。
 
 ### 1. 用户表 `user`

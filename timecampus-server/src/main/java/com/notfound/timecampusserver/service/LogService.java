@@ -1,0 +1,13 @@
+package com.notfound.timecampusserver.service;
+
+import com.notfound.timecampuspojo.entity.LogEntity;
+
+import java.util.List;
+
+public interface LogService {
+
+    void record(String operatorType, Long operatorId, String type, String action,
+                String targetType, Long targetId, String detail);
+
+    List<LogEntity> list(String operatorType, String type, String action, String targetType, Integer limit);
+}

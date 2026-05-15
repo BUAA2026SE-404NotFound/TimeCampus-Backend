@@ -4,15 +4,15 @@ set -euo pipefail
 # ====================== 参数校验 ======================
 if [ $# -lt 1 ]; then
     echo "用法：$0 <域名> [部署用户]"
-    echo "示例：$0 api.timetrack.com root"
+    echo "示例：$0 api.timecampus.com root"
     exit 1
 fi
 
 SERVER_NAME="$1"
 DEPLOY_USER="${2:-${SUDO_USER:-$USER}}"
-REPO_DIR="/home/${DEPLOY_USER}/TimeTrack-Backend"
-TEMPLATE_PATH="${REPO_DIR}/deploy/nginx/timetrack.conf.template"
-NGINX_CONF="/etc/nginx/conf.d/timetrack.conf"
+REPO_DIR="/home/${DEPLOY_USER}/TimeCampus-Backend"
+TEMPLATE_PATH="${REPO_DIR}/deploy/nginx/timecampus.conf.template"
+NGINX_CONF="/etc/nginx/conf.d/timecampus.conf"
 
 # ====================== 检查必要文件 ======================
 if [ ! -f "$TEMPLATE_PATH" ]; then
