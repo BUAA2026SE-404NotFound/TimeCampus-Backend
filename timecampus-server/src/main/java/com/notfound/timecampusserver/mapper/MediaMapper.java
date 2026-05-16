@@ -1,6 +1,7 @@
 package com.notfound.timecampusserver.mapper;
 
 import com.notfound.timecampuspojo.entity.MediaEntity;
+import com.notfound.timecampuspojo.vo.MediaVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -42,4 +43,11 @@ public interface MediaMapper {
                                      @Param("year") Integer year,
                                      @Param("type") String type,
                                      @Param("reviewStatus") String reviewStatus);
+
+    List<MediaVO> listMemosByUser(@Param("userId") Long userId,
+                                  @Param("poiId") Long poiId,
+                                  @Param("yearFrom") Integer yearFrom,
+                                  @Param("yearTo") Integer yearTo);
+
+    int deleteMemoByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 }

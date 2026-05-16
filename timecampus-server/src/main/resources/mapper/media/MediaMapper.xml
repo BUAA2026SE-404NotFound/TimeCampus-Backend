@@ -143,4 +143,39 @@
         order by abs(year - #{year}) , year desc, id desc
         limit 1
     </select>
+
+    <select id="listMemosByUser" resultType="com.notfound.timecampuspojo.vo.MediaVO">
+        SELECT
+        m.id,
+        m.poi_id AS poiId,
+        p.name AS poiName,
+        m.year,
+        m.description,
+        m.review_status AS reviewStatus,
+        m.reject_reason AS rejectReason,
+        m.create_time AS createTime,
+        m.update_time AS updateTime,
+        m.image_path AS imagePath
+        FROM media m
+        INNER JOIN poi p ON m.poi_id = p.id
+        WHERE m.upload_user_id = #{userId}
+        AND m.type = 'memo'
+        <if test="poiId != null">
+            AND m.poi_id = #{poiId}
+        </if>
+        <if test="yearFrom != null">
+            AND m.year >= #{yearFrom}
+        </if>
+        <if test="yearTo != null">
+            AND m.year &lt;= #{yearTo}
+        </if>
+        ORDER BY m.create_time DESC
+    </select>
+
+    <delete id="deleteMemoByIdAndUserId">
+        DELETE FROM media
+        WHERE id = #{id}
+          AND upload_user_id = #{userId}
+          AND type = 'memo'
+    </delete>
 </mapper>

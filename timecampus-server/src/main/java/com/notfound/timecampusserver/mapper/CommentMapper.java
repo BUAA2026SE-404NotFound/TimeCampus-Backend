@@ -1,6 +1,7 @@
 package com.notfound.timecampusserver.mapper;
 
 import com.notfound.timecampuspojo.entity.CommentEntity;
+import com.notfound.timecampuspojo.vo.NoteVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
@@ -28,4 +29,10 @@ public interface CommentMapper {
     List<CommentEntity> listForAdmin(@Param("targetType") String targetType,
                                      @Param("targetId") Long targetId,
                                      @Param("reviewStatus") String reviewStatus);
+
+    List<NoteVO> listMyNotes(@Param("userId") Long userId,
+                             @Param("poiId") Long poiId,
+                             @Param("reviewStatus") String reviewStatus);
+
+    int deleteNoteByIdAndUserId(@Param("id") Long id, @Param("userId") Long userId);
 }
