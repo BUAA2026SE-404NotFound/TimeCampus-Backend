@@ -172,10 +172,56 @@
         ORDER BY m.create_time DESC
     </select>
 
+    <select id="listTimelineMemos" resultType="com.notfound.timecampuspojo.vo.TimelineItemVO">
+        SELECT
+            m.id,
+            m.poi_id AS poiId,
+            p.name AS poiName,
+            m.year,
+            m.description,
+            m.image_path AS imagePath,
+            m.create_time AS createTime
+        FROM media m
+        INNER JOIN poi p ON m.poi_id = p.id
+        WHERE m.upload_user_id = #{userId}
+          AND m.type = 'memo'
+        <if test="poiId != null">
+            AND m.poi_id = #{poiId}
+        </if>
+        <if test="yearFrom != null">
+            AND m.year &gt;= #{yearFrom}
+        </if>
+        <if test="yearTo != null">
+            AND m.year &lt;= #{yearTo}
+        </if>
+        ORDER BY m.year DESC, m.create_time DESC, m.id DESC
+    </select>
+
     <delete id="deleteMemoByIdAndUserId">
         DELETE FROM media
         WHERE id = #{id}
           AND upload_user_id = #{userId}
           AND type = 'memo'
     </delete>
+
+    <select id="listTimelineOfficial" resultType="com.notfound.timecampuspojo.vo.TimelineItemVO">
+        SELECT
+            m.id,
+            m.poi_id AS poiId,
+            p.name AS poiName,
+            m.year,
+            m.description,
+            m.image_path AS imagePath,
+            m.create_time AS createTime
+        FROM media m
+        INNER JOIN poi p ON m.poi_id = p.id
+        WHERE m.type = 'official'
+          AND m.review_status = 'approved'
+          AND m.year &gt;= #{yearFrom}
+          AND m.year &lt;= #{yearTo}
+        <if test="poiId != null">
+            AND m.poi_id = #{poiId}
+        </if>
+        ORDER BY m.year DESC, m.create_time DESC, m.id DESC
+    </select>
 </mapper>

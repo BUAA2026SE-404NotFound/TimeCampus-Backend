@@ -36,6 +36,26 @@ public class UserAuthInterceptor implements HandlerInterceptor {
         redisTemplate.delete(USER_TOKEN_PREFIX + token);
     }
 
+    /**
+     * Resolves the current user id when a valid Bearer token is present.
+     * Returns null for anonymous requests or invalid/expired tokens.
+     */
+    public Long resolveUserId(HttpServletRequest request) {
+        String token = resolveBearerToken(request);
+        if (token == null) {
+            return null;
+        }
+        String userIdStr = redisTemplate.opsForValue().get(USER_TOKEN_PREFIX + token);
+        if (userIdStr == null || userIdStr.isBlank()) {
+            return null;
+        }
+        try {
+            return Long.parseLong(userIdStr);
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
         String token = resolveBearerToken(request);
