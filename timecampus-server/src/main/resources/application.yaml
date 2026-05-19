@@ -22,10 +22,6 @@ management:
       exposure:
         include: health,info
 
-springdoc:
-  swagger-ui:
-    disable-swagger-default-url: true
-
 storage:
   local-root-dir: ${TIMECAMPUS_STORAGE_DIR:/home/ubuntu/cos}
   max-file-size-mb: 10
