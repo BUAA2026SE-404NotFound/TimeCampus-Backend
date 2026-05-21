@@ -21,9 +21,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.core.io.Resource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -45,6 +47,17 @@ public class AdminMediaController {
     @SecurityRequirement(name = "bearerAuth")
     public ApiResponse<ImportResultVO> importOfficial(@Valid @RequestBody OfficialMediaImportRequest request) {
         return ApiResponse.success(adminMediaService.importOfficial(request));
+    }
+
+    @PostMapping("/upload")
+    @Operation(summary = "上传官方影像", description = "上传本地图片并创建 official + approved 的 media 记录。")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<MediaVO> uploadOfficial(@RequestPart MultipartFile file,
+                                               @RequestParam Long poiId,
+                                               @RequestParam Integer year,
+                                               @RequestParam(required = false) String description) {
+        Long reviewerId = AdminContext.getAdminId();
+        return ApiResponse.success(adminMediaService.uploadOfficial(file, poiId, year, description, reviewerId));
     }
 
     @GetMapping("/{id}")

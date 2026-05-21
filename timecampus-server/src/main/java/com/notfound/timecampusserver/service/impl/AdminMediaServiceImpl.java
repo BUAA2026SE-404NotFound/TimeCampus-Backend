@@ -11,7 +11,9 @@ import com.notfound.timecampusserver.mapper.PoiMapper;
 import com.notfound.timecampusserver.service.AdminMediaService;
 import com.notfound.timecampusserver.security.AdminContext;
 import com.notfound.timecampusserver.service.LogService;
+import com.notfound.timecampusserver.service.StorageService;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -29,12 +31,18 @@ public class AdminMediaServiceImpl implements AdminMediaService {
     private final PoiMapper poiMapper;
     private final MediaStructMapper mediaStructMapper;
     private final LogService logService;
+    private final StorageService storageService;
 
-    public AdminMediaServiceImpl(MediaMapper mediaMapper, PoiMapper poiMapper, MediaStructMapper mediaStructMapper, LogService logService) {
+    public AdminMediaServiceImpl(MediaMapper mediaMapper,
+                                 PoiMapper poiMapper,
+                                 MediaStructMapper mediaStructMapper,
+                                 LogService logService,
+                                 StorageService storageService) {
         this.mediaMapper = mediaMapper;
         this.poiMapper = poiMapper;
         this.mediaStructMapper = mediaStructMapper;
         this.logService = logService;
+        this.storageService = storageService;
     }
 
     @Override
@@ -86,6 +94,33 @@ public class AdminMediaServiceImpl implements AdminMediaService {
     }
 
     @Override
+    public MediaVO uploadOfficial(MultipartFile file, Long poiId, Integer year, String description, Long reviewerId) {
+        if (reviewerId == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "admin login required");
+        }
+        if (poiId == null || !poiMapper.existsById(poiId)) {
+            throw new BizException(ResultCode.NOT_FOUND, "poi not found: " + poiId);
+        }
+        validateYear(year);
+
+        String imagePath = storageService.store(file, reviewerId);
+        MediaEntity entity = new MediaEntity();
+        entity.setPoiId(poiId);
+        entity.setType(TYPE_OFFICIAL);
+        entity.setImagePath(imagePath);
+        entity.setYear(year);
+        entity.setDescription(description);
+        entity.setReviewStatus(REVIEW_APPROVED);
+        entity.setReviewTime(LocalDateTime.now());
+        entity.setReviewerId(reviewerId);
+        entity.setCreateTime(LocalDateTime.now());
+        entity.setUpdateTime(LocalDateTime.now());
+        mediaMapper.insert(entity);
+        logService.record("ADMIN", reviewerId, "content", "upload_official", "media", entity.getId(), imagePath);
+        return mediaStructMapper.toVO(entity);
+    }
+
+    @Override
     public MediaVO getById(Long id) {
         MediaEntity entity = mediaMapper.findById(id);
         if (entity == null) {
@@ -121,7 +156,19 @@ public class AdminMediaServiceImpl implements AdminMediaService {
         if (item.getYear() == null) {
             return "year is required";
         }
+        try {
+            validateYear(item.getYear());
+        } catch (BizException e) {
+            return e.getMessage();
+        }
         return null;
+    }
+
+    private void validateYear(Integer year) {
+        int currentYear = LocalDateTime.now().getYear();
+        if (year == null || year < 1953 || year > currentYear) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "year must be between 1953 and " + currentYear);
+        }
     }
 
     @Override

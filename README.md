@@ -76,6 +76,8 @@ timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 - 管理员登录/登出：`POST /api/v1/admin/login`、`POST /api/v1/admin/logout`
 - POI 管理：`/api/v1/admin/pois`
 - 官方内容批量导入：`POST /api/v1/admin/contents/batch-import`
+- 官方影像批量导入：`POST /api/v1/admin/media/import`
+- 官方影像上传：`POST /api/v1/admin/media/upload`
 - UGC 审核：`GET /api/v1/admin/ugc`、`POST /api/v1/admin/ugc/{id}/approve`、`POST /api/v1/admin/ugc/{id}/reject`
 - 评论审核：`GET /api/v1/admin/comments`、`POST /api/v1/admin/comments/{id}/approve`、`POST /api/v1/admin/comments/{id}/reject`
 - 审计日志查看：`GET /api/v1/admin/logs`
@@ -89,6 +91,7 @@ timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 - POI 管理
 - 运营地图：查看 POI 点位及收藏、评论、媒体、UGC 概览
 - 官方内容列表与批量导入
+- 官方影像上传（单文件）
 - UGC 审核
 - 腾讯地图辅助搜索
 - 审计日志查看
