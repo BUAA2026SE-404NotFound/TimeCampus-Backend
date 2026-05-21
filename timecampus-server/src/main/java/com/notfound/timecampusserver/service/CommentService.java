@@ -2,6 +2,7 @@ package com.notfound.timecampusserver.service;
 
 import com.notfound.timecampuspojo.dto.CommentCreateRequest;
 import com.notfound.timecampuspojo.vo.CommentVO;
+import com.notfound.timecampuspojo.vo.NoteVO;
 
 import java.util.List;
 
@@ -18,4 +19,10 @@ public interface CommentService {
     CommentVO approve(Long id, Long reviewerId);
 
     CommentVO reject(Long id, String reason, Long reviewerId);
+
+    NoteVO createNote(Long userId, Long poiId, String content);
+
+    List<NoteVO> listMyNotes(Long userId, Long poiId, String reviewStatus);
+
+    void deleteNote(Long id, Long userId);
 }

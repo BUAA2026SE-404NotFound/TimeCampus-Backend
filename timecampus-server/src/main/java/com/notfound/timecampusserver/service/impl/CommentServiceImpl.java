@@ -1,5 +1,7 @@
 package com.notfound.timecampusserver.service.impl;
 
+import com.notfound.timecampuspojo.vo.NoteVO;
+import com.notfound.timecampusserver.service.impl.CommentStructMapper;
 import com.notfound.timecampuscommon.api.ResultCode;
 import com.notfound.timecampuscommon.exception.BizException;
 import com.notfound.timecampuspojo.constant.ReviewStatuses;
@@ -68,6 +70,76 @@ public class CommentServiceImpl implements CommentService {
         return commentStructMapper.toVO(entity);
     }
 
+    @Override
+    @Transactional
+    public NoteVO createNote(Long userId, Long poiId, String content) {
+        if (userId == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "missing user token");
+        }
+
+        if (poiId == null) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "poiId is required");
+        }
+
+        PoiEntity poi = poiMapper.findById(poiId);
+        if (poi == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "poi not found: " + poiId);
+        }
+
+        if (content == null || content.isBlank()) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "content is required");
+        }
+
+        if (content.length() > 1000) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "content length must be <= 1000");
+        }
+
+        CommentEntity entity = new CommentEntity();
+        entity.setUserId(userId);
+        entity.setTargetType(TargetTypes.NOTE);
+        entity.setTargetId(poiId);
+        entity.setContent(content.trim());
+        entity.setReviewStatus(ReviewStatuses.APPROVED);
+
+        commentMapper.insert(entity);
+
+        logService.record("USER", userId, "behavior", "create_note", "poi", poiId, content);
+
+        NoteVO noteVO = new NoteVO();
+        noteVO.setId(entity.getId());
+        noteVO.setUserId(userId);
+        noteVO.setPoiId(poiId);
+        noteVO.setPoiName(poi.getName());
+        noteVO.setContent(content.trim());
+        noteVO.setReviewStatus(ReviewStatuses.APPROVED);
+        noteVO.setCreateTime(entity.getCreateTime());
+        noteVO.setUpdateTime(entity.getUpdateTime());
+
+        return noteVO;
+    }
+
+    @Override
+    public List<NoteVO> listMyNotes(Long userId, Long poiId, String reviewStatus) {
+        if (userId == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "missing user token");
+        }
+
+        return commentMapper.listMyNotes(userId, poiId, reviewStatus);
+    }
+
+    @Override
+    @Transactional
+    public void deleteNote(Long id, Long userId) {
+        if (userId == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "missing user token");
+        }
+        int deleted = commentMapper.deleteNoteByIdAndUserId(id, userId);
+        if (deleted == 0) {
+            throw new BizException(ResultCode.NOT_FOUND, "note not found or permission denied");
+        }
+
+        logService.record("USER", userId, "note", "delete_note", "note", id, null);
+    }
     @Override
     public List<CommentVO> listByTarget(String targetType, Long targetId) {
         String normalizedTargetType = normalizeTargetType(targetType);

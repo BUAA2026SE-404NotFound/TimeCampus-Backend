@@ -15,6 +15,7 @@ import com.notfound.timecampusserver.controller.user.MapController;
 import com.notfound.timecampusserver.controller.user.MediaFileController;
 import com.notfound.timecampusserver.controller.user.MeController;
 import com.notfound.timecampusserver.controller.user.PoiController;
+import com.notfound.timecampusserver.controller.user.TimelineController;
 import com.notfound.timecampusserver.controller.user.UgcController;
 import com.notfound.timecampusserver.controller.user.UserController;
 import com.notfound.timecampusserver.mapper.MediaMapper;
@@ -27,8 +28,10 @@ import com.notfound.timecampusserver.service.MapService;
 import com.notfound.timecampusserver.service.MediaFileService;
 import com.notfound.timecampusserver.service.PoiService;
 import com.notfound.timecampusserver.service.ReviewResultService;
+import com.notfound.timecampusserver.service.TimelineService;
 import com.notfound.timecampusserver.service.UgcService;
 import com.notfound.timecampusserver.service.UserService;
+import com.notfound.timecampusserver.security.UserAuthInterceptor;
 import com.notfound.timecampusserver.service.impl.MediaStructMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -48,6 +51,8 @@ class ControllerMappingRegressionTest {
         MediaFileService mediaFileService = mock(MediaFileService.class);
         MapService mapService = mock(MapService.class);
         UgcService ugcService = mock(UgcService.class);
+        TimelineService timelineService = mock(TimelineService.class);
+        UserAuthInterceptor userAuthInterceptor = mock(UserAuthInterceptor.class);
         AdminMediaService adminMediaService = mock(AdminMediaService.class);
         AdminMapService adminMapService = mock(AdminMapService.class);
         LogService logService = mock(LogService.class);
@@ -61,6 +66,7 @@ class ControllerMappingRegressionTest {
                 new PoiController(poiService),
                 new ContentController(mediaMapper, new MediaStructMapper(mediaFileService)),
                 new MapController(mapService),
+                new TimelineController(timelineService, userAuthInterceptor),
                 new MediaFileController(mediaFileService),
                 new UgcController(ugcService),
                 new AdminContentController(adminMediaService),

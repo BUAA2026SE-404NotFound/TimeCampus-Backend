@@ -3,20 +3,20 @@ package com.notfound.timecampusserver.controller.user;
 import com.notfound.timecampuscommon.api.ApiResponse;
 import com.notfound.timecampuscommon.api.ResultCode;
 import com.notfound.timecampuscommon.exception.BizException;
-import com.notfound.timecampuspojo.vo.CommentVO;
-import com.notfound.timecampuspojo.vo.MediaVO;
-import com.notfound.timecampuspojo.vo.UserProfileVO;
-import com.notfound.timecampuspojo.vo.UserReviewResultVO;
+import com.notfound.timecampuspojo.dto.CreateNoteRequest;
+import com.notfound.timecampuspojo.vo.*;
 import com.notfound.timecampusserver.security.UserContext;
+import com.notfound.timecampusserver.service.CommentService;
+import com.notfound.timecampusserver.service.MemoService;
 import com.notfound.timecampusserver.service.ReviewResultService;
 import com.notfound.timecampusserver.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import jakarta.validation.Valid;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -28,9 +28,74 @@ public class MeController {
     private final UserService userService;
     private final ReviewResultService reviewResultService;
 
+    @Autowired
+    private CommentService commentService;
+    @Autowired
+    private MemoService memoService;
+
     public MeController(UserService userService, ReviewResultService reviewResultService) {
         this.userService = userService;
         this.reviewResultService = reviewResultService;
+    }
+
+    @PostMapping("/notes")
+    @Operation(summary = "创建私有笔记")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<NoteVO> createNote(@Valid @RequestBody CreateNoteRequest request) {
+        Long userId = UserContext.getUserId();
+        return ApiResponse.success(commentService.createNote(userId, request.getPoiId(), request.getContent()));
+    }
+
+    @GetMapping("/notes")
+    @Operation(summary = "私有笔记列表")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<List<NoteVO>> listMyNotes(@RequestParam(required = false) Long poiId,
+                                                 @RequestParam(required = false) String status) {
+        Long userId = UserContext.getUserId();
+        List<NoteVO> list = commentService.listMyNotes(userId, poiId, status);
+        return ApiResponse.success(list);
+    }
+
+    @DeleteMapping("/notes/{id}")
+    @Operation(summary = "删除私有笔记")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<Void> deleteNote(@PathVariable Long id) {
+        Long userId = UserContext.getUserId();
+        commentService.deleteNote(id, userId);
+        return ApiResponse.success();
+    }
+
+    @PostMapping("/memos")
+    @Operation(summary = "创建私有图片备忘")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<MediaVO> createMemo(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("poiId") Long poiId,
+            @RequestParam("year") Integer year,
+            @RequestParam(required = false) String description) {
+        Long userId = UserContext.getUserId();
+        return ApiResponse.success(memoService.createMemo(userId, poiId, year, description, file));
+    }
+
+    @GetMapping("/memos")
+    @Operation(summary = "查询私有图片备忘列表")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<List<MediaVO>> listMemos(
+            @RequestParam(required = false) Long poiId,
+            @RequestParam(required = false) Integer yearFrom,
+            @RequestParam(required = false) Integer yearTo) {
+        Long userId = UserContext.getUserId();
+        List<MediaVO> memos = memoService.listMemos(userId, poiId, yearFrom, yearTo);
+        return ApiResponse.success(memos);
+    }
+
+    @DeleteMapping("/memos/{id}")
+    @Operation(summary = "删除私有图片备忘")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<Void> deleteMemo(@PathVariable Long id) {
+        Long userId = UserContext.getUserId();
+        memoService.deleteMemo(id, userId);
+        return ApiResponse.success();
     }
 
     @GetMapping
