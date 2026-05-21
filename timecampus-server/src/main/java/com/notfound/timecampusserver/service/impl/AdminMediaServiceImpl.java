@@ -95,12 +95,15 @@ public class AdminMediaServiceImpl implements AdminMediaService {
 
     @Override
     public MediaVO uploadOfficial(MultipartFile file, Long poiId, Integer year, String description, Long reviewerId) {
+        if (reviewerId == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "admin login required");
+        }
         if (poiId == null || !poiMapper.existsById(poiId)) {
             throw new BizException(ResultCode.NOT_FOUND, "poi not found: " + poiId);
         }
         validateYear(year);
 
-        String imagePath = storageService.store(file, reviewerId == null ? 0L : reviewerId);
+        String imagePath = storageService.store(file, reviewerId);
         MediaEntity entity = new MediaEntity();
         entity.setPoiId(poiId);
         entity.setType(TYPE_OFFICIAL);
@@ -152,6 +155,11 @@ public class AdminMediaServiceImpl implements AdminMediaService {
         }
         if (item.getYear() == null) {
             return "year is required";
+        }
+        try {
+            validateYear(item.getYear());
+        } catch (BizException e) {
+            return e.getMessage();
         }
         return null;
     }
