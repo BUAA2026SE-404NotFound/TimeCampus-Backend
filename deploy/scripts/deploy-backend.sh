@@ -98,6 +98,8 @@ start_app() {
 
     if command -v curl >/dev/null 2>&1; then
         log "Checking health endpoint: $HEALTH_URL"
+        sleep 10
+        log "Waiting the Backend to be available for 10 seconds..."
         local waited=0
         until curl -fsS --max-time 3 "$HEALTH_URL" >/dev/null; do
             if [ "$waited" -ge "$HEALTH_TIMEOUT_SECONDS" ]; then
