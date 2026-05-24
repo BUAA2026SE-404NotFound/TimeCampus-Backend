@@ -23,11 +23,12 @@ class UgcServiceImplTest {
     private final PoiMapper poiMapper = mock(PoiMapper.class);
     private final StorageService storageService = mock(StorageService.class);
     private final LogService logService = mock(LogService.class);
+    private final MediaFileService mediaFileService = mock(MediaFileService.class);
     private final UgcServiceImpl service = new UgcServiceImpl(
             mediaMapper,
             poiMapper,
             storageService,
-            new MediaStructMapper(mock(MediaFileService.class)),
+            new MediaStructMapper(mediaFileService),
             logService
     );
 
@@ -36,12 +37,13 @@ class UgcServiceImplTest {
         MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", "img".getBytes());
         when(poiMapper.existsById(7L)).thenReturn(true);
         when(storageService.store(file, 3L)).thenReturn("/uploads/photo.jpg");
+        when(mediaFileService.previewUrl(null, "/uploads/photo.jpg")).thenReturn("/api/v1/media/20/file");
 
         var result = service.upload(file, 7L, 2000, "old gate", null, 3L);
 
         assertThat(result.getPoiId()).isEqualTo(7L);
         assertThat(result.getType()).isEqualTo("ugc");
-        assertThat(result.getImagePath()).isEqualTo("/uploads/photo.jpg");
+        assertThat(result.getImagePath()).isEqualTo("/api/v1/media/20/file");
         assertThat(result.getReviewStatus()).isEqualTo("pending");
         verify(mediaMapper).insert(any(MediaEntity.class));
     }

@@ -11,6 +11,7 @@ import com.notfound.timecampusserver.config.TencentMapProperties;
 import com.notfound.timecampusserver.mapper.MediaMapper;
 import com.notfound.timecampusserver.mapper.PoiMapper;
 import com.notfound.timecampusserver.service.MapService;
+import com.notfound.timecampusserver.service.MediaFileService;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.client.RestClient;
 import org.springframework.stereotype.Service;
@@ -36,15 +37,18 @@ public class MapServiceImpl implements MapService {
     private final TencentMapProperties tencentMapProperties;
     private final RestClient restClient;
     private final TencentMapSignature tencentMapSignature;
+    private final MediaFileService mediaFileService;
 
     public MapServiceImpl(PoiMapper poiMapper,
                           MediaMapper mediaMapper,
                           TencentMapProperties tencentMapProperties,
-                          TencentMapSignature tencentMapSignature) {
+                          TencentMapSignature tencentMapSignature,
+                          MediaFileService mediaFileService) {
         this.poiMapper = poiMapper;
         this.mediaMapper = mediaMapper;
         this.tencentMapProperties = tencentMapProperties;
         this.tencentMapSignature = tencentMapSignature;
+        this.mediaFileService = mediaFileService;
         this.restClient = RestClient.create();
     }
 
@@ -77,7 +81,10 @@ public class MapServiceImpl implements MapService {
 
             List<MediaEntity> list = mediaByPoi.getOrDefault(poi.getId(), List.of());
             vo.setAvailableYears(list.stream().map(MediaEntity::getYear).distinct().sorted().collect(Collectors.toList()));
-            vo.setCoverImagePath(selectCover(list, year));
+            MediaEntity cover = selectCover(list, year);
+            String coverPreviewUrl = previewUrl(cover);
+            vo.setCoverImagePath(coverPreviewUrl);
+            vo.setCoverPreviewUrl(coverPreviewUrl);
             vo.setMediaList(list.stream().map(this::toMapMediaVO).collect(Collectors.toList()));
 
             mapPois.add(vo);
@@ -192,27 +199,32 @@ public class MapServiceImpl implements MapService {
         return result;
     }
 
-    private String selectCover(List<MediaEntity> list, Integer year) {
+    private MediaEntity selectCover(List<MediaEntity> list, Integer year) {
         if (list == null || list.isEmpty()) {
             return null;
         }
         if (year == null) {
-            return list.get(0).getImagePath();
+            return list.getFirst();
         }
         return list.stream()
                 .min(Comparator.comparingInt(m -> Math.abs(m.getYear() - year)))
-                .map(MediaEntity::getImagePath)
-                .orElse(list.get(0).getImagePath());
+                .orElse(list.getFirst());
     }
 
     private MapMediaVO toMapMediaVO(MediaEntity entity) {
         MapMediaVO vo = new MapMediaVO();
         vo.setId(entity.getId());
         vo.setYear(entity.getYear());
-        vo.setImagePath(entity.getImagePath());
+        String previewUrl = previewUrl(entity);
+        vo.setImagePath(previewUrl);
+        vo.setPreviewUrl(previewUrl);
         vo.setDescription(entity.getDescription());
         vo.setType(entity.getType());
         return vo;
+    }
+
+    private String previewUrl(MediaEntity entity) {
+        return entity == null ? null : mediaFileService.previewUrl(entity.getId(), entity.getImagePath());
     }
 
     private void requireTencentKey() {

@@ -19,7 +19,7 @@ class LocalStorageServiceTest {
 
     @Test
     void storeReturnsAbsolutePathUnderConfiguredRoot() {
-        LocalStorageService service = new LocalStorageService(new StorageProperties(tempDir.toString(), 10L));
+        LocalStorageService service = new LocalStorageService(new StorageProperties(tempDir.toString(), 10L, 600L));
         MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", "img".getBytes());
 
         String storedPath = service.store(file, 7L);
@@ -35,7 +35,7 @@ class LocalStorageServiceTest {
     @Test
     void storeCreatesDateDirectoryWhenMissing() {
         Path root = tempDir.resolve("cos-root");
-        LocalStorageService service = new LocalStorageService(new StorageProperties(root.toString(), 10L));
+        LocalStorageService service = new LocalStorageService(new StorageProperties(root.toString(), 10L, 600L));
         MockMultipartFile file = new MockMultipartFile("file", "photo.png", "image/png", "img".getBytes());
 
         String storedPath = service.store(file, 1L);
@@ -46,7 +46,7 @@ class LocalStorageServiceTest {
 
     @Test
     void storeInfersExtensionFromContentTypeWhenFilenameHasNoExtension() {
-        LocalStorageService service = new LocalStorageService(new StorageProperties(tempDir.toString(), 10L));
+        LocalStorageService service = new LocalStorageService(new StorageProperties(tempDir.toString(), 10L, 600L));
         MockMultipartFile file = new MockMultipartFile("file", "photo", "image/png", "img".getBytes());
 
         String storedPath = service.store(file, 1L);
@@ -57,7 +57,7 @@ class LocalStorageServiceTest {
 
     @Test
     void storeRejectsUnsupportedExtension() {
-        LocalStorageService service = new LocalStorageService(new StorageProperties(tempDir.toString(), 10L));
+        LocalStorageService service = new LocalStorageService(new StorageProperties(tempDir.toString(), 10L, 600L));
         MockMultipartFile file = new MockMultipartFile("file", "shell.php", "application/octet-stream", "x".getBytes());
 
         assertThatThrownBy(() -> service.store(file, 1L))
@@ -67,7 +67,7 @@ class LocalStorageServiceTest {
 
     @Test
     void storeRejectsOversizedFile() {
-        LocalStorageService service = new LocalStorageService(new StorageProperties(tempDir.toString(), 0L));
+        LocalStorageService service = new LocalStorageService(new StorageProperties(tempDir.toString(), 0L, 600L));
         MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", "x".getBytes());
 
         assertThatThrownBy(() -> service.store(file, 1L))

@@ -21,6 +21,8 @@ public class MapPoiVO {
     private String description;
     @Schema(description = "封面图片路径（根据 year 选择最接近年份的官方已通过影像）", example = "https://example.com/images/poi-1-2000.jpg")
     private String coverImagePath;
+    @Schema(description = "前端可直接访问的封面预览 URL")
+    private String coverPreviewUrl;
     @Schema(description = "该地点可用年份列表（官方已通过影像的年份集合）", example = "[1952, 1980, 2000]")
     private List<Integer> availableYears;
 
@@ -83,6 +85,14 @@ public class MapPoiVO {
         this.coverImagePath = coverImagePath;
     }
 
+    public String getCoverPreviewUrl() {
+        return coverPreviewUrl;
+    }
+
+    public void setCoverPreviewUrl(String coverPreviewUrl) {
+        this.coverPreviewUrl = coverPreviewUrl;
+    }
+
     public List<Integer> getAvailableYears() {
         return availableYears;
     }
@@ -99,4 +109,3 @@ public class MapPoiVO {
         this.mediaList = mediaList;
     }
 }
-
