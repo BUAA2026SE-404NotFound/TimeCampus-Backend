@@ -24,7 +24,7 @@ public class MediaFileController {
 
     @GetMapping("/{id}/file")
     @Operation(summary = "读取影像文件", description = "用于访问保存在本地文件系统或挂载目录中的 media.image_path。必须使用内容接口返回的短期 accessToken。远程 URL 直接由前端访问。")
-    public ResponseEntity<Resource> file(@PathVariable Long id, @RequestParam String accessToken) {
+    public ResponseEntity<Resource> file(@PathVariable Long id, @RequestParam(required = false) String accessToken) {
         Resource resource = mediaFileService.loadMediaFile(id, accessToken);
         return ResponseEntity.ok()
                 .header("Content-Type", mediaFileService.contentType(resource))

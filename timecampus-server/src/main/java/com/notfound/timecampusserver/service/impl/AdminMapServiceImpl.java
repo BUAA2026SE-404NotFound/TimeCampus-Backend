@@ -60,7 +60,7 @@ public class AdminMapServiceImpl implements AdminMapService {
         if (limit == null) {
             return 50;
         }
-        return Math.clamp(limit, 1, 200);
+        return Math.max(1, Math.min(limit, 200));
     }
 
     private String adminPreviewUrl(Long mediaId, String imagePath) {

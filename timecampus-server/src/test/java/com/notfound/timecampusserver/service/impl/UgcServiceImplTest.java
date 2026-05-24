@@ -13,6 +13,7 @@ import org.springframework.mock.web.MockMultipartFile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -37,7 +38,12 @@ class UgcServiceImplTest {
         MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", "img".getBytes());
         when(poiMapper.existsById(7L)).thenReturn(true);
         when(storageService.store(file, 3L)).thenReturn("/uploads/photo.jpg");
-        when(mediaFileService.previewUrl(null, "/uploads/photo.jpg")).thenReturn("/api/v1/media/20/file");
+        doAnswer(invocation -> {
+            MediaEntity entity = invocation.getArgument(0);
+            entity.setId(20L);
+            return null;
+        }).when(mediaMapper).insert(any(MediaEntity.class));
+        when(mediaFileService.previewUrl(20L, "/uploads/photo.jpg")).thenReturn("/api/v1/media/20/file");
 
         var result = service.upload(file, 7L, 2000, "old gate", null, 3L);
 
