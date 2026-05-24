@@ -38,10 +38,22 @@ public class ContentController {
                                                 @RequestParam(required = false) String type,
                                                 @RequestParam(required = false) Integer yearFrom,
                                                 @RequestParam(required = false) Integer yearTo) {
-        return ApiResponse.success(mediaMapper.list(id, normalizeType(type), REVIEW_APPROVED, yearFrom, yearTo)
+        return ApiResponse.success(listApprovedByPoi(id, type, yearFrom, yearTo));
+    }
+
+    @GetMapping("/pois/{id}/official-contents")
+    @Operation(summary = "查询 POI 下官方已审核通过内容", description = "兼容旧前端路径；等价于 /pois/{id}/contents?type=official。")
+    public ApiResponse<List<MediaVO>> listOfficialByPoi(@PathVariable Long id,
+                                                       @RequestParam(required = false) Integer yearFrom,
+                                                       @RequestParam(required = false) Integer yearTo) {
+        return ApiResponse.success(listApprovedByPoi(id, "official", yearFrom, yearTo));
+    }
+
+    private List<MediaVO> listApprovedByPoi(Long id, String type, Integer yearFrom, Integer yearTo) {
+        return mediaMapper.list(id, normalizeType(type), REVIEW_APPROVED, yearFrom, yearTo)
                 .stream()
                 .map(mediaStructMapper::toVO)
-                .toList());
+                .toList();
     }
 
     @GetMapping("/contents/{id}")

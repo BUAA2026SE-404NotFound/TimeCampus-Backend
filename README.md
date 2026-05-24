@@ -64,12 +64,12 @@ timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 - 按用户 ID 查询审核结果汇总：`GET /api/v1/users/{id}/review-results?status=pending|approved|rejected`，仅允许查询本人
 - 按用户 ID 查询 UGC / 评论审核结果：`GET /api/v1/users/{id}/review-results/ugc`、`GET /api/v1/users/{id}/review-results/comments`，仅允许查询本人
 - POI 公开查询：`GET /api/v1/pois`、`GET /api/v1/pois/{id}`
-- 内容查询：`GET /api/v1/pois/{id}/contents`、`GET /api/v1/contents/{id}`
+- 内容查询：`GET /api/v1/pois/{id}/contents`、`GET /api/v1/pois/{id}/official-contents`、`GET /api/v1/contents/{id}`
 - 时间切换：`GET /api/v1/pois/{id}/time-switch?year=YYYY`
 - 收藏：`POST /api/v1/favorites/{targetType}/{targetId}`、`DELETE /api/v1/favorites/{targetType}/{targetId}`、`GET /api/v1/favorites`
 - UGC 上传：`POST /api/v1/ugc`
 - 评论：`POST /api/v1/comments`、`GET /api/v1/comments`、`GET /api/v1/my/comments`
-- 地图聚合与辅助：`GET /api/v1/map/home`、`GET /api/v1/map/reverse-geocode`、`GET /api/v1/map/poi-search`
+- 地图聚合与辅助：`GET /api/v1/map/home`、`GET /api/v1/map/poi/{poiId}/timemachine`、`GET /api/v1/map/reverse-geocode`、`GET /api/v1/map/poi-search`
 
 ### 管理端
 
@@ -131,6 +131,7 @@ timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 - token 当前存储在 Redis 中
 - `/api/v1/admin/**` 需要管理员 token
 - `/api/v1/me`、用户审核结果、收藏、UGC 上传等用户行为接口需要用户 token
+- 会返回媒体访问 URL 的用户端接口也需要用户 token，包括 `/api/v1/pois/{id}/contents`、`/api/v1/pois/{id}/official-contents`、`/api/v1/contents/{id}`、`/api/v1/pois/{id}/time-switch`、`/api/v1/map/home`、`/api/v1/map/poi/{poiId}/timemachine`、`/api/v1/timeline`
 
 ### UGC 审核流程
 
@@ -166,9 +167,20 @@ Mapper XML 显式写入 `create_time` / `update_time`，避免依赖数据库隐
 storage:
   local-root-dir: ${TIMECAMPUS_STORAGE_DIR:/home/ubuntu/cos}
   max-file-size-mb: 10
+  media-file-token-ttl-seconds: 600
 ```
 
 生产环境建议保持 `/home/ubuntu/cos` 为 COS 挂载或同步目录。数据库中的媒体路径使用绝对路径保存，后端读取文件时会校验路径必须位于 `storage.local-root-dir` 下，以避免相对路径受 Jar 启动目录影响或发生路径穿越。
+
+用户端接口不会直接暴露本地文件路径。`MediaVO.imagePath`、`MediaVO.previewUrl`、地图返回的 `coverImagePath`、`coverPreviewUrl`、`mediaList[].imagePath`、`mediaList[].previewUrl` 均为前端可直接作为图片 `src` 使用的访问 URL。对于本地挂载文件，URL 会携带短期 `accessToken`，例如：
+
+```text
+https://api.example.com/api/v1/media/123/file?accessToken=...
+```
+
+小程序图片组件不能稳定携带 `Authorization` 请求头，因此媒体文件直出接口使用短期 URL token 鉴权。前端应使用内容接口响应中的 URL，不要自行拼接 `/api/v1/media/{id}/file`。`accessToken` 默认有效期为 600 秒，可通过 `storage.media-file-token-ttl-seconds` 或环境变量 `TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS` 调整。
+
+管理端预览仍使用管理员鉴权接口 `/api/v1/admin/media/{id}/file`，不要复用用户端短期 URL 规则。
 
 ### 腾讯地图 Sig
 
@@ -257,6 +269,7 @@ WECHAT_APPID
 WECHAT_SECRET
 TENCENT_MAP_KEY
 TENCENT_MAP_SK
+TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS
 ```
 
 本地开发需要 MySQL 和 Redis 可用。
@@ -321,6 +334,7 @@ mvn test
 - 收藏逻辑
 - UGC 上传与审核规则
 - 文件上传校验、绝对路径存储、媒体文件访问路径安全
+- 媒体文件短期 URL token 鉴权
 - AOP 时间填充
 - `/api/v1` 回归接口
 - 管理端日志接口
@@ -363,6 +377,7 @@ mvn -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.Wechat
 - [`docs/alpha-release-notes.md`](docs/alpha-release-notes.md)：Alpha 版本范围、已知限制与交付检查清单。
 - [`docs/alpha-test-report.md`](docs/alpha-test-report.md)：测试计划、测试过程、测试矩阵、压测结果与 Alpha 出口条件。
 - [`docs/deploy.md`](docs/deploy.md)：Ubuntu 24.04 LTS 生产部署、Nginx、配置文件和常见排查。
+- [`docs/frontend-media-access-fix.md`](docs/frontend-media-access-fix.md)：媒体访问修复后给前端的对接说明。
 
 ## 分支策略
 

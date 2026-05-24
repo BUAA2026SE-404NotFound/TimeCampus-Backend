@@ -13,6 +13,9 @@ public class MapMediaVO {
     @Schema(description = "图片路径（media.image_path）", example = "https://example.com/images/poi-1-2000.jpg")
     private String imagePath;
 
+    @Schema(description = "前端可直接访问的图片预览 URL")
+    private String previewUrl;
+
     @Schema(description = "影像说明（media.description）", example = "主楼 2000 年旧照")
     private String description;
 
@@ -43,6 +46,14 @@ public class MapMediaVO {
         this.imagePath = imagePath;
     }
 
+    public String getPreviewUrl() {
+        return previewUrl;
+    }
+
+    public void setPreviewUrl(String previewUrl) {
+        this.previewUrl = previewUrl;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -59,4 +70,3 @@ public class MapMediaVO {
         this.type = type;
     }
 }
-

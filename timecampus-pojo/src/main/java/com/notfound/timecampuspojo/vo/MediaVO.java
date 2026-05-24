@@ -12,9 +12,9 @@ public class MediaVO {
     private Long poiId;
     @Schema(description = "类型：official/ugc（media.type）", example = "official")
     private String type;
-    @Schema(description = "图片路径（media.image_path）", example = "https://example.com/images/poi-1-2000.jpg")
+    @Schema(description = "前端可访问的图片 URL；不暴露服务端存储路径", example = "https://example.com/images/poi-1-2000.jpg")
     private String imagePath;
-    @Schema(description = "管理端可访问的预览 URL")
+    @Schema(description = "前端可访问的预览 URL")
     private String previewUrl;
     @Schema(description = "拍摄年份（media.year）", example = "2000")
     private Integer year;

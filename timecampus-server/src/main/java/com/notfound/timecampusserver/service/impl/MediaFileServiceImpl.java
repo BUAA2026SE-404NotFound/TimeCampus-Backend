@@ -8,23 +8,33 @@ import com.notfound.timecampusserver.mapper.MediaMapper;
 import com.notfound.timecampusserver.service.MediaFileService;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Duration;
+import java.util.UUID;
 
 @Service
 public class MediaFileServiceImpl implements MediaFileService {
 
     private static final String DEFAULT_STORAGE_ROOT = LocalStorageService.DEFAULT_STORAGE_ROOT;
+    private static final String MEDIA_FILE_TOKEN_PREFIX = "media:file:token:";
+    private static final long DEFAULT_MEDIA_FILE_TOKEN_TTL_SECONDS = 600L;
 
     private final MediaMapper mediaMapper;
     private final StorageProperties storageProperties;
+    private final StringRedisTemplate redisTemplate;
 
-    public MediaFileServiceImpl(MediaMapper mediaMapper, StorageProperties storageProperties) {
+    public MediaFileServiceImpl(MediaMapper mediaMapper,
+                                StorageProperties storageProperties,
+                                StringRedisTemplate redisTemplate) {
         this.mediaMapper = mediaMapper;
         this.storageProperties = storageProperties;
+        this.redisTemplate = redisTemplate;
     }
 
     @Override
@@ -36,11 +46,21 @@ public class MediaFileServiceImpl implements MediaFileService {
         if (value.startsWith("http://") || value.startsWith("https://")) {
             return value;
         }
-        return "/api/v1/media/" + mediaId + "/file";
+        String accessToken = issueAccessToken(mediaId);
+        String path = "/api/v1/media/" + mediaId + "/file";
+        try {
+            return ServletUriComponentsBuilder.fromCurrentContextPath()
+                    .path(path)
+                    .queryParam("accessToken", accessToken)
+                    .toUriString();
+        } catch (IllegalStateException e) {
+            return path + "?accessToken=" + accessToken;
+        }
     }
 
     @Override
-    public Resource loadMediaFile(Long mediaId) {
+    public Resource loadMediaFile(Long mediaId, String accessToken) {
+        validateAccessToken(mediaId, accessToken);
         return loadMediaFileInternal(mediaId, true);
     }
 
@@ -127,5 +147,32 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     private String defaultIfBlank(String value, String fallback) {
         return value == null || value.isBlank() ? fallback : value;
+    }
+
+    private String issueAccessToken(Long mediaId) {
+        if (mediaId == null) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "mediaId is required");
+        }
+        String token = UUID.randomUUID().toString().replace("-", "");
+        redisTemplate.opsForValue().set(
+                MEDIA_FILE_TOKEN_PREFIX + token,
+                String.valueOf(mediaId),
+                Duration.ofSeconds(mediaFileTokenTtlSeconds()));
+        return token;
+    }
+
+    private void validateAccessToken(Long mediaId, String accessToken) {
+        if (accessToken == null || accessToken.isBlank()) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "missing media access token");
+        }
+        String expectedMediaId = redisTemplate.opsForValue().get(MEDIA_FILE_TOKEN_PREFIX + accessToken);
+        if (!String.valueOf(mediaId).equals(expectedMediaId)) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "invalid or expired media access token");
+        }
+    }
+
+    private long mediaFileTokenTtlSeconds() {
+        Long configured = storageProperties == null ? null : storageProperties.mediaFileTokenTtlSeconds();
+        return configured == null || configured <= 0 ? DEFAULT_MEDIA_FILE_TOKEN_TTL_SECONDS : configured;
     }
 }

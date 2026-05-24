@@ -21,8 +21,9 @@ public class MediaStructMapper {
         vo.setId(entity.getId());
         vo.setPoiId(entity.getPoiId());
         vo.setType(entity.getType());
-        vo.setImagePath(entity.getImagePath());
-        vo.setPreviewUrl(mediaFileService.previewUrl(entity.getId(), entity.getImagePath()));
+        String previewUrl = mediaFileService.previewUrl(entity.getId(), entity.getImagePath());
+        vo.setImagePath(previewUrl);
+        vo.setPreviewUrl(previewUrl);
         vo.setYear(entity.getYear());
         vo.setDescription(entity.getDescription());
         vo.setUploadUserId(entity.getUploadUserId());

@@ -25,6 +25,7 @@ management:
 storage:
   local-root-dir: ${TIMECAMPUS_STORAGE_DIR:/home/ubuntu/cos}
   max-file-size-mb: ${TIMECAMPUS_MAX_FILE_SIZE_MB:10}
+  media-file-token-ttl-seconds: ${TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS:600}
 
 tencent-map:
   key: ${TENCENT_MAP_KEY:}
