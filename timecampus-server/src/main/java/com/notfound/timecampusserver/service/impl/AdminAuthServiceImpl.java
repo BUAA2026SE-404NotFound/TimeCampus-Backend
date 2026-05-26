@@ -8,6 +8,7 @@ import com.notfound.timecampuspojo.vo.AdminLoginVO;
 import com.notfound.timecampusserver.mapper.AdminMapper;
 import com.notfound.timecampusserver.security.AdminAuthInterceptor;
 import com.notfound.timecampusserver.service.AdminAuthService;
+import com.notfound.timecampusserver.service.CaptchaVerificationService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -16,16 +17,22 @@ public class AdminAuthServiceImpl implements AdminAuthService {
 
     private final AdminMapper adminMapper;
     private final AdminAuthInterceptor adminAuthInterceptor;
+    private final CaptchaVerificationService captchaVerificationService;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public AdminAuthServiceImpl(AdminMapper adminMapper, AdminAuthInterceptor adminAuthInterceptor) {
+    public AdminAuthServiceImpl(AdminMapper adminMapper,
+                                AdminAuthInterceptor adminAuthInterceptor,
+                                CaptchaVerificationService captchaVerificationService) {
         this.adminMapper = adminMapper;
         this.adminAuthInterceptor = adminAuthInterceptor;
+        this.captchaVerificationService = captchaVerificationService;
         this.passwordEncoder = new BCryptPasswordEncoder();
     }
 
     @Override
     public AdminLoginVO login(AdminLoginRequest request) {
+        captchaVerificationService.verifyLoginToken(request.getCapToken());
+
         AdminEntity admin = adminMapper.findByAdminName(request.getAdminName());
         if (admin == null) {
             throw new BizException(ResultCode.UNAUTHORIZED, "invalid admin credentials");
@@ -63,4 +70,3 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         return stored.equals(raw);
     }
 }
-

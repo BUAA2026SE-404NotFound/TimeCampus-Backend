@@ -73,7 +73,7 @@ timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 
 ### 管理端
 
-- 管理员登录/登出：`POST /api/v1/admin/login`、`POST /api/v1/admin/logout`
+- 管理员登录/登出：`POST /api/v1/admin/login`、`POST /api/v1/admin/logout`；生产登录请求需要携带 Cap 返回的 `capToken`
 - POI 管理：`/api/v1/admin/pois`
 - 官方内容批量导入：`POST /api/v1/admin/contents/batch-import`
 - 官方影像批量导入：`POST /api/v1/admin/media/import`
@@ -256,6 +256,17 @@ tencent-map:
   sk: your-tencent-sk
 ```
 
+生产管理端登录需要开启 Cap 后端校验：
+
+```yaml
+cap:
+  enabled: true
+  siteverify-url: https://cap.timecampus.asia/<site-key>/siteverify
+  secret: your-cap-site-secret
+```
+
+本地开发可使用 `CAP_ENABLED=false` 跳过验证码校验；生产必须使用 `CAP_ENABLED=true`，且前端不能保存或暴露 `CAP_SECRET`。
+
 也可以通过环境变量注入敏感信息：
 
 ```text
@@ -269,6 +280,9 @@ WECHAT_APPID
 WECHAT_SECRET
 TENCENT_MAP_KEY
 TENCENT_MAP_SK
+CAP_ENABLED
+CAP_SITEVERIFY_URL
+CAP_SECRET
 TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS
 ```
 
@@ -376,8 +390,6 @@ mvn -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.Wechat
 
 - [`docs/alpha-release-notes.md`](docs/alpha-release-notes.md)：Alpha 版本范围、已知限制与交付检查清单。
 - [`docs/alpha-test-report.md`](docs/alpha-test-report.md)：测试计划、测试过程、测试矩阵、压测结果与 Alpha 出口条件。
-- [`docs/deploy.md`](docs/deploy.md)：Ubuntu 24.04 LTS 生产部署、Nginx、配置文件和常见排查。
-- [`docs/frontend-media-access-fix.md`](docs/frontend-media-access-fix.md)：媒体访问修复后给前端的对接说明。
 
 ## 分支策略
 

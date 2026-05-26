@@ -6,9 +6,9 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   data:
     redis:
-      host: ${REDIS_HOST}
+      host: ${REDIS_HOST:valkey}
       port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD}
+      password: ${REDIS_PASSWORD:}
       database: ${REDIS_DATABASE:0}
       timeout: 3s
 
@@ -16,7 +16,7 @@ server:
   port: ${SERVER_PORT:8080}
 
 storage:
-  local-root-dir: ${TIMECAMPUS_STORAGE_DIR:/home/ubuntu/cos}
+  local-root-dir: ${TIMECAMPUS_STORAGE_DIR:/data/storage}
   max-file-size-mb: ${TIMECAMPUS_MAX_FILE_SIZE_MB:10}
   media-file-token-ttl-seconds: ${TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS:600}
 
@@ -37,5 +37,5 @@ wechat:
   secret: ${WECHAT_SECRET}
 
 tencent-map:
-  key: ${TENCENT_MAP_KEY}
-  sk: ${TENCENT_MAP_SK}
+  key: ${TENCENT_MAP_KEY:}
+  sk: ${TENCENT_MAP_SK:}

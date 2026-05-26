@@ -26,6 +26,13 @@ storage:
   max-file-size-mb: ${TIMECAMPUS_MAX_FILE_SIZE_MB:20}
   media-file-token-ttl-seconds: ${TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS:600}
 
+cap:
+  enabled: ${CAP_ENABLED:false}
+  siteverify-url: ${CAP_SITEVERIFY_URL:}
+  secret: ${CAP_SECRET:}
+  connect-timeout: ${CAP_CONNECT_TIMEOUT:2s}
+  read-timeout: ${CAP_READ_TIMEOUT:5s}
+
 tencent-map:
   key: ${TENCENT_MAP_KEY:}
   sk: ${TENCENT_MAP_SK:}

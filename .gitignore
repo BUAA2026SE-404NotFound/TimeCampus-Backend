@@ -20,6 +20,9 @@ out
 **/application.yaml
 **/application-dev.yaml
 **/application-prod.yaml
+!deploy/config/
+!deploy/config/application.yaml
+!deploy/config/application-prod.yaml
 
 # Logs
 *.log
