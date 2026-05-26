@@ -2,6 +2,8 @@
 
 FROM maven:3.9.11-eclipse-temurin-21 AS build
 WORKDIR /workspace
+ARG MAVEN_OPTS=
+ENV MAVEN_OPTS=${MAVEN_OPTS}
 
 # 先拷贝 pom 以便缓存依赖
 COPY pom.xml .
