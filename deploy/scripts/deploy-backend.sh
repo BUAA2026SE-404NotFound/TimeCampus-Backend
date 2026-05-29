@@ -1,30 +1,27 @@
 #!/usr/bin/env bash
-# Deploy TimeCampus backend for the production server layout:
+# Deploy TimeCampus backend on the production server layout:
 #   ~/TimeCampus-Backend  backend repository
-#   ~/app                 backend runtime directory
-#   ~/cos                 mounted or synced object storage directory
-#   ~/TimeCampus-Portal   separate React portal, not touched by this script
+#   ~/app                 runtime directory: app.jar, config/, logs, backups
+#
+# The script is intended to be run directly on the server.
 
 set -Eeuo pipefail
 
 REPO_DIR="${REPO_DIR:-$HOME/TimeCampus-Backend}"
 APP_DIR="${APP_DIR:-$HOME/app}"
+SERVICE_NAME="${SERVICE_NAME:-timecampus-backend}"
 SPRING_PROFILE="${SPRING_PROFILE:-prod}"
-JAVA_BIN="${JAVA_BIN:-java}"
 MAVEN_BIN="${MAVEN_BIN:-mvn}"
+JAVA_BIN="${JAVA_BIN:-/usr/bin/java}"
 SKIP_GIT_PULL="${SKIP_GIT_PULL:-false}"
-STOP_TIMEOUT_SECONDS="${STOP_TIMEOUT_SECONDS:-20}"
 HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:8080/api/v1/health}"
-HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-30}"
+HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-45}"
 
-PID_FILE="${PID_FILE:-$APP_DIR/app.pid}"
-LOG_FILE="${LOG_FILE:-$APP_DIR/app.log}"
 APP_JAR="$APP_DIR/app.jar"
 CONFIG_DIR="$APP_DIR/config"
-PROFILE_CONFIG_FILE="$CONFIG_DIR/application-${SPRING_PROFILE}.yaml"
-BASE_CONFIG_FILE="$CONFIG_DIR/application.yaml"
 BACKUP_DIR="$APP_DIR/backup"
 TARGET_DIR="$REPO_DIR/timecampus-server/target"
+SYSTEMD_UNIT="/etc/systemd/system/${SERVICE_NAME}.service"
 
 log() {
     printf '[%s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
@@ -48,71 +45,56 @@ find_latest_jar() {
         awk 'NR == 1 { sub(/^[^ ]+ /, ""); print }'
 }
 
-stop_app() {
-    if [ ! -f "$PID_FILE" ]; then
-        log "No pid file found; skip stop"
+ensure_systemd_unit() {
+    if [ -f "$SYSTEMD_UNIT" ]; then
         return
     fi
 
-    local pid
-    pid="$(cat "$PID_FILE")"
-    if [ -z "$pid" ] || ! kill -0 "$pid" 2>/dev/null; then
-        log "Stale pid file; removing $PID_FILE"
-        rm -f "$PID_FILE"
-        return
-    fi
+    log "Creating systemd unit: $SYSTEMD_UNIT"
+    sudo tee "$SYSTEMD_UNIT" >/dev/null <<UNIT
+[Unit]
+Description=TimeCampus Spring Boot Backend
+After=network-online.target redis-server.service
+Wants=network-online.target
 
-    log "Stopping backend process pid=$pid"
-    kill "$pid" || true
+[Service]
+Type=simple
+User=$USER
+WorkingDirectory=$APP_DIR
+EnvironmentFile=-$HOME/TimeCampus/.env
+Environment=SPRING_PROFILES_ACTIVE=$SPRING_PROFILE
+Environment=SERVER_PORT=8080
+Environment=SERVER_ADDRESS=127.0.0.1
+Environment=TIMECAMPUS_MAX_FILE_SIZE_MB=20
+Environment="JAVA_TOOL_OPTIONS=-Xms256m -Xmx768m"
+ExecStart=$JAVA_BIN -jar $APP_JAR --server.address=127.0.0.1 --spring.config.additional-location=file:$CONFIG_DIR/
+Restart=always
+RestartSec=5
+SuccessExitStatus=143
+StandardOutput=append:$APP_DIR/app.log
+StandardError=append:$APP_DIR/app.log
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+    sudo systemctl daemon-reload
+    sudo systemctl enable "$SERVICE_NAME"
+}
+
+wait_for_health() {
+    require_command curl
+    log "Checking health endpoint: $HEALTH_URL"
 
     local waited=0
-    while kill -0 "$pid" 2>/dev/null; do
-        if [ "$waited" -ge "$STOP_TIMEOUT_SECONDS" ]; then
-            log "Process did not stop in ${STOP_TIMEOUT_SECONDS}s; sending SIGKILL"
-            kill -9 "$pid" || true
-            break
+    until curl -fsS --max-time 3 "$HEALTH_URL" >/dev/null; do
+        if [ "$waited" -ge "$HEALTH_TIMEOUT_SECONDS" ]; then
+            sudo journalctl -u "$SERVICE_NAME" -n 120 --no-pager || true
+            fail "Health check failed: $HEALTH_URL"
         fi
         sleep 1
         waited=$((waited + 1))
     done
-
-    rm -f "$PID_FILE"
-}
-
-start_app() {
-    log "Starting backend with profile=$SPRING_PROFILE"
-    cd "$APP_DIR"
-    nohup "$JAVA_BIN" -jar "$APP_JAR" \
-        --spring.profiles.active="$SPRING_PROFILE" \
-        > "$LOG_FILE" 2>&1 &
-    echo $! > "$PID_FILE"
-
-    sleep 8
-    if ! kill -0 "$(cat "$PID_FILE")" 2>/dev/null; then
-        tail -n 120 "$LOG_FILE" || true
-        rm -f "$PID_FILE"
-        fail "Backend failed to start"
-    fi
-
-    log "Backend started pid=$(cat "$PID_FILE")"
-
-    if command -v curl >/dev/null 2>&1; then
-        log "Checking health endpoint: $HEALTH_URL"
-        sleep 10
-        log "Waiting the Backend to be available for 10 seconds..."
-        local waited=0
-        until curl -fsS --max-time 3 "$HEALTH_URL" >/dev/null; do
-            if [ "$waited" -ge "$HEALTH_TIMEOUT_SECONDS" ]; then
-                tail -n 120 "$LOG_FILE" || true
-                fail "Health check failed: $HEALTH_URL"
-            fi
-            sleep 1
-            waited=$((waited + 1))
-        done
-        log "Health check passed"
-    else
-        log "curl not found; skipping HTTP health check"
-    fi
+    log "Health check passed"
 }
 
 require_command git
@@ -121,13 +103,14 @@ require_command "$JAVA_BIN"
 require_command find
 require_command sort
 require_command awk
+require_command sudo
 
 [ -d "$REPO_DIR" ] || fail "Backend repository not found: $REPO_DIR"
 [ -f "$REPO_DIR/pom.xml" ] || fail "Missing Maven pom.xml in $REPO_DIR"
 
 mkdir -p "$CONFIG_DIR" "$BACKUP_DIR"
-if [ ! -f "$PROFILE_CONFIG_FILE" ] && [ ! -f "$BASE_CONFIG_FILE" ]; then
-    fail "Missing config file: expected $PROFILE_CONFIG_FILE or $BASE_CONFIG_FILE"
+if [ ! -f "$CONFIG_DIR/application.yaml" ] && [ ! -f "$CONFIG_DIR/application-${SPRING_PROFILE}.yaml" ]; then
+    fail "Missing config file: expected $CONFIG_DIR/application.yaml or application-${SPRING_PROFILE}.yaml"
 fi
 
 cd "$REPO_DIR"
@@ -146,11 +129,7 @@ log "Building backend jar"
 
 latest_jar="$(find_latest_jar)"
 [ -n "$latest_jar" ] || fail "No jar found under $TARGET_DIR"
-[ -f "$latest_jar" ] || fail "Latest jar path is invalid: $latest_jar"
-
 log "Latest jar: $latest_jar"
-
-stop_app
 
 if [ -f "$APP_JAR" ]; then
     backup_file="$BACKUP_DIR/app-$(date '+%Y%m%d%H%M%S').jar"
@@ -161,6 +140,11 @@ fi
 log "Copying jar to $APP_JAR"
 cp "$latest_jar" "$APP_JAR"
 
-start_app
+ensure_systemd_unit
+
+log "Restarting $SERVICE_NAME"
+sudo systemctl daemon-reload
+sudo systemctl restart "$SERVICE_NAME"
+wait_for_health
 
 log "Deployment successful"
