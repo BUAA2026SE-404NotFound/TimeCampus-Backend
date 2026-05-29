@@ -16,6 +16,8 @@ public class MediaVO {
     private String imagePath;
     @Schema(description = "前端可访问的预览 URL")
     private String previewUrl;
+    @Schema(description = "前端可访问的缩略图 URL")
+    private String thumbnailUrl;
     @Schema(description = "拍摄年份（media.year）", example = "2000")
     private Integer year;
     @Schema(description = "影像说明（可选）", example = "主楼 2000 年旧照")
@@ -73,6 +75,14 @@ public class MediaVO {
 
     public void setPreviewUrl(String previewUrl) {
         this.previewUrl = previewUrl;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
     }
 
     public Integer getYear() {

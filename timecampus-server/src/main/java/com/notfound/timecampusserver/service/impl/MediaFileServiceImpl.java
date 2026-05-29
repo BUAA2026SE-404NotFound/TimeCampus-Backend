@@ -12,10 +12,20 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.imageio.IIOImage;
+import javax.imageio.ImageIO;
+import javax.imageio.ImageWriteParam;
+import javax.imageio.ImageWriter;
+import javax.imageio.stream.ImageOutputStream;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.Iterator;
 import java.util.UUID;
 
 @Service
@@ -25,6 +35,9 @@ public class MediaFileServiceImpl implements MediaFileService {
     private static final String MEDIA_FILE_TOKEN_PREFIX = "media:file:token:";
     private static final String ADMIN_MEDIA_FILE_TOKEN_PREFIX = "admin:media:file:token:";
     private static final long DEFAULT_MEDIA_FILE_TOKEN_TTL_SECONDS = 600L;
+    private static final int MIN_THUMBNAIL_SIZE = 32;
+    private static final int MAX_THUMBNAIL_SIZE = 2048;
+    private static final float THUMBNAIL_JPEG_QUALITY = 0.82f;
 
     private final MediaMapper mediaMapper;
     private final StorageProperties storageProperties;
@@ -40,15 +53,25 @@ public class MediaFileServiceImpl implements MediaFileService {
 
     @Override
     public String previewUrl(Long mediaId, String imagePath) {
-        return signedPreviewUrl(mediaId, imagePath, "/api/v1/media/" + mediaId + "/file", MEDIA_FILE_TOKEN_PREFIX);
+        return previewUrl(mediaId, imagePath, null);
+    }
+
+    @Override
+    public String previewUrl(Long mediaId, String imagePath, Integer size) {
+        return signedPreviewUrl(mediaId, imagePath, "/api/v1/media/" + mediaId + "/file", MEDIA_FILE_TOKEN_PREFIX, size);
     }
 
     @Override
     public String adminPreviewUrl(Long mediaId, String imagePath) {
-        return signedPreviewUrl(mediaId, imagePath, "/api/v1/admin/media/" + mediaId + "/file", ADMIN_MEDIA_FILE_TOKEN_PREFIX);
+        return adminPreviewUrl(mediaId, imagePath, null);
     }
 
-    private String signedPreviewUrl(Long mediaId, String imagePath, String path, String tokenPrefix) {
+    @Override
+    public String adminPreviewUrl(Long mediaId, String imagePath, Integer size) {
+        return signedPreviewUrl(mediaId, imagePath, "/api/v1/admin/media/" + mediaId + "/file", ADMIN_MEDIA_FILE_TOKEN_PREFIX, size);
+    }
+
+    private String signedPreviewUrl(Long mediaId, String imagePath, String path, String tokenPrefix, Integer size) {
         if (imagePath == null || imagePath.isBlank()) {
             return null;
         }
@@ -56,35 +79,55 @@ public class MediaFileServiceImpl implements MediaFileService {
         if (value.startsWith("http://") || value.startsWith("https://")) {
             return value;
         }
+        Integer normalizedSize = normalizeSize(size);
         String accessToken = issueAccessToken(mediaId, tokenPrefix);
         try {
-            return ServletUriComponentsBuilder.fromCurrentContextPath()
+            var builder = ServletUriComponentsBuilder.fromCurrentContextPath()
                     .path(path)
-                    .queryParam("accessToken", accessToken)
-                    .toUriString();
+                    .queryParam("accessToken", accessToken);
+            if (normalizedSize != null) {
+                builder.queryParam("size", normalizedSize);
+            }
+            return builder.toUriString();
         } catch (IllegalStateException e) {
-            return path + "?accessToken=" + accessToken;
+            String url = path + "?accessToken=" + accessToken;
+            return normalizedSize == null ? url : url + "&size=" + normalizedSize;
         }
     }
 
     @Override
     public Resource loadMediaFile(Long mediaId, String accessToken) {
+        return loadMediaFile(mediaId, accessToken, null);
+    }
+
+    @Override
+    public Resource loadMediaFile(Long mediaId, String accessToken, Integer size) {
         validateAccessToken(mediaId, accessToken, MEDIA_FILE_TOKEN_PREFIX);
-        return loadMediaFileInternal(mediaId, true);
+        return loadMediaFileInternal(mediaId, true, size);
     }
 
     @Override
     public Resource loadMediaFileAdmin(Long mediaId) {
-        return loadMediaFileInternal(mediaId, false);
+        return loadMediaFileAdmin(mediaId, (Integer) null);
+    }
+
+    @Override
+    public Resource loadMediaFileAdmin(Long mediaId, Integer size) {
+        return loadMediaFileInternal(mediaId, false, size);
     }
 
     @Override
     public Resource loadMediaFileAdmin(Long mediaId, String accessToken) {
-        validateAccessToken(mediaId, accessToken, ADMIN_MEDIA_FILE_TOKEN_PREFIX);
-        return loadMediaFileInternal(mediaId, false);
+        return loadMediaFileAdmin(mediaId, accessToken, null);
     }
 
-    private Resource loadMediaFileInternal(Long mediaId, boolean approvedOnly) {
+    @Override
+    public Resource loadMediaFileAdmin(Long mediaId, String accessToken, Integer size) {
+        validateAccessToken(mediaId, accessToken, ADMIN_MEDIA_FILE_TOKEN_PREFIX);
+        return loadMediaFileInternal(mediaId, false, size);
+    }
+
+    private Resource loadMediaFileInternal(Long mediaId, boolean approvedOnly, Integer size) {
         MediaEntity media = mediaMapper.findById(mediaId);
         if (media == null) {
             throw new BizException(ResultCode.NOT_FOUND, "media not found: " + mediaId);
@@ -95,6 +138,10 @@ public class MediaFileServiceImpl implements MediaFileService {
         Path path = resolvePath(media.getImagePath());
         if (!Files.isRegularFile(path) || !Files.isReadable(path)) {
             throw new BizException(ResultCode.NOT_FOUND, "media file not found: " + mediaId);
+        }
+        Integer normalizedSize = normalizeSize(size);
+        if (normalizedSize != null) {
+            path = thumbnailPath(mediaId, path, normalizedSize);
         }
         try {
             return new UrlResource(path.toUri());
@@ -168,11 +215,18 @@ public class MediaFileServiceImpl implements MediaFileService {
         if (mediaId == null) {
             throw new BizException(ResultCode.VALIDATION_ERROR, "mediaId is required");
         }
+        String latestKey = tokenPrefix + "latest:" + mediaId;
+        String latestToken = redisTemplate.opsForValue().get(latestKey);
+        if (latestToken != null && String.valueOf(mediaId).equals(redisTemplate.opsForValue().get(tokenPrefix + latestToken))) {
+            return latestToken;
+        }
         String token = UUID.randomUUID().toString().replace("-", "");
+        Duration ttl = Duration.ofSeconds(mediaFileTokenTtlSeconds());
         redisTemplate.opsForValue().set(
                 tokenPrefix + token,
                 String.valueOf(mediaId),
-                Duration.ofSeconds(mediaFileTokenTtlSeconds()));
+                ttl);
+        redisTemplate.opsForValue().set(latestKey, token, ttl);
         return token;
     }
 
@@ -189,5 +243,82 @@ public class MediaFileServiceImpl implements MediaFileService {
     private long mediaFileTokenTtlSeconds() {
         Long configured = storageProperties == null ? null : storageProperties.mediaFileTokenTtlSeconds();
         return configured == null || configured <= 0 ? DEFAULT_MEDIA_FILE_TOKEN_TTL_SECONDS : configured;
+    }
+
+    private Integer normalizeSize(Integer size) {
+        if (size == null) {
+            return null;
+        }
+        if (size < MIN_THUMBNAIL_SIZE || size > MAX_THUMBNAIL_SIZE) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "size must be between " + MIN_THUMBNAIL_SIZE + " and " + MAX_THUMBNAIL_SIZE);
+        }
+        return size;
+    }
+
+    private Path thumbnailPath(Long mediaId, Path original, int size) {
+        try {
+            BufferedImage image = ImageIO.read(original.toFile());
+            if (image == null) {
+                return original;
+            }
+            Path thumbnailDir = storageRoot().resolve(".thumbs").resolve(String.valueOf(size)).normalize();
+            if (!thumbnailDir.startsWith(storageRoot())) {
+                throw new BizException(ResultCode.INTERNAL_ERROR, "thumbnail path escapes storage root");
+            }
+            Files.createDirectories(thumbnailDir);
+            long modified = Files.getLastModifiedTime(original).toMillis();
+            Path thumbnail = thumbnailDir.resolve(mediaId + "-" + modified + ".jpg");
+            if (Files.isRegularFile(thumbnail)) {
+                return thumbnail;
+            }
+
+            BufferedImage scaled = scaleToFit(image, size);
+            writeJpeg(scaled, thumbnail, THUMBNAIL_JPEG_QUALITY);
+            return thumbnail;
+        } catch (IOException e) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "failed to create thumbnail: " + e.getMessage());
+        }
+    }
+
+    private BufferedImage scaleToFit(BufferedImage source, int maxSize) {
+        int width = source.getWidth();
+        int height = source.getHeight();
+        double ratio = Math.min(1D, (double) maxSize / Math.max(width, height));
+        int targetWidth = Math.max(1, (int) Math.round(width * ratio));
+        int targetHeight = Math.max(1, (int) Math.round(height * ratio));
+        BufferedImage target = new BufferedImage(targetWidth, targetHeight, BufferedImage.TYPE_INT_RGB);
+        Graphics2D graphics = target.createGraphics();
+        try {
+            graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            graphics.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
+            graphics.setColor(java.awt.Color.WHITE);
+            graphics.fillRect(0, 0, targetWidth, targetHeight);
+            graphics.drawImage(source, 0, 0, targetWidth, targetHeight, null);
+        } finally {
+            graphics.dispose();
+        }
+        return target;
+    }
+
+    private void writeJpeg(BufferedImage image, Path target, float quality) throws IOException {
+        Iterator<ImageWriter> writers = ImageIO.getImageWritersByFormatName("jpg");
+        if (!writers.hasNext()) {
+            throw new IOException("no jpeg writer available");
+        }
+        ImageWriter writer = writers.next();
+        try (ImageOutputStream output = ImageIO.createImageOutputStream(target.toFile())) {
+            ImageWriteParam params = writer.getDefaultWriteParam();
+            params.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
+            params.setCompressionQuality(quality);
+            writer.setOutput(output);
+            writer.write(null, new IIOImage(image, null, null), params);
+        } finally {
+            writer.dispose();
+        }
+    }
+
+    private Path storageRoot() {
+        String configuredRootValue = storageProperties == null ? null : storageProperties.localRootDir();
+        return resolveStorageRoot(Path.of(defaultIfBlank(configuredRootValue, DEFAULT_STORAGE_ROOT)));
     }
 }

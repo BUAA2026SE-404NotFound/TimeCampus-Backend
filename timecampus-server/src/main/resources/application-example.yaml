@@ -24,7 +24,7 @@ management:
 
 storage:
   local-root-dir: ${TIMECAMPUS_STORAGE_DIR:/home/ubuntu/cos}
-  max-file-size-mb: ${TIMECAMPUS_MAX_FILE_SIZE_MB:10}
+  max-file-size-mb: ${TIMECAMPUS_MAX_FILE_SIZE_MB:20}
   media-file-token-ttl-seconds: ${TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS:600}
 
 cap:

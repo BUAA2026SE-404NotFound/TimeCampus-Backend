@@ -2,7 +2,9 @@ package com.notfound.timecampusserver.config;
 
 import com.notfound.timecampusserver.security.AdminAuthInterceptor;
 import com.notfound.timecampusserver.security.UserAuthInterceptor;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.filter.ForwardedHeaderFilter;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -17,12 +19,18 @@ public class WebConfig implements WebMvcConfigurer {
         this.userAuthInterceptor = userAuthInterceptor;
     }
 
+    @Bean
+    public ForwardedHeaderFilter forwardedHeaderFilter() {
+        return new ForwardedHeaderFilter();
+    }
+
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(adminAuthInterceptor)
                 .addPathPatterns("/api/v1/admin/**")
                 .excludePathPatterns(
                         "/api/v1/admin/login",
+                        "/api/v1/admin/media",
                         "/api/v1/health",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
