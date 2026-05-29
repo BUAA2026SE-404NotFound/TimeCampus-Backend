@@ -4,10 +4,7 @@ import com.notfound.timecampusserver.security.AdminAuthInterceptor;
 import com.notfound.timecampusserver.security.UserAuthInterceptor;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
-import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.nio.file.Paths;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
@@ -57,13 +54,4 @@ public class WebConfig implements WebMvcConfigurer {
                         "/actuator/**"
                 );
     }
-
-    @Override
-    public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        // 映射 /uploads/** 到本地目录
-        String uploadPath = "file:" + Paths.get("./uploads").toAbsolutePath().normalize() + "/";
-        registry.addResourceHandler("/uploads/**")
-                .addResourceLocations(uploadPath);
-    }
-
 }

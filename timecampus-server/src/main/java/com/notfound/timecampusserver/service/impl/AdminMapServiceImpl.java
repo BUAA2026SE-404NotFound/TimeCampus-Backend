@@ -1,9 +1,11 @@
 package com.notfound.timecampusserver.service.impl;
 
 import com.notfound.timecampuspojo.vo.AdminMapOverviewVO;
+import com.notfound.timecampuspojo.vo.AdminMapMediaVO;
 import com.notfound.timecampuspojo.vo.AdminMapPoiVO;
 import com.notfound.timecampusserver.mapper.AdminMapMapper;
 import com.notfound.timecampusserver.service.AdminMapService;
+import com.notfound.timecampusserver.service.MediaFileService;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -14,9 +16,11 @@ import java.util.stream.Collectors;
 public class AdminMapServiceImpl implements AdminMapService {
 
     private final AdminMapMapper adminMapMapper;
+    private final MediaFileService mediaFileService;
 
-    public AdminMapServiceImpl(AdminMapMapper adminMapMapper) {
+    public AdminMapServiceImpl(AdminMapMapper adminMapMapper, MediaFileService mediaFileService) {
         this.adminMapMapper = adminMapMapper;
+        this.mediaFileService = mediaFileService;
     }
 
     @Override
@@ -46,7 +50,7 @@ public class AdminMapServiceImpl implements AdminMapService {
                         .collect(Collectors.groupingBy(com.notfound.timecampuspojo.vo.AdminMapCommentVO::getRelatedPoiId));
         Map<Long, List<com.notfound.timecampuspojo.vo.AdminMapMediaVO>> mediaByPoi =
                 adminMapMapper.listPoiMedia(poiIds).stream()
-                        .peek(media -> media.setPreviewUrl(adminPreviewUrl(media.getId(), media.getImagePath())))
+                        .peek(this::applyPreviewUrl)
                         .collect(Collectors.groupingBy(com.notfound.timecampuspojo.vo.AdminMapMediaVO::getPoiId));
 
         for (AdminMapPoiVO poi : pois) {
@@ -63,14 +67,9 @@ public class AdminMapServiceImpl implements AdminMapService {
         return Math.clamp(limit, 1, 200);
     }
 
-    private String adminPreviewUrl(Long mediaId, String imagePath) {
-        if (imagePath == null || imagePath.isBlank()) {
-            return null;
-        }
-        String value = imagePath.trim();
-        if (value.startsWith("http://") || value.startsWith("https://")) {
-            return value;
-        }
-        return "/api/v1/admin/media/" + mediaId + "/file";
+    private void applyPreviewUrl(AdminMapMediaVO media) {
+        String previewUrl = mediaFileService.adminPreviewUrl(media.getId(), media.getImagePath());
+        media.setImagePath(previewUrl);
+        media.setPreviewUrl(previewUrl);
     }
 }

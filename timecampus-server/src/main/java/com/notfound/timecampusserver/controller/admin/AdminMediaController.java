@@ -68,10 +68,13 @@ public class AdminMediaController {
     }
 
     @GetMapping("/{id}/file")
-    @Operation(summary = "读取本地影像文件", description = "用于管理端预览保存在文件系统中的 media.image_path。远程 URL 直接由前端访问。")
+    @Operation(summary = "读取本地影像文件", description = "用于管理端预览保存在文件系统中的 media.image_path；可使用 Bearer token 或管理端预览 URL 中的短期 accessToken。远程 URL 直接由前端访问。")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Resource> file(@Parameter(description = "影像 ID", example = "1") @PathVariable Long id) {
-        Resource resource = mediaFileService.loadMediaFileAdmin(id);
+    public ResponseEntity<Resource> file(@Parameter(description = "影像 ID", example = "1") @PathVariable Long id,
+                                         @RequestParam(required = false) String accessToken) {
+        Resource resource = accessToken == null || accessToken.isBlank()
+                ? mediaFileService.loadMediaFileAdmin(id)
+                : mediaFileService.loadMediaFileAdmin(id, accessToken);
         return ResponseEntity.ok()
                 .header("Content-Type", mediaFileService.contentType(resource))
                 .body(resource);

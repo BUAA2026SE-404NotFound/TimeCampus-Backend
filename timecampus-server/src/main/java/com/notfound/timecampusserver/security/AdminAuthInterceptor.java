@@ -8,6 +8,7 @@ import org.springframework.web.servlet.HandlerInterceptor;
 
 import java.time.Duration;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -17,6 +18,8 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 
     public static final String ADMIN_TOKEN_PREFIX = "admin:token:";
     public static final Duration ADMIN_TOKEN_TTL = Duration.ofHours(2);
+    private static final Pattern ADMIN_MEDIA_FILE_PATH =
+            Pattern.compile("^/api/v1/admin/media/\\d+/file$");
 
     private final StringRedisTemplate redisTemplate;
 
@@ -39,6 +42,10 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
+        if (isSignedAdminMediaFileRequest(request)) {
+            AdminContext.clear();
+            return true;
+        }
         String token = resolveBearerToken(request);
         if (token == null) {
             throw new BizException(ResultCode.UNAUTHORIZED, "missing admin token");
@@ -60,6 +67,22 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
         AdminContext.clear();
     }
 
+    private boolean isSignedAdminMediaFileRequest(HttpServletRequest request) {
+        if (!"GET".equalsIgnoreCase(request.getMethod())) {
+            return false;
+        }
+        String accessToken = request.getParameter("accessToken");
+        if (accessToken == null || accessToken.isBlank()) {
+            return false;
+        }
+        String path = request.getRequestURI();
+        String contextPath = request.getContextPath();
+        if (contextPath != null && !contextPath.isBlank() && path.startsWith(contextPath)) {
+            path = path.substring(contextPath.length());
+        }
+        return ADMIN_MEDIA_FILE_PATH.matcher(path).matches();
+    }
+
     private String resolveBearerToken(HttpServletRequest request) {
         String auth = request.getHeader("Authorization");
         if (auth == null || auth.isBlank()) {
@@ -73,4 +96,3 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
         return token.isBlank() ? null : token;
     }
 }
-

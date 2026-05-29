@@ -11,6 +11,7 @@ import com.notfound.timecampuspojo.vo.MediaVO;
 import com.notfound.timecampusserver.mapper.MediaMapper;
 import com.notfound.timecampusserver.mapper.PoiMapper;
 import com.notfound.timecampusserver.service.LogService;
+import com.notfound.timecampusserver.service.MediaFileService;
 import com.notfound.timecampusserver.service.MemoService;
 import com.notfound.timecampusserver.service.StorageService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,7 @@ public class MemoServiceImpl implements MemoService {
     private StorageService storageService;
     @Autowired private MediaStructMapper mediaStructMapper;
     @Autowired private LogService logService;
+    @Autowired private MediaFileService mediaFileService;
 
     @Override
     @Transactional
@@ -64,7 +66,10 @@ public class MemoServiceImpl implements MemoService {
 
     @Override
     public List<MediaVO> listMemos(Long userId, Long poiId, Integer yearFrom, Integer yearTo) {
-        return mediaMapper.listMemosByUser(userId, poiId, yearFrom, yearTo);
+        return mediaMapper.listMemosByUser(userId, poiId, yearFrom, yearTo)
+                .stream()
+                .peek(this::applyPreviewUrl)
+                .toList();
     }
 
     @Override
@@ -75,5 +80,11 @@ public class MemoServiceImpl implements MemoService {
             throw new BizException(ResultCode.NOT_FOUND, "memo not found or permission denied");
         }
         logService.record("USER", userId, "memo", "delete_memo", "media", id, null);
+    }
+
+    private void applyPreviewUrl(MediaVO memo) {
+        String previewUrl = mediaFileService.previewUrl(memo.getId(), memo.getImagePath());
+        memo.setImagePath(previewUrl);
+        memo.setPreviewUrl(previewUrl);
     }
 }
