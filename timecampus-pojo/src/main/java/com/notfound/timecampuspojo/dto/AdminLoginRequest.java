@@ -14,6 +14,9 @@ public class AdminLoginRequest {
     @Schema(description = "管理员密码（明文提交，服务端校验哈希）", example = "123456")
     private String password;
 
+    @Schema(description = "Cap 前端验证码 token；生产环境必填", example = "cap-token-from-widget")
+    private String capToken;
+
     public String getAdminName() {
         return adminName;
     }
@@ -29,5 +32,12 @@ public class AdminLoginRequest {
     public void setPassword(String password) {
         this.password = password;
     }
-}
 
+    public String getCapToken() {
+        return capToken;
+    }
+
+    public void setCapToken(String capToken) {
+        this.capToken = capToken;
+    }
+}

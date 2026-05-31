@@ -79,6 +79,28 @@ class MediaFileServiceImplTest {
     }
 
     @Test
+    void loadMediaFileAdminWithAccessTokenServesNonApprovedContent() throws Exception {
+        Path root = Files.createDirectories(tempDir.resolve("storage/uploads"));
+        Path mediaFile = Files.writeString(root.resolve("photo.svg"), "<svg/>");
+        MediaFileServiceImpl service = serviceWithMedia("/uploads/photo.svg", root, "pending");
+
+        var resource = service.loadMediaFileAdmin(9L, "valid-admin-token");
+
+        assertThat(resource.getFile().toPath()).isEqualTo(mediaFile);
+    }
+
+    @Test
+    void loadMediaFileAdminWithAccessTokenRejectsUserMediaToken() throws Exception {
+        Path root = Files.createDirectories(tempDir.resolve("storage/uploads"));
+        Files.writeString(root.resolve("photo.svg"), "<svg/>");
+        MediaFileServiceImpl service = serviceWithMedia("/uploads/photo.svg", root, "pending");
+
+        assertThatThrownBy(() -> service.loadMediaFileAdmin(9L, "valid-token"))
+                .isInstanceOf(BizException.class)
+                .hasMessageContaining("invalid or expired media access token");
+    }
+
+    @Test
     void loadMediaFileRejectsTraversalOutsideStorageRoot() throws Exception {
         Path root = Files.createDirectories(tempDir.resolve("storage/uploads"));
         Files.writeString(tempDir.resolve("application-dev.yaml"), "secret");
@@ -112,6 +134,16 @@ class MediaFileServiceImplTest {
     }
 
     @Test
+    void adminPreviewUrlIssuesSignedAccessTokenForLocalFile() throws Exception {
+        Path root = Files.createDirectories(tempDir.resolve("storage/uploads"));
+        MediaFileServiceImpl service = serviceWithMedia("/uploads/photo.jpg", root, "pending");
+
+        String url = service.adminPreviewUrl(9L, "/uploads/photo.jpg");
+
+        assertThat(url).startsWith("/api/v1/admin/media/9/file?accessToken=");
+    }
+
+    @Test
     void loadMediaFileRejectsMissingToken() throws Exception {
         Path root = Files.createDirectories(tempDir.resolve("storage/uploads"));
         MediaFileServiceImpl service = serviceWithMedia("/uploads/photo.jpg", root, "approved");
@@ -133,6 +165,7 @@ class MediaFileServiceImplTest {
         ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("media:file:token:valid-token")).thenReturn("9");
+        when(valueOperations.get("admin:media:file:token:valid-admin-token")).thenReturn("9");
         org.mockito.Mockito.doNothing().when(valueOperations)
                 .set(any(String.class), eq("9"), any(Duration.class));
         return new MediaFileServiceImpl(mediaMapper, new StorageProperties(root.toString(), 10L, 600L), redisTemplate);
