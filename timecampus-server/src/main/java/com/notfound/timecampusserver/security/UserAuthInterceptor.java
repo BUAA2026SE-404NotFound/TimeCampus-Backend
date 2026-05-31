@@ -2,14 +2,15 @@ package com.notfound.timecampusserver.security;
 
 import com.notfound.timecampuscommon.api.ResultCode;
 import com.notfound.timecampuscommon.exception.BizException;
+import com.notfound.timecampuscommon.web.TokenUtil;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.time.Duration;
-import java.util.UUID;
 
 @Component
 public class UserAuthInterceptor implements HandlerInterceptor {
@@ -24,16 +25,9 @@ public class UserAuthInterceptor implements HandlerInterceptor {
     }
 
     public String issueToken(Long userId) {
-        String token = UUID.randomUUID().toString().replace("-", "");
+        String token = TokenUtil.generateToken();
         redisTemplate.opsForValue().set(USER_TOKEN_PREFIX + token, String.valueOf(userId), USER_TOKEN_TTL);
         return token;
-    }
-
-    public void revokeToken(String token) {
-        if (token == null || token.isBlank()) {
-            return;
-        }
-        redisTemplate.delete(USER_TOKEN_PREFIX + token);
     }
 
     /**
@@ -41,7 +35,7 @@ public class UserAuthInterceptor implements HandlerInterceptor {
      * Returns null for anonymous requests or invalid/expired tokens.
      */
     public Long resolveUserId(HttpServletRequest request) {
-        String token = resolveBearerToken(request);
+        String token = TokenUtil.resolveBearerToken(request);
         if (token == null) {
             return null;
         }
@@ -57,8 +51,8 @@ public class UserAuthInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        String token = resolveBearerToken(request);
+    public boolean preHandle(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler) {
+        String token = TokenUtil.resolveBearerToken(request);
         if (token == null) {
             throw new BizException(ResultCode.UNAUTHORIZED, "missing user token");
         }
@@ -75,21 +69,8 @@ public class UserAuthInterceptor implements HandlerInterceptor {
     }
 
     @Override
-    public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) {
+    public void afterCompletion(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull Object handler, Exception ex) {
         UserContext.clear();
-    }
-
-    private String resolveBearerToken(HttpServletRequest request) {
-        String auth = request.getHeader("Authorization");
-        if (auth == null || auth.isBlank()) {
-            return null;
-        }
-        String prefix = "Bearer ";
-        if (!auth.startsWith(prefix)) {
-            return null;
-        }
-        String token = auth.substring(prefix.length()).trim();
-        return token.isBlank() ? null : token;
     }
 }
 

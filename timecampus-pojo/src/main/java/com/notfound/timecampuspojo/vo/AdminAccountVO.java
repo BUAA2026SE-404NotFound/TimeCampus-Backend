@@ -1,17 +1,26 @@
-package com.notfound.timecampuspojo.entity;
+package com.notfound.timecampuspojo.vo;
+
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.time.LocalDateTime;
 
-public class AdminEntity {
+@Schema(description = "管理员账户信息")
+public class AdminAccountVO {
+
+    @Schema(description = "管理员主键 ID（admin.id）", example = "1")
     private Long id;
-    private Long adminId;
+
+    @Schema(description = "管理员登录名（admin.admin_name）", example = "operator")
     private String adminName;
-    private String password;
+
+    @Schema(description = "角色：super / normal", example = "normal")
     private String role;
+
+    @Schema(description = "状态：1 启用，0 禁用", example = "1")
     private Integer status;
-    private LocalDateTime lastLoginTime;
+
+    @Schema(description = "创建时间")
     private LocalDateTime createTime;
-    private LocalDateTime updateTime;
 
     public Long getId() {
         return id;
@@ -21,28 +30,12 @@ public class AdminEntity {
         this.id = id;
     }
 
-    public Long getAdminId() {
-        return adminId;
-    }
-
-    public void setAdminId(Long adminId) {
-        this.adminId = adminId;
-    }
-
     public String getAdminName() {
         return adminName;
     }
 
     public void setAdminName(String adminName) {
         this.adminName = adminName;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(String password) {
-        this.password = password;
     }
 
     public String getRole() {
@@ -61,14 +54,6 @@ public class AdminEntity {
         this.status = status;
     }
 
-    public LocalDateTime getLastLoginTime() {
-        return lastLoginTime;
-    }
-
-    public void setLastLoginTime(LocalDateTime lastLoginTime) {
-        this.lastLoginTime = lastLoginTime;
-    }
-
     public LocalDateTime getCreateTime() {
         return createTime;
     }
@@ -76,12 +61,5 @@ public class AdminEntity {
     public void setCreateTime(LocalDateTime createTime) {
         this.createTime = createTime;
     }
-
-    public LocalDateTime getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(LocalDateTime updateTime) {
-        this.updateTime = updateTime;
-    }
 }
+

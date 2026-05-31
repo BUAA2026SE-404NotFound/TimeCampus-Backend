@@ -8,6 +8,13 @@ public interface AdminMapper {
 
     AdminEntity findByAdminName(String adminName);
 
-    int updateLastLoginTime(Long id);
-}
+    AdminEntity findById(Long id);
 
+    int insert(AdminEntity admin);
+
+    int updateStatus(AdminEntity admin);
+
+    int updateRole(AdminEntity admin);
+
+    int updateLastLoginTime(AdminEntity admin);
+}
