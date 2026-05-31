@@ -69,7 +69,9 @@ public class AdminMapServiceImpl implements AdminMapService {
 
     private void applyPreviewUrl(AdminMapMediaVO media) {
         String previewUrl = mediaFileService.adminPreviewUrl(media.getId(), media.getImagePath());
+        String thumbnailUrl = mediaFileService.adminPreviewUrl(media.getId(), media.getImagePath(), 192);
         media.setImagePath(previewUrl);
         media.setPreviewUrl(previewUrl);
+        media.setThumbnailUrl(thumbnailUrl);
     }
 }

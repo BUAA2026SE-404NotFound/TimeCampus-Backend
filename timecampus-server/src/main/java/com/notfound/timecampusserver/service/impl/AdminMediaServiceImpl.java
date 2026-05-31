@@ -117,7 +117,7 @@ public class AdminMediaServiceImpl implements AdminMediaService {
         entity.setUpdateTime(LocalDateTime.now());
         mediaMapper.insert(entity);
         logService.record("ADMIN", reviewerId, "content", "upload_official", "media", entity.getId(), imagePath);
-        return mediaStructMapper.toVO(entity);
+        return mediaStructMapper.toAdminVO(entity);
     }
 
     @Override
@@ -126,14 +126,14 @@ public class AdminMediaServiceImpl implements AdminMediaService {
         if (entity == null) {
             throw new BizException(ResultCode.NOT_FOUND, "media not found: " + id);
         }
-        return mediaStructMapper.toVO(entity);
+        return mediaStructMapper.toAdminVO(entity);
     }
 
     @Override
     public List<MediaVO> list(Long poiId, String type, String reviewStatus, Integer yearFrom, Integer yearTo) {
         return mediaMapper.list(poiId, type, reviewStatus, yearFrom, yearTo)
                 .stream()
-                .map(mediaStructMapper::toVO)
+                .map(mediaStructMapper::toAdminVO)
                 .collect(Collectors.toList());
     }
 

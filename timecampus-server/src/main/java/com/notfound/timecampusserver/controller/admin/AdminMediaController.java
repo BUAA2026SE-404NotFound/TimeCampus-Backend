@@ -24,10 +24,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.core.io.Resource;
+import org.springframework.http.CacheControl;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 @Tag(name = "Admin-Media", description = "管理员：影像（media）管理")
 @RestController
@@ -71,12 +73,14 @@ public class AdminMediaController {
     @Operation(summary = "读取本地影像文件", description = "用于管理端预览保存在文件系统中的 media.image_path；可使用 Bearer token 或管理端预览 URL 中的短期 accessToken。远程 URL 直接由前端访问。")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Resource> file(@Parameter(description = "影像 ID", example = "1") @PathVariable Long id,
-                                         @RequestParam(required = false) String accessToken) {
+                                         @RequestParam(required = false) String accessToken,
+                                         @RequestParam(required = false) Integer size) {
         Resource resource = accessToken == null || accessToken.isBlank()
-                ? mediaFileService.loadMediaFileAdmin(id)
-                : mediaFileService.loadMediaFileAdmin(id, accessToken);
+                ? mediaFileService.loadMediaFileAdmin(id, size)
+                : mediaFileService.loadMediaFileAdmin(id, accessToken, size);
         return ResponseEntity.ok()
                 .header("Content-Type", mediaFileService.contentType(resource))
+                .cacheControl(CacheControl.maxAge(10, TimeUnit.MINUTES).cachePrivate())
                 .body(resource);
     }
 

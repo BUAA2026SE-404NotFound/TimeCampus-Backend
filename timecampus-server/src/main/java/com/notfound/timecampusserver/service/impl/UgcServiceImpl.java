@@ -72,7 +72,7 @@ public class UgcServiceImpl implements UgcService {
     public List<MediaVO> list(String status) {
         return mediaMapper.list(null, TYPE_UGC, normalizeStatus(status), null, null)
                 .stream()
-                .map(mediaStructMapper::toVO)
+                .map(mediaStructMapper::toAdminVO)
                 .collect(Collectors.toList());
     }
 
@@ -81,7 +81,7 @@ public class UgcServiceImpl implements UgcService {
         MediaEntity entity = requireUgc(id);
         mediaMapper.updateReview(entity.getId(), REVIEW_APPROVED, null, reviewerId);
         logService.record("ADMIN", reviewerId, "review", "approve_ugc", "media", id, null);
-        return mediaStructMapper.toVO(mediaMapper.findById(id));
+        return mediaStructMapper.toAdminVO(mediaMapper.findById(id));
     }
 
     @Override
@@ -92,7 +92,7 @@ public class UgcServiceImpl implements UgcService {
         MediaEntity entity = requireUgc(id);
         mediaMapper.updateReview(entity.getId(), REVIEW_REJECTED, reason, reviewerId);
         logService.record("ADMIN", reviewerId, "review", "reject_ugc", "media", id, reason);
-        return mediaStructMapper.toVO(mediaMapper.findById(id));
+        return mediaStructMapper.toAdminVO(mediaMapper.findById(id));
     }
 
     private MediaEntity requireUgc(Long id) {

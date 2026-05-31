@@ -11,6 +11,7 @@ public class AdminMapMediaVO {
     private String type;
     private String imagePath;
     private String previewUrl;
+    private String thumbnailUrl;
     private Integer year;
     private String description;
     private Long uploadUserId;
@@ -55,6 +56,14 @@ public class AdminMapMediaVO {
 
     public void setPreviewUrl(String previewUrl) {
         this.previewUrl = previewUrl;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
     }
 
     public Integer getYear() {
