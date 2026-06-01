@@ -30,6 +30,12 @@
         limit 1
     </select>
 
+    <select id="findAll" resultMap="BaseResultMap">
+        select id, admin_id, admin_name, password, role, status, last_login_time, create_time, update_time
+        from admin
+        order by create_time desc, id desc
+    </select>
+
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
         insert into admin (admin_id, admin_name, password, role, status)
         values (#{adminId}, #{adminName}, #{password}, #{role}, #{status})

@@ -14,6 +14,9 @@ public class AdminLoginVO {
     @Schema(description = "管理员登录名（admin.admin_name）", example = "admin")
     private String adminName;
 
+    @Schema(description = "角色：super / admin / read / none", example = "admin")
+    private String role;
+
     public String getToken() {
         return token;
     }
@@ -37,5 +40,12 @@ public class AdminLoginVO {
     public void setAdminName(String adminName) {
         this.adminName = adminName;
     }
-}
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+}

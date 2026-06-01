@@ -13,7 +13,7 @@ public class AdminAccountVO {
     @Schema(description = "管理员登录名（admin.admin_name）", example = "operator")
     private String adminName;
 
-    @Schema(description = "角色：super / normal", example = "normal")
+    @Schema(description = "角色：super / admin / read / none", example = "admin")
     private String role;
 
     @Schema(description = "状态：1 启用，0 禁用", example = "1")
@@ -62,4 +62,3 @@ public class AdminAccountVO {
         this.createTime = createTime;
     }
 }
-

@@ -57,6 +57,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         vo.setToken(token);
         vo.setAdminId(admin.getId());
         vo.setAdminName(admin.getAdminName());
+        vo.setRole(admin.getRole());
         return vo;
     }
 
@@ -83,6 +84,7 @@ public class AdminAuthServiceImpl implements AdminAuthService {
         AdminLoginVO vo = new AdminLoginVO();
         vo.setAdminId(admin.getId());
         vo.setAdminName(admin.getAdminName());
+        vo.setRole(admin.getRole());
         vo.setToken(adminAuthInterceptor.issueToken(admin.getId()));
         return vo;
     }

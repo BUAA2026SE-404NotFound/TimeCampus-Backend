@@ -24,7 +24,7 @@ class AdminAccountServiceImplTest {
         operator.setRole("read");
         when(adminMapper.findById(1L)).thenReturn(operator);
 
-        assertThatThrownBy(() -> service.updateRole(2L, "write", 1L))
+        assertThatThrownBy(() -> service.updateRole(2L, "admin", 1L))
                 .isInstanceOf(BizException.class)
                 .hasMessage("super admin required");
     }
@@ -42,13 +42,31 @@ class AdminAccountServiceImplTest {
         when(adminMapper.findById(1L)).thenReturn(operator);
         when(adminMapper.findById(2L)).thenReturn(target);
 
-        AdminAccountVO result = service.updateRole(2L, "write", 1L);
+        AdminAccountVO result = service.updateRole(2L, "admin", 1L);
 
         ArgumentCaptor<AdminEntity> captor = ArgumentCaptor.forClass(AdminEntity.class);
         verify(adminMapper).updateRole(captor.capture());
         assertThat(captor.getValue().getId()).isEqualTo(2L);
-        assertThat(captor.getValue().getRole()).isEqualTo("write");
-        assertThat(result.getRole()).isEqualTo("write");
+        assertThat(captor.getValue().getRole()).isEqualTo("admin");
+        assertThat(result.getRole()).isEqualTo("admin");
+    }
+
+    @Test
+    void updateRoleRejectsUnassignableRole() {
+        AdminMapper adminMapper = mock(AdminMapper.class);
+        AdminAccountServiceImpl service = new AdminAccountServiceImpl(adminMapper);
+        AdminEntity operator = new AdminEntity();
+        operator.setId(1L);
+        operator.setRole("super");
+        when(adminMapper.findById(1L)).thenReturn(operator);
+
+        assertThatThrownBy(() -> service.updateRole(2L, "write", 1L))
+                .isInstanceOf(BizException.class)
+                .hasMessage("invalid admin role");
+
+        assertThatThrownBy(() -> service.updateRole(2L, "super", 1L))
+                .isInstanceOf(BizException.class)
+                .hasMessage("invalid admin role");
     }
 
     @Test

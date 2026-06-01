@@ -85,7 +85,29 @@ class AdminAuthInterceptorTest {
     }
 
     @Test
-    void writeEndpointRejectsReadOnlyRole() {
+    void superAdminCanReadDashboardStats() {
+        StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
+        AdminMapper adminMapper = mock(AdminMapper.class);
+        @SuppressWarnings("unchecked")
+        ValueOperations<String, String> valueOperations = mock(ValueOperations.class);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("admin:token:super-token")).thenReturn("1");
+        AdminEntity admin = new AdminEntity();
+        admin.setId(1L);
+        admin.setRole("super");
+        admin.setStatus(1);
+        when(adminMapper.findById(1L)).thenReturn(admin);
+        AdminAuthInterceptor interceptor = new AdminAuthInterceptor(redisTemplate, adminMapper);
+        MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/admin/dashboard/stats");
+        request.addHeader("Authorization", "Bearer super-token");
+
+        assertThat(interceptor.preHandle(request, new MockHttpServletResponse(), new Object())).isTrue();
+        assertThat(AdminContext.getAdminId()).isEqualTo(1L);
+        assertThat(AdminContext.getAdminRole()).isEqualTo("super");
+    }
+
+    @Test
+    void adminEndpointRejectsReadOnlyRole() {
         StringRedisTemplate redisTemplate = mock(StringRedisTemplate.class);
         AdminMapper adminMapper = mock(AdminMapper.class);
         @SuppressWarnings("unchecked")
@@ -103,6 +125,6 @@ class AdminAuthInterceptorTest {
 
         assertThatThrownBy(() -> interceptor.preHandle(request, new MockHttpServletResponse(), new Object()))
                 .isInstanceOf(BizException.class)
-                .hasMessageContaining("write permission required");
+                .hasMessageContaining("admin permission required");
     }
 }

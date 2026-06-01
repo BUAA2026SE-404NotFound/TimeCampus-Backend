@@ -139,14 +139,14 @@ public class AdminAuthInterceptor implements HandlerInterceptor {
     }
 
     private void requireAtLeastRead(String role) {
-        if (AdminRoles.READ.equals(role) || AdminRoles.WRITE.equals(role) || AdminRoles.SUPER.equals(role)) {
+        if (AdminRoles.READ.equals(role) || AdminRoles.ADMIN.equals(role) || AdminRoles.SUPER.equals(role)) {
             return;
         }
         throw new BizException(ResultCode.FORBIDDEN, "read permission required");
     }
 
     private void requireAtLeastAdmin(String role) {
-        if (AdminRoles.WRITE.equals(role) || AdminRoles.SUPER.equals(role)) {
+        if (AdminRoles.ADMIN.equals(role) || AdminRoles.SUPER.equals(role)) {
             return;
         }
         throw new BizException(ResultCode.FORBIDDEN, "admin permission required");

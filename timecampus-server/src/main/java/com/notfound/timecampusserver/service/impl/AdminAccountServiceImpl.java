@@ -9,13 +9,28 @@ import com.notfound.timecampusserver.mapper.AdminMapper;
 import com.notfound.timecampusserver.service.AdminAccountService;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.Set;
+
 @Service
 public class AdminAccountServiceImpl implements AdminAccountService {
+
+    private static final Set<String> ASSIGNABLE_ROLES = Set.of(
+            AdminRoles.ADMIN,
+            AdminRoles.READ,
+            AdminRoles.NONE
+    );
 
     private final AdminMapper adminMapper;
 
     public AdminAccountServiceImpl(AdminMapper adminMapper) {
         this.adminMapper = adminMapper;
+    }
+
+    @Override
+    public List<AdminAccountVO> listAccounts(Long operatorId) {
+        requireSuperAdmin(operatorId);
+        return adminMapper.findAll().stream().map(this::toVO).toList();
     }
 
     @Override
@@ -37,12 +52,13 @@ public class AdminAccountServiceImpl implements AdminAccountService {
     @Override
     public AdminAccountVO updateRole(Long adminId, String role, Long operatorId) {
         requireSuperAdmin(operatorId);
+        requireAssignableRole(role);
         AdminEntity target = requireAdmin(adminId);
         if (adminId != null && adminId.equals(operatorId)) {
             throw new BizException(ResultCode.FORBIDDEN, "cannot change your own role");
         }
 
-        if (isSuperAdmin(target) && !AdminRoles.SUPER.equals(role)) {
+        if (isSuperAdmin(target)) {
             throw new BizException(ResultCode.FORBIDDEN, "cannot change super admin role");
         }
         target.setRole(role);
@@ -74,6 +90,12 @@ public class AdminAccountServiceImpl implements AdminAccountService {
         }
         String role = admin.getRole();
         return AdminRoles.SUPER.equalsIgnoreCase(role);
+    }
+
+    private void requireAssignableRole(String role) {
+        if (!ASSIGNABLE_ROLES.contains(role)) {
+            throw new BizException(ResultCode.BIZ_ERROR, "invalid admin role");
+        }
     }
 
     private AdminAccountVO toVO(AdminEntity admin) {

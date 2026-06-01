@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank;
 public class AdminRoleUpdateRequest {
 
     @NotBlank(message = "role cannot be blank")
-    @Schema(description = "角色：super / write / read / none", example = "read")
+    @Schema(description = "角色：admin / read / none；super 不能通过接口直接授予", example = "read")
     private String role;
 
     public String getRole() {
@@ -18,4 +18,3 @@ public class AdminRoleUpdateRequest {
         this.role = role;
     }
 }
-
