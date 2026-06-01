@@ -74,6 +74,9 @@ timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 ### 管理端
 
 - 管理员登录/登出：`POST /api/v1/admin/login`、`POST /api/v1/admin/logout`；生产登录请求需要携带 Cap 返回的 `capToken`
+- 管理员注册：`POST /api/v1/admin/register`；新注册管理员默认需要超级管理员分配权限
+- 管理员账号管理：`GET /api/v1/admin/accounts`、`PATCH /api/v1/admin/accounts/{id}/role`、`PATCH /api/v1/admin/accounts/{id}/status`
+- 运营首页统计：`GET /api/v1/admin/dashboard/stats`
 - POI 管理：`/api/v1/admin/pois`
 - 官方内容批量导入：`POST /api/v1/admin/contents/batch-import`
 - 官方影像批量导入：`POST /api/v1/admin/media/import`
@@ -88,6 +91,7 @@ timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 
 - 登录
 - 运营首页
+- 管理员管理：超级管理员可将管理员提权到 `admin` / `read` / `none`，不能直接授权 `super`
 - POI 管理
 - 运营地图：查看 POI 点位及收藏、评论、媒体、UGC 概览
 - 官方内容列表与批量导入
@@ -130,6 +134,11 @@ timecampus-server/src/main/java/com/notfound/timecampusserver/controller
 - 管理端使用 `Authorization: Bearer <token>`
 - token 当前存储在 Redis 中
 - `/api/v1/admin/**` 需要管理员 token
+- 管理员权限分为 `super`、`admin`、`read`、`none`：
+  - `super`：超级管理员，可管理其他管理员账号，但不能直接授予另一个账号 `super`
+  - `admin`：普通管理员，可访问管理端写操作
+  - `read`：只读管理员，可访问查询类管理端接口
+  - `none`：未授权管理员，只允许登录与获取自身信息，管理端业务数据接口应返回拒绝或空视图所需响应
 - `/api/v1/me`、用户审核结果、收藏、UGC 上传等用户行为接口需要用户 token
 - 会返回媒体访问 URL 的用户端接口也需要用户 token，包括 `/api/v1/pois/{id}/contents`、`/api/v1/pois/{id}/official-contents`、`/api/v1/contents/{id}`、`/api/v1/pois/{id}/time-switch`、`/api/v1/map/home`、`/api/v1/map/poi/{poiId}/timemachine`、`/api/v1/timeline`
 
@@ -181,6 +190,21 @@ https://api.example.com/api/v1/media/123/file?accessToken=...
 小程序图片组件不能稳定携带 `Authorization` 请求头，因此媒体文件直出接口使用短期 URL token 鉴权。前端应使用内容接口响应中的 URL，不要自行拼接 `/api/v1/media/{id}/file`。`accessToken` 默认有效期为 600 秒，可通过 `storage.media-file-token-ttl-seconds` 或环境变量 `TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS` 调整。
 
 管理端预览仍使用管理员鉴权接口 `/api/v1/admin/media/{id}/file`，不要复用用户端短期 URL 规则。
+
+`none` 权限管理员不能获取运营地图、内容上传页中的媒体图片等受保护内容。前端应在 `none` 权限下展示空界面并提示联系超级管理员分配 `read` 或 `admin` 权限。
+
+### 管理端 Dashboard 统计
+
+`GET /api/v1/admin/dashboard/stats` 汇总运营首页所需数据，包括：
+
+- 指标卡片
+- 内容增长趋势
+- 审核状态分布
+- 媒体类型分布
+- POI 热度排行
+- 最近审计日志
+
+接口位于 `AdminDashboardController`，实现层通过独立的 `AdminDashboardMapper` 聚合数据库统计结果。
 
 ### 腾讯地图 Sig
 
