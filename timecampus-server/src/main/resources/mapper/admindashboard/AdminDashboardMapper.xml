@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.notfound.timecampusserver.mapper.AdminDashboardMapper">
+
+    <select id="countPois" resultType="int">
+        select count(1) from poi
+    </select>
+
+    <select id="countActivePois" resultType="int">
+        select count(1) from poi where status = 1
+    </select>
+
+    <select id="countMedia" resultType="int">
+        select count(1) from media
+    </select>
+
+    <select id="countApprovedMedia" resultType="int">
+        select count(1) from media where review_status = 'approved'
+    </select>
+
+    <select id="countPendingUgc" resultType="int">
+        select count(1) from media where type = 'ugc' and review_status = 'pending'
+    </select>
+
+    <select id="countPendingComments" resultType="int">
+        select count(1) from `comment` where review_status = 'pending'
+    </select>
+
+    <select id="countNewMediaInDays" resultType="int">
+        select count(1)
+        from media
+        where create_time >= date_sub(current_date, interval #{days} day)
+    </select>
+
+    <select id="countNewUgcInDays" resultType="int">
+        select count(1)
+        from media
+        where type = 'ugc'
+          and create_time >= date_sub(current_date, interval #{days} day)
+    </select>
+
+    <select id="listContentTrends" resultType="com.notfound.timecampuspojo.vo.AdminDashboardTrendVO">
+        select date_format(d.day, '%m-%d') as date,
+               coalesce(m.media_count, 0) as mediaCount,
+               coalesce(u.ugc_count, 0) as ugcCount,
+               coalesce(c.comment_count, 0) as commentCount
+        from (
+            select date(create_time) as day
+            from media
+            where create_time >= date_sub(current_date, interval #{days} day)
+            union
+            select date(create_time) as day
+            from `comment`
+            where create_time >= date_sub(current_date, interval #{days} day)
+        ) d
+        left join (
+            select date(create_time) as day, count(1) as media_count
+            from media
+            where create_time >= date_sub(current_date, interval #{days} day)
+            group by date(create_time)
+        ) m on m.day = d.day
+        left join (
+            select date(create_time) as day, count(1) as ugc_count
+            from media
+            where type = 'ugc'
+              and create_time >= date_sub(current_date, interval #{days} day)
+            group by date(create_time)
+        ) u on u.day = d.day
+        left join (
+            select date(create_time) as day, count(1) as comment_count
+            from `comment`
+            where create_time >= date_sub(current_date, interval #{days} day)
+            group by date(create_time)
+        ) c on c.day = d.day
+        order by d.day asc
+    </select>
+
+    <select id="listReviewDistribution" resultType="com.notfound.timecampuspojo.vo.AdminDashboardDistributionVO">
+        select review_status as label, count(1) as value
+        from (
+            select review_status from media
+            union all
+            select review_status from `comment`
+        ) review_items
+        group by review_status
+        order by review_status asc
+    </select>
+
+    <select id="listMediaTypeDistribution" resultType="com.notfound.timecampuspojo.vo.AdminDashboardDistributionVO">
+        select type as label, count(1) as value
+        from media
+        group by type
+        order by type asc
+    </select>
+</mapper>

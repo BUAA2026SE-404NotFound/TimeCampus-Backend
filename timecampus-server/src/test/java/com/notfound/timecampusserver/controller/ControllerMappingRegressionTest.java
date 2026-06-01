@@ -2,6 +2,7 @@ package com.notfound.timecampusserver.controller;
 
 import com.notfound.timecampusserver.controller.admin.AdminContentController;
 import com.notfound.timecampusserver.controller.admin.AdminCommentController;
+import com.notfound.timecampusserver.controller.admin.AdminDashboardController;
 import com.notfound.timecampusserver.controller.admin.AdminLogController;
 import com.notfound.timecampusserver.controller.admin.AdminMapController;
 import com.notfound.timecampusserver.controller.admin.AdminMediaController;
@@ -21,6 +22,7 @@ import com.notfound.timecampusserver.controller.user.UserController;
 import com.notfound.timecampusserver.mapper.MediaMapper;
 import com.notfound.timecampusserver.service.AdminMediaService;
 import com.notfound.timecampusserver.service.AdminMapService;
+import com.notfound.timecampusserver.service.AdminDashboardService;
 import com.notfound.timecampusserver.service.CommentService;
 import com.notfound.timecampusserver.service.FavoriteService;
 import com.notfound.timecampusserver.service.LogService;
@@ -55,6 +57,7 @@ class ControllerMappingRegressionTest {
         UserAuthInterceptor userAuthInterceptor = mock(UserAuthInterceptor.class);
         AdminMediaService adminMediaService = mock(AdminMediaService.class);
         AdminMapService adminMapService = mock(AdminMapService.class);
+        AdminDashboardService adminDashboardService = mock(AdminDashboardService.class);
         LogService logService = mock(LogService.class);
 
         MockMvcBuilders.standaloneSetup(
@@ -71,6 +74,7 @@ class ControllerMappingRegressionTest {
                 new UgcController(ugcService),
                 new AdminContentController(adminMediaService),
                 new AdminMapController(adminMapService, new TencentMapProperties("test-map-key", "test-sk", null, null)),
+                new AdminDashboardController(adminDashboardService),
                 new AdminMediaController(adminMediaService, mediaFileService),
                 new AdminCommentController(commentService),
                 new AdminUgcController(ugcService),
