@@ -85,6 +85,7 @@ public class MapServiceImpl implements MapService {
             String coverPreviewUrl = previewUrl(cover);
             vo.setCoverImagePath(coverPreviewUrl);
             vo.setCoverPreviewUrl(coverPreviewUrl);
+            vo.setCoverThumbnailUrl(thumbnailUrl(cover));
             vo.setMediaList(list.stream().map(this::toMapMediaVO).collect(Collectors.toList()));
 
             mapPois.add(vo);
@@ -218,6 +219,7 @@ public class MapServiceImpl implements MapService {
         String previewUrl = previewUrl(entity);
         vo.setImagePath(previewUrl);
         vo.setPreviewUrl(previewUrl);
+        vo.setThumbnailUrl(thumbnailUrl(entity));
         vo.setDescription(entity.getDescription());
         vo.setType(entity.getType());
         return vo;
@@ -225,6 +227,10 @@ public class MapServiceImpl implements MapService {
 
     private String previewUrl(MediaEntity entity) {
         return entity == null ? null : mediaFileService.previewUrl(entity.getId(), entity.getImagePath());
+    }
+
+    private String thumbnailUrl(MediaEntity entity) {
+        return entity == null ? null : mediaFileService.previewUrl(entity.getId(), entity.getImagePath(), 192);
     }
 
     private void requireTencentKey() {
