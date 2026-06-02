@@ -66,7 +66,7 @@ public class TencentRouteServiceImpl implements TencentRouteService {
                 from,
                 to,
                 intValue(route.get("distance")),
-                intValue(route.get("duration")),
+                intValue(route.get("duration")) * 60,
                 route.get("polyline"),
                 route
         );
