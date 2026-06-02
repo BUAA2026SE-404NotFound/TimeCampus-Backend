@@ -7,13 +7,13 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.3.11</version>
+        <version>3.5.14</version>
         <relativePath/>
     </parent>
 
     <groupId>com.notfound</groupId>
     <artifactId>timecampus</artifactId>
-    <version>0.1.0-alpha</version>
+    <version>0.2.0-beta</version>
     <packaging>pom</packaging>
     <name>timecampus-backend</name>
     <description>Multi-module backend prototype for TimeCampus mini program.</description>
@@ -27,6 +27,8 @@
     <properties>
         <java.version>21</java.version>
         <mybatis.spring.boot.version>3.0.4</mybatis.spring.boot.version>
+        <spring-ai.version>1.1.7</spring-ai.version>
+        <springdoc-openapi.version>2.8.14</springdoc-openapi.version>
     </properties>
 
     <dependencyManagement>
@@ -35,6 +37,13 @@
                 <groupId>org.mybatis.spring.boot</groupId>
                 <artifactId>mybatis-spring-boot-starter</artifactId>
                 <version>${mybatis.spring.boot.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
@@ -53,6 +62,7 @@
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
                     <release>${java.version}</release>
+                    <parameters>true</parameters>
                 </configuration>
             </plugin>
         </plugins>

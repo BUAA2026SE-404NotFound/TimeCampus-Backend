@@ -7,7 +7,7 @@
 
 ## 当前状态
 
-- 后端：Spring Boot 3.3.11，Java 21，多模块 Maven 工程。
+- 后端：Spring Boot 3.5.14，Java 21，多模块 Maven 工程。
 - 管理端：Vue 3 + Vite + Element Plus，已迁出本后端仓库独立管理。
 - API 路径统一为 `/api/v1/...`。
 - Alpha 交付状态：核心后端接口、管理端 API、评论审核、运营地图、文件上传、腾讯地图接入、部署文档和测试报告已进入交付前确认。
@@ -22,14 +22,15 @@
 ## 技术栈
 
 - Java 21
-- Spring Boot 3.3.11
+- Spring Boot 3.5.14
+- Spring AI 1.1.7
 - Maven 3.9+
 - MyBatis
 - MySQL 8
 - Redis 7
-- Vue 3
-- Vite
-- Element Plus
+- Qdrant 1.14.1
+- Nginx
+- Docker（部署 Cap 和 Qdrant）
 - 腾讯地图 WebService API
 - 微信小程序 code2Session
 
@@ -460,3 +461,9 @@ mvn -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.Wechat
 
 - 使用 ApiFox 平台进行管理
 - https://localhost:8080/swagger-ui/index.html 仅供开发阶段使用。
+
+### MCP 管理服务
+
+- 后端提供可选的 Spring AI MCP Server，用于 agent 维护 POI、官方影像资料、审核状态和展示文案。
+- MCP Server 内置轻量 RAG 封装，agent 可先检索 POI、影像、评论和维护规范，再执行编辑。
+- 默认关闭，启用方式、工具列表和 Resources/Prompts 设计见 [docs/mcp-server.md](docs/mcp-server.md)。

@@ -2,6 +2,8 @@ package com.notfound.timecampusserver.service.impl;
 
 import com.notfound.timecampuscommon.api.ResultCode;
 import com.notfound.timecampuscommon.exception.BizException;
+import com.notfound.timecampuspojo.constant.ReviewStatuses;
+import com.notfound.timecampuspojo.dto.MediaMetadataUpdateRequest;
 import com.notfound.timecampuspojo.dto.OfficialMediaImportRequest;
 import com.notfound.timecampuspojo.entity.MediaEntity;
 import com.notfound.timecampuspojo.vo.ImportResultVO;
@@ -138,6 +140,59 @@ public class AdminMediaServiceImpl implements AdminMediaService {
     }
 
     @Override
+    public MediaVO updateMetadata(Long id, MediaMetadataUpdateRequest request, Long reviewerId) {
+        MediaEntity existing = mediaMapper.findById(id);
+        if (existing == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "media not found: " + id);
+        }
+        if (request == null) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "request cannot be null");
+        }
+        if (request.getPoiId() != null) {
+            if (!poiMapper.existsById(request.getPoiId())) {
+                throw new BizException(ResultCode.NOT_FOUND, "poi not found: " + request.getPoiId());
+            }
+            existing.setPoiId(request.getPoiId());
+        }
+        if (request.getImagePath() != null) {
+            if (request.getImagePath().isBlank()) {
+                throw new BizException(ResultCode.VALIDATION_ERROR, "imagePath cannot be blank");
+            }
+            existing.setImagePath(request.getImagePath());
+        }
+        if (request.getYear() != null) {
+            validateYear(request.getYear());
+            existing.setYear(request.getYear());
+        }
+        if (request.getDescription() != null) {
+            existing.setDescription(request.getDescription());
+        }
+        if (request.getReviewStatus() != null && !request.getReviewStatus().isBlank()) {
+            String reviewStatus = request.getReviewStatus();
+            if (!ReviewStatuses.APPROVED.equals(reviewStatus)
+                    && !ReviewStatuses.PENDING.equals(reviewStatus)
+                    && !ReviewStatuses.REJECTED.equals(reviewStatus)) {
+                throw new BizException(ResultCode.VALIDATION_ERROR,
+                        "reviewStatus must be pending, approved or rejected");
+            }
+            existing.setReviewStatus(reviewStatus);
+            if (ReviewStatuses.APPROVED.equals(reviewStatus)) {
+                existing.setReviewTime(LocalDateTime.now());
+                existing.setReviewerId(reviewerId == null ? AdminContext.getAdminId() : reviewerId);
+                existing.setRejectReason(null);
+            }
+        }
+        existing.setUpdateTime(LocalDateTime.now());
+        int rows = mediaMapper.updateById(existing);
+        if (rows != 1) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "media update failed: " + id);
+        }
+        logService.record("ADMIN", reviewerId == null ? AdminContext.getAdminId() : reviewerId, "content",
+                "update_media_metadata", "media", id, existing.getDescription());
+        return mediaStructMapper.toAdminVO(existing);
+    }
+
+    @Override
     public void deleteById(Long id) {
         mediaMapper.deleteById(id);
         logService.record("ADMIN", AdminContext.getAdminId(), "content", "delete_media", "media", id, null);
@@ -209,7 +264,7 @@ public class AdminMediaServiceImpl implements AdminMediaService {
         if (value == null || value.isBlank()) {
             return REVIEW_APPROVED;
         }
-        if (REVIEW_APPROVED.equals(value) || REVIEW_PENDING.equals(value) || "rejected".equals(value)) {
+        if (REVIEW_APPROVED.equals(value) || REVIEW_PENDING.equals(value) || ReviewStatuses.REJECTED.equals(value)) {
             return value;
         }
         return REVIEW_APPROVED;
