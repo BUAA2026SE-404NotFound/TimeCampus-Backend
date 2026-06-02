@@ -93,6 +93,17 @@ POI 写工具：
 
 检索结果会返回 `document.uri`，agent 写入前应再读取对应 resource/tool 获取当前值。
 
+### Admin Agent HTTP API
+
+Portal 管理端可通过普通后台 API 使用同一套 RAG 和草案生成能力：
+
+- `POST /api/v1/admin/agent/rag/search`
+- `POST /api/v1/admin/agent/rag/context-pack`
+- `POST /api/v1/admin/agent/rag/rebuild-index`
+- `POST /api/v1/admin/agent/draft`
+
+`/agent/draft` 默认返回规则草案；启用 DeepSeek chat 后返回模型草案，同时保留 RAG context、质量分和执行门槛。
+
 ### Qdrant 配置
 
 仓库根目录 `docker-compose.yaml` 已包含 Qdrant 服务：
@@ -124,6 +135,24 @@ ZHIPU_EMBEDDING_DIMENSIONS=768
 ```
 
 也可以接 OpenAI、通义、本地模型等任意 Spring AI embedding starter/bean。没有 `EmbeddingModel` 时不会创建 Qdrant VectorStore，MCP RAG 会自动退回词法检索。
+
+### DeepSeek 草案生成
+
+用于管理端 agent draft，默认关闭：
+
+```bash
+DEEPSEEK_CHAT_ENABLED=true
+DEEPSEEK_API_KEY=<your-api-key>
+DEEPSEEK_CHAT_MODEL=deepseek-v4-flash
+```
+
+本地真实 key 可写入被 `.gitignore` 忽略的 `timecampus-server/src/main/resources/application-dev.yaml`。
+
+## 测试
+
+```bash
+mvn -q -pl timecampus-server -am test
+```
 
 ## 维护原则
 

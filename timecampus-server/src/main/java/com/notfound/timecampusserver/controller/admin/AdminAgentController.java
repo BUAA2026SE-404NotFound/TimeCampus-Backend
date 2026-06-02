@@ -1,6 +1,8 @@
 package com.notfound.timecampusserver.controller.admin;
 
 import com.notfound.timecampuscommon.api.ApiResponse;
+import com.notfound.timecampusserver.mcp.TimeCampusAgentDraftService;
+import com.notfound.timecampusserver.mcp.TimeCampusAgentDraftService.AgentDraftResult;
 import com.notfound.timecampusserver.mcp.TimeCampusRagService;
 import com.notfound.timecampusserver.mcp.TimeCampusRagService.TimeCampusRagContextPack;
 import com.notfound.timecampusserver.mcp.TimeCampusRagService.TimeCampusRagSearchResult;
@@ -25,11 +27,14 @@ public class AdminAgentController {
 
     private final TimeCampusRagService ragService;
     private final TimeCampusRagVectorIndexService vectorIndexService;
+    private final TimeCampusAgentDraftService draftService;
 
     public AdminAgentController(TimeCampusRagService ragService,
-                                TimeCampusRagVectorIndexService vectorIndexService) {
+                                TimeCampusRagVectorIndexService vectorIndexService,
+                                TimeCampusAgentDraftService draftService) {
         this.ragService = ragService;
         this.vectorIndexService = vectorIndexService;
+        this.draftService = draftService;
     }
 
     @PostMapping("/rag/search")
@@ -50,6 +55,19 @@ public class AdminAgentController {
     @SecurityRequirement(name = "bearerAuth")
     public ApiResponse<TimeCampusRagContextPack> contextPack(@Valid @RequestBody RagContextPackRequest request) {
         return ApiResponse.success(ragService.contextPack(
+                request.task(),
+                request.limit(),
+                request.types(),
+                request.poiId(),
+                request.includePending()
+        ));
+    }
+
+    @PostMapping("/draft")
+    @Operation(summary = "生成 Agent 维护草案")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<AgentDraftResult> draft(@Valid @RequestBody AgentDraftRequest request) {
+        return ApiResponse.success(draftService.draft(
                 request.task(),
                 request.limit(),
                 request.types(),
@@ -85,6 +103,13 @@ public class AdminAgentController {
                                         List<String> types,
                                         Long poiId,
                                         Boolean includePending) {
+    }
+
+    public record AgentDraftRequest(@NotBlank String task,
+                                    Integer limit,
+                                    List<String> types,
+                                    Long poiId,
+                                    Boolean includePending) {
     }
 
     public record RagIndexRequest(List<String> types,
