@@ -13,6 +13,7 @@ import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -78,6 +79,45 @@ class TimeCampusRagVectorIndexServiceTest {
                 .containsEntry("poiId", 1L)
                 .containsEntry("reviewStatus", "approved")
                 .containsEntry("source", "mysql");
+    }
+
+    @Test
+    void rebuildContinuesWhenDeletingMissingCollection() {
+        TimeCampusRagService ragService = mock(TimeCampusRagService.class);
+        VectorStore vectorStore = mock(VectorStore.class);
+        @SuppressWarnings("unchecked")
+        ObjectProvider<VectorStore> vectorStoreProvider = mock(ObjectProvider.class);
+        when(vectorStoreProvider.getIfAvailable()).thenReturn(vectorStore);
+        when(ragService.collectDocuments(List.of("guideline"), null, false)).thenReturn(List.of(
+                new TimeCampusRagService.TimeCampusRagDocument(
+                        "guideline:content-maintenance",
+                        "guideline",
+                        "TimeCampus content maintenance guidelines",
+                        "Agents must read before writing.",
+                        "timecampus://content-guidelines",
+                        new LinkedHashMap<>()
+                )
+        ));
+        doThrow(new IllegalStateException("NOT_FOUND: Collection `timecampus_rag` doesn't exist!"))
+                .when(vectorStore)
+                .delete(any(Filter.Expression.class));
+        TimeCampusRagVectorIndexService service = new TimeCampusRagVectorIndexService(
+                ragService,
+                new TimeCampusRagProperties(),
+                vectorStoreProvider
+        );
+
+        TimeCampusRagVectorIndexService.VectorIndexResult result = service.rebuild(
+                List.of("guideline"),
+                null,
+                false,
+                true
+        );
+
+        assertThat(result.status()).isEqualTo("indexed");
+        assertThat(result.sourceDocumentCount()).isEqualTo(1);
+        assertThat(result.vectorDocumentCount()).isEqualTo(1);
+        verify(vectorStore).add(any());
     }
 
     @Test

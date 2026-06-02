@@ -59,7 +59,25 @@ public class TimeCampusRagVectorIndexService {
                 .map(Object.class::cast)
                 .toList();
         FilterExpressionBuilder builder = new FilterExpressionBuilder();
-        vectorStore.delete(builder.in("source_id", ids).build());
+        try {
+            vectorStore.delete(builder.in("source_id", ids).build());
+        } catch (RuntimeException e) {
+            if (!isMissingCollection(e)) {
+                throw e;
+            }
+        }
+    }
+
+    private boolean isMissingCollection(Throwable throwable) {
+        Throwable current = throwable;
+        while (current != null) {
+            String message = current.getMessage();
+            if (message != null && (message.contains("NOT_FOUND") || message.contains("doesn't exist"))) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
     }
 
     private List<Document> toVectorDocuments(TimeCampusRagDocument source) {
