@@ -58,11 +58,12 @@ public class TimeCampusAdminResources {
             description = "单个 POI 及其影像资料，用于编辑 POI 和关联历史影像前检查上下文。",
             mimeType = JSON)
     public ReadResourceResult poiDetail(
-            @McpArg(name = "poiId", description = "POI ID", required = true) Long poiId) {
+            @McpArg(name = "poiId", description = "POI ID", required = true) String poiId) {
+        Long id = parseId(poiId, "poiId");
         return adminScope.call(() -> jsonResource("timecampus://poi/" + poiId,
                 Map.of(
-                        "poi", poiService.getById(poiId),
-                        "media", adminMediaService.list(poiId, null, null, null, null)
+                        "poi", poiService.getById(id),
+                        "media", adminMediaService.list(id, null, null, null, null)
                 )));
     }
 
@@ -73,9 +74,10 @@ public class TimeCampusAdminResources {
             description = "单条影像资料详情，用于编辑影像说明、年份、路径、审核状态前检查当前值。",
             mimeType = JSON)
     public ReadResourceResult mediaDetail(
-            @McpArg(name = "mediaId", description = "影像 ID", required = true) Long mediaId) {
+            @McpArg(name = "mediaId", description = "影像 ID", required = true) String mediaId) {
+        Long id = parseId(mediaId, "mediaId");
         return adminScope.call(() -> jsonResource("timecampus://media/" + mediaId,
-                Map.of("media", adminMediaService.getById(mediaId))));
+                Map.of("media", adminMediaService.getById(id))));
     }
 
     @McpResource(
@@ -85,9 +87,10 @@ public class TimeCampusAdminResources {
             description = "某个 POI 下的全部影像资料，适合批量维护一个地点的时间线影像。",
             mimeType = JSON)
     public ReadResourceResult mediaByPoi(
-            @McpArg(name = "poiId", description = "POI ID", required = true) Long poiId) {
+            @McpArg(name = "poiId", description = "POI ID", required = true) String poiId) {
+        Long id = parseId(poiId, "poiId");
         return adminScope.call(() -> jsonResource("timecampus://media/by-poi/" + poiId,
-                Map.of("media", adminMediaService.list(poiId, null, null, null, null))));
+                Map.of("media", adminMediaService.list(id, null, null, null, null))));
     }
 
     @McpResource(
@@ -144,6 +147,14 @@ public class TimeCampusAdminResources {
             return new ReadResourceResult(List.of(new TextResourceContents(uri, JSON, json)));
         } catch (JsonProcessingException e) {
             throw new IllegalStateException("failed to serialize MCP resource: " + uri, e);
+        }
+    }
+
+    private Long parseId(String value, String name) {
+        try {
+            return Long.valueOf(value);
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException(name + " must be a numeric id", e);
         }
     }
 }
