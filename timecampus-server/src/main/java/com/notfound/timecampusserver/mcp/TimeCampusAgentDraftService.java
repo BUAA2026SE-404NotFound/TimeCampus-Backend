@@ -10,6 +10,9 @@ import java.util.List;
 @Service
 public class TimeCampusAgentDraftService {
 
+    public static final int EXECUTABLE_OVERALL_THRESHOLD = 85;
+    public static final int EXECUTABLE_ACTION_SAFETY_THRESHOLD = 80;
+
     private final TimeCampusRagService ragService;
     private final ObjectProvider<TimeCampusChatGenerator> chatGeneratorProvider;
 
@@ -25,13 +28,14 @@ public class TimeCampusAgentDraftService {
                                   Long poiId,
                                   Boolean includePending) {
         TimeCampusRagContextPack contextPack = ragService.contextPack(task, limit, types, poiId, includePending);
-        AgentQualityScore quality = score(contextPack);
+        AgentQualityScore quality = score(task, contextPack);
+        AgentQualityGate qualityGate = qualityGate(quality);
         TimeCampusChatGenerator chatGenerator = chatGeneratorProvider.getIfAvailable();
         String mode = chatGenerator == null ? "rule" : "model";
         String draft = chatGenerator == null
                 ? ruleDraft(task, contextPack)
                 : chatGenerator.generate(systemPrompt(), userPrompt(task, contextPack));
-        return new AgentDraftResult(task, mode, draft, contextPack, quality, gates(quality));
+        return new AgentDraftResult(task, mode, draft, contextPack, quality, qualityGate, gates(qualityGate));
     }
 
     private String ruleDraft(String task, TimeCampusRagContextPack contextPack) {
@@ -62,11 +66,13 @@ public class TimeCampusAgentDraftService {
         return "任务：\n" + task + "\n\nRAG context pack：\n" + contextPack;
     }
 
-    private AgentQualityScore score(TimeCampusRagContextPack contextPack) {
+    private AgentQualityScore score(String task, TimeCampusRagContextPack contextPack) {
         int citedItems = contextPack.retrieval().hits().size();
         int plannedActions = Math.max(1, contextPack.workflow().size());
+        int destructiveActions = containsAny(task, "delete", "remove", "删除", "清空") ? 1 : 0;
+        int unresolvedRisks = unresolvedRiskCount(task, contextPack);
         int grounding = clamp(citedItems * 24);
-        int actionSafety = 100;
+        int actionSafety = clamp(100 - destructiveActions * 28 - unresolvedRisks * 16);
         int completeness = citedItems > 0 ? 90 : 45;
         int citationDensity = clamp((int) Math.round((double) citedItems / plannedActions * 55));
         int overall = clamp((int) Math.round(
@@ -74,8 +80,36 @@ public class TimeCampusAgentDraftService {
         return new AgentQualityScore(grounding, actionSafety, completeness, citationDensity, overall);
     }
 
-    private List<String> gates(AgentQualityScore quality) {
-        if (quality.overall() >= 85 && quality.actionSafety() >= 80) {
+    private AgentQualityGate qualityGate(AgentQualityScore quality) {
+        boolean executable = quality.overall() >= EXECUTABLE_OVERALL_THRESHOLD
+                && quality.actionSafety() >= EXECUTABLE_ACTION_SAFETY_THRESHOLD;
+        List<String> reasons = executable
+                ? List.of("达到执行线", "写入前仍需展示变更摘要")
+                : nonExecutableReasons(quality);
+        return new AgentQualityGate(
+                executable,
+                EXECUTABLE_OVERALL_THRESHOLD,
+                EXECUTABLE_ACTION_SAFETY_THRESHOLD,
+                reasons
+        );
+    }
+
+    private List<String> nonExecutableReasons(AgentQualityScore quality) {
+        List<String> reasons = new java.util.ArrayList<>();
+        if (quality.overall() < EXECUTABLE_OVERALL_THRESHOLD) {
+            reasons.add("overall 低于 " + EXECUTABLE_OVERALL_THRESHOLD);
+        }
+        if (quality.actionSafety() < EXECUTABLE_ACTION_SAFETY_THRESHOLD) {
+            reasons.add("actionSafety 低于 " + EXECUTABLE_ACTION_SAFETY_THRESHOLD);
+        }
+        if (reasons.isEmpty()) {
+            reasons.add("需要人工复核");
+        }
+        return List.copyOf(reasons);
+    }
+
+    private List<String> gates(AgentQualityGate gate) {
+        if (gate.executable()) {
             return List.of("可执行", "写入前仍需展示变更摘要");
         }
         return List.of("仅草案", "补充引用或人工复核后再写入");
@@ -85,11 +119,37 @@ public class TimeCampusAgentDraftService {
         return Math.max(0, Math.min(100, value));
     }
 
+    private int unresolvedRiskCount(String task, TimeCampusRagContextPack contextPack) {
+        String haystack = ((task == null ? "" : task) + "\n" + contextPack.retrieval().hits()).toLowerCase();
+        int risks = 0;
+        if (containsAny(haystack, "版权", "rights", "copyright")) {
+            risks++;
+        }
+        if (containsAny(haystack, "未知", "不明", "待确认", "uncertain", "unknown")) {
+            risks++;
+        }
+        return Math.min(2, risks);
+    }
+
+    private boolean containsAny(String value, String... needles) {
+        if (value == null || value.isBlank()) {
+            return false;
+        }
+        String normalized = value.toLowerCase();
+        for (String needle : needles) {
+            if (normalized.contains(needle.toLowerCase())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public record AgentDraftResult(String task,
                                    String mode,
                                    String draft,
                                    TimeCampusRagContextPack contextPack,
                                    AgentQualityScore quality,
+                                   AgentQualityGate qualityGate,
                                    List<String> gates) {
     }
 
@@ -98,5 +158,11 @@ public class TimeCampusAgentDraftService {
                                     int completeness,
                                     int citationDensity,
                                     int overall) {
+    }
+
+    public record AgentQualityGate(boolean executable,
+                                   int minOverall,
+                                   int minActionSafety,
+                                   List<String> reasons) {
     }
 }

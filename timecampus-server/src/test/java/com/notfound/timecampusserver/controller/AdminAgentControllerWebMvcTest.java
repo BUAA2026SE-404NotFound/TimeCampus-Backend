@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.notfound.timecampusserver.controller.admin.AdminAgentController;
 import com.notfound.timecampusserver.mcp.TimeCampusAgentDraftService;
 import com.notfound.timecampusserver.mcp.TimeCampusAgentDraftService.AgentDraftResult;
+import com.notfound.timecampusserver.mcp.TimeCampusAgentDraftService.AgentQualityGate;
 import com.notfound.timecampusserver.mcp.TimeCampusAgentDraftService.AgentQualityScore;
 import com.notfound.timecampusserver.mcp.TimeCampusRagService;
 import com.notfound.timecampusserver.mcp.TimeCampusRagService.TimeCampusRagContextPack;
@@ -76,6 +77,7 @@ class AdminAgentControllerWebMvcTest {
                 "摘要：建议更新主楼文案。",
                 contextPack("维护主楼文案"),
                 new AgentQualityScore(96, 100, 90, 55, 90),
+                new AgentQualityGate(true, 85, 80, List.of("达到执行线")),
                 List.of("可执行")
         );
         when(draftService.draft(eq("维护主楼文案"), eq(6), any(), eq(null), eq(true))).thenReturn(result);
@@ -91,6 +93,8 @@ class AdminAgentControllerWebMvcTest {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.mode").value("model"))
                 .andExpect(jsonPath("$.data.quality.overall").value(90))
+                .andExpect(jsonPath("$.data.qualityGate.executable").value(true))
+                .andExpect(jsonPath("$.data.qualityGate.minOverall").value(85))
                 .andExpect(jsonPath("$.data.contextPack.retrieval.hits[0].document.type").value("poi"));
     }
 

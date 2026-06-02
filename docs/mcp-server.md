@@ -104,6 +104,15 @@ Portal 管理端可通过普通后台 API 使用同一套 RAG 和草案生成能
 
 `/agent/draft` 默认返回规则草案；启用 DeepSeek chat 后返回模型草案，同时保留 RAG context、质量分和执行门槛。
 
+质量门禁字段：
+
+- `quality`：`grounding`、`actionSafety`、`completeness`、`citationDensity`、`overall` 五项 0-100 分。
+- `qualityGate.executable`：是否达到管理写入执行线。
+- `qualityGate.minOverall`：默认 85。
+- `qualityGate.minActionSafety`：默认 80。
+- `qualityGate.reasons`：不达标原因或执行前提示。
+- `gates`：兼容前端展示的简短标签；低于执行线时只生成草案，不自动写入。
+
 ### Visitor Route API
 
 游客导览 agent 使用公开接口 `POST /api/v1/map/walking-route`。前端传入 2-8 个 GCJ02 点位，后端逐段调用腾讯地图步行路线规划并返回总距离、总耗时和每段摘要。
