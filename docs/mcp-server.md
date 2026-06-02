@@ -104,6 +104,10 @@ Portal 管理端可通过普通后台 API 使用同一套 RAG 和草案生成能
 
 `/agent/draft` 默认返回规则草案；启用 DeepSeek chat 后返回模型草案，同时保留 RAG context、质量分和执行门槛。
 
+### Visitor Route API
+
+游客导览 agent 使用公开接口 `POST /api/v1/map/walking-route`。前端传入 2-8 个 GCJ02 点位，后端逐段调用腾讯地图步行路线规划并返回总距离、总耗时和每段摘要。
+
 ### Qdrant 配置
 
 仓库根目录 `docker-compose.yaml` 已包含 Qdrant 服务：
