@@ -8,10 +8,12 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class TimeCampusRagVectorIndexService {
@@ -95,9 +97,13 @@ public class TimeCampusRagVectorIndexService {
             metadata.put("chunk_count", chunks.size());
             metadata.putIfAbsent("reviewStatus", "");
             metadata.putIfAbsent("source", "mysql");
-            documents.add(new Document(chunkId, chunks.get(i), metadata));
+            documents.add(new Document(stableVectorId(chunkId), chunks.get(i), metadata));
         }
         return documents;
+    }
+
+    private String stableVectorId(String chunkId) {
+        return UUID.nameUUIDFromBytes(chunkId.getBytes(StandardCharsets.UTF_8)).toString();
     }
 
     private List<String> chunks(String text) {

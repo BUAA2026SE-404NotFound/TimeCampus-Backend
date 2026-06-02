@@ -10,6 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -69,8 +70,9 @@ class TimeCampusRagVectorIndexServiceTest {
         assertThat(result.sourceDocumentCount()).isEqualTo(1);
         assertThat(result.vectorDocumentCount()).isEqualTo(vectorDocuments.size());
         assertThat(vectorDocuments).hasSizeGreaterThan(1);
-        assertThat(vectorDocuments.get(0).getId()).isEqualTo("media:10#chunk:0");
+        assertThat(UUID.fromString(vectorDocuments.get(0).getId())).isNotNull();
         assertThat(vectorDocuments.get(0).getMetadata())
+                .containsEntry("rag_id", "media:10#chunk:0")
                 .containsEntry("source_id", "media:10")
                 .containsEntry("rag_type", "media")
                 .containsEntry("uri", "timecampus://media/10")
