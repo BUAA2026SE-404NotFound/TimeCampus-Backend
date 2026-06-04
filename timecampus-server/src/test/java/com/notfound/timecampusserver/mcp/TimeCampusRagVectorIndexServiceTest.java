@@ -45,6 +45,7 @@ class TimeCampusRagVectorIndexServiceTest {
         ));
 
         TimeCampusRagProperties properties = new TimeCampusRagProperties();
+        properties.setVectorEnabled(true);
         properties.setChunkMaxChars(12);
         properties.setChunkOverlapChars(3);
         TimeCampusRagVectorIndexService service = new TimeCampusRagVectorIndexService(
@@ -105,7 +106,7 @@ class TimeCampusRagVectorIndexServiceTest {
                 .delete(any(Filter.Expression.class));
         TimeCampusRagVectorIndexService service = new TimeCampusRagVectorIndexService(
                 ragService,
-                new TimeCampusRagProperties(),
+                vectorEnabledProperties(),
                 vectorStoreProvider
         );
 
@@ -130,7 +131,7 @@ class TimeCampusRagVectorIndexServiceTest {
         when(vectorStoreProvider.getIfAvailable()).thenReturn(null);
         TimeCampusRagVectorIndexService service = new TimeCampusRagVectorIndexService(
                 ragService,
-                new TimeCampusRagProperties(),
+                vectorEnabledProperties(),
                 vectorStoreProvider
         );
 
@@ -140,5 +141,32 @@ class TimeCampusRagVectorIndexServiceTest {
         assertThat(result.sourceDocumentCount()).isZero();
         assertThat(result.vectorDocumentCount()).isZero();
         assertThat(result.message()).contains("No VectorStore bean");
+    }
+
+    @Test
+    void rebuildReportsDisabledWhenVectorRagIsOff() {
+        TimeCampusRagService ragService = mock(TimeCampusRagService.class);
+        VectorStore vectorStore = mock(VectorStore.class);
+        @SuppressWarnings("unchecked")
+        ObjectProvider<VectorStore> vectorStoreProvider = mock(ObjectProvider.class);
+        when(vectorStoreProvider.getIfAvailable()).thenReturn(vectorStore);
+        TimeCampusRagVectorIndexService service = new TimeCampusRagVectorIndexService(
+                ragService,
+                new TimeCampusRagProperties(),
+                vectorStoreProvider
+        );
+
+        TimeCampusRagVectorIndexService.VectorIndexResult result = service.rebuild(null, null, false, true);
+
+        assertThat(result.status()).isEqualTo("disabled");
+        assertThat(result.sourceDocumentCount()).isZero();
+        assertThat(result.vectorDocumentCount()).isZero();
+        assertThat(result.message()).contains("Vector RAG is disabled");
+    }
+
+    private TimeCampusRagProperties vectorEnabledProperties() {
+        TimeCampusRagProperties properties = new TimeCampusRagProperties();
+        properties.setVectorEnabled(true);
+        return properties;
     }
 }

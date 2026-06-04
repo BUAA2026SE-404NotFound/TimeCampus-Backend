@@ -35,6 +35,10 @@ public class TimeCampusRagVectorIndexService {
                                      Boolean includePending,
                                      Boolean deleteExisting) {
         VectorStore vectorStore = vectorStoreProvider.getIfAvailable();
+        if (!ragProperties.isVectorEnabled()) {
+            return new VectorIndexResult("disabled", 0, 0,
+                    "Vector RAG is disabled. Set SPRING_AI_VECTORSTORE_TYPE=qdrant and TIMECAMPUS_RAG_VECTOR_ENABLED=true to rebuild the Qdrant index.");
+        }
         if (vectorStore == null) {
             return new VectorIndexResult("unavailable", 0, 0,
                     "No VectorStore bean is available. Configure Qdrant plus an EmbeddingModel bean first.");

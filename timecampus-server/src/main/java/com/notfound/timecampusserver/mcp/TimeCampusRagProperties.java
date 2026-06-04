@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 @ConfigurationProperties(prefix = "timecampus.rag")
 public class TimeCampusRagProperties {
 
-    private boolean vectorEnabled = true;
+    private boolean vectorEnabled = false;
     private boolean lexicalFallbackEnabled = true;
     private int defaultTopK = 8;
     private int maxTopK = 20;

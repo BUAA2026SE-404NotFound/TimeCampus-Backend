@@ -4,16 +4,29 @@ TimeCampus 后端通过 Spring AI MCP WebMVC Starter 暴露 Streamable HTTP MCP 
 
 ## 启用方式
 
-默认关闭 MCP Server，避免管理写能力在生产环境被意外暴露。启用时设置：
+本地默认启用 MCP Server，且默认不要求 token，方便直接从 IDE 或 Maven 启动后端后连接 `/mcp`。
+
+快速启动：
+
+```powershell
+..\tools\start-backend-mcp.ps1
+```
+
+默认端点：
+
+```text
+POST/GET http://127.0.0.1:8080/mcp
+```
+
+生产或公网环境应显式开启 MCP 鉴权：
 
 ```bash
 TIMECAMPUS_MCP_ENABLED=true
+TIMECAMPUS_MCP_AUTH_REQUIRED=true
 TIMECAMPUS_MCP_TOKEN=replace-with-a-long-random-token
 TIMECAMPUS_MCP_ADMIN_ID=1
 TIMECAMPUS_MCP_ADMIN_ROLE=admin
 ```
-
-默认端点：
 
 ```text
 POST/GET http://<host>:<port>/mcp
@@ -73,8 +86,8 @@ POI 写工具：
 
 当前 RAG 实现支持两层检索：
 
-- 优先：Spring AI `VectorStore` + Qdrant 向量检索。
-- 兜底：本地词法检索，保证 Qdrant 或 EmbeddingModel 未配置时 MCP 仍可用。
+- 默认：本地词法检索，不依赖 Docker、WSL 或 Qdrant，保证 MCP 和后端可直接启动。
+- 可选增强：Spring AI `VectorStore` + Qdrant 向量检索。
 
 语料从 MySQL 业务数据构建：
 
@@ -119,18 +132,32 @@ Portal 管理端可通过普通后台 API 使用同一套 RAG 和草案生成能
 
 ### Qdrant 配置
 
-仓库根目录 `docker-compose.yaml` 已包含 Qdrant 服务：
+Qdrant 是可选增强。没有 Qdrant 时后端仍可启动，RAG 使用词法检索。需要向量检索时先启动 Qdrant：
 
 ```bash
 docker compose up -d qdrant
 ```
 
-后端配置示例：
+再启用 Spring AI Qdrant VectorStore：
+
+```powershell
+$env:SPRING_AI_VECTORSTORE_TYPE="qdrant"
+$env:TIMECAMPUS_RAG_VECTOR_ENABLED="true"
+```
+
+或直接使用启动脚本：
+
+```powershell
+..\tools\start-backend-mcp.ps1 -WithQdrant
+```
+
+Qdrant 连接配置示例：
 
 ```yaml
 spring:
   ai:
     vectorstore:
+      type: qdrant
       qdrant:
         host: ${QDRANT_HOST:localhost}
         port: ${QDRANT_GRPC_PORT:6334}
@@ -141,13 +168,14 @@ spring:
 Qdrant VectorStore 还需要一个 Spring AI `EmbeddingModel` Bean。项目内置了可选的智谱 `embedding-3` HTTP 实现，默认关闭：
 
 ```bash
+TIMECAMPUS_RAG_VECTOR_ENABLED=true
 ZHIPU_EMBEDDING_ENABLED=true
 ZHIPU_API_KEY=<your-api-key>
 ZHIPU_EMBEDDING_MODEL=embedding-3
 ZHIPU_EMBEDDING_DIMENSIONS=768
 ```
 
-也可以接 OpenAI、通义、本地模型等任意 Spring AI embedding starter/bean。没有 `EmbeddingModel` 时不会创建 Qdrant VectorStore，MCP RAG 会自动退回词法检索。
+也可以接 OpenAI、通义、本地模型等任意 Spring AI embedding starter/bean。未设置 `SPRING_AI_VECTORSTORE_TYPE=qdrant` 时不会创建 Qdrant VectorStore，因此不会在启动期连接 `localhost:6334`。
 
 ### DeepSeek 草案生成
 

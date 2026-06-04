@@ -10,7 +10,7 @@ spring:
   ai:
     mcp:
       server:
-        enabled: ${TIMECAMPUS_MCP_ENABLED:false}
+        enabled: ${TIMECAMPUS_MCP_ENABLED:true}
         protocol: STREAMABLE
         name: timecampus-admin-mcp
         version: ${TIMECAMPUS_MCP_VERSION:1.0.0-SNAPSHOT}
@@ -20,6 +20,7 @@ spring:
           mcp-endpoint: ${TIMECAMPUS_MCP_ENDPOINT:/mcp}
           disallow-delete: true
     vectorstore:
+      type: ${SPRING_AI_VECTORSTORE_TYPE:none}
       qdrant:
         host: ${QDRANT_HOST:localhost}
         port: ${QDRANT_GRPC_PORT:6334}
@@ -81,13 +82,13 @@ timecampus:
         batch-size: ${ZHIPU_EMBEDDING_BATCH_SIZE:64}
   mcp:
     endpoint: ${TIMECAMPUS_MCP_ENDPOINT:/mcp}
-    auth-required: ${TIMECAMPUS_MCP_AUTH_REQUIRED:true}
+    auth-required: ${TIMECAMPUS_MCP_AUTH_REQUIRED:false}
     token-header: ${TIMECAMPUS_MCP_TOKEN_HEADER:X-TimeCampus-MCP-Token}
     token: ${TIMECAMPUS_MCP_TOKEN:}
     admin-id: ${TIMECAMPUS_MCP_ADMIN_ID:1}
     admin-role: ${TIMECAMPUS_MCP_ADMIN_ROLE:admin}
   rag:
-    vector-enabled: ${TIMECAMPUS_RAG_VECTOR_ENABLED:true}
+    vector-enabled: ${TIMECAMPUS_RAG_VECTOR_ENABLED:false}
     lexical-fallback-enabled: ${TIMECAMPUS_RAG_LEXICAL_FALLBACK_ENABLED:true}
     default-top-k: ${TIMECAMPUS_RAG_DEFAULT_TOP_K:8}
     max-top-k: ${TIMECAMPUS_RAG_MAX_TOP_K:20}

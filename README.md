@@ -466,4 +466,4 @@ mvn -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.Wechat
 
 - 后端提供可选的 Spring AI MCP Server，用于 agent 维护 POI、官方影像资料、审核状态和展示文案。
 - MCP Server 内置轻量 RAG 封装，agent 可先检索 POI、影像、评论和维护规范，再执行编辑。
-- 默认关闭，启用方式、工具列表和 Resources/Prompts 设计见 [docs/mcp-server.md](docs/mcp-server.md)。
+- 本地默认启用 MCP，RAG 默认使用词法检索，因此没有 Docker/Qdrant 也能启动；启用 Qdrant 向量检索和生产鉴权方式见 [docs/mcp-server.md](docs/mcp-server.md)。
