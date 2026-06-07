@@ -19,6 +19,9 @@ COPY timecampus-common/src timecampus-common/src
 COPY timecampus-pojo/src timecampus-pojo/src
 COPY timecampus-server/src timecampus-server/src
 
+RUN cp timecampus-server/src/main/resources/application-example.yaml timecampus-server/src/main/resources/application.yaml \
+    && cp timecampus-server/src/main/resources/application-prod-example.yaml timecampus-server/src/main/resources/application-prod.yaml
+
 RUN mvn -q -DskipTests package -pl timecampus-server -am
 
 FROM eclipse-temurin:21-jre-alpine
