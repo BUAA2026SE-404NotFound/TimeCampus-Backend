@@ -54,6 +54,15 @@ public class MapServiceImpl implements MapService {
 
     @Override
     public MapHomeVO getHome(Integer year) {
+        return buildHome(year, false);
+    }
+
+    @Override
+    public MapHomeVO getPortalHome(Integer year) {
+        return buildHome(year, true);
+    }
+
+    private MapHomeVO buildHome(Integer year, boolean mediaRequired) {
         List<PoiEntity> pois = poiMapper.list(1, null);
         MapHomeVO homeVO = new MapHomeVO();
         if (pois.isEmpty()) {
@@ -80,6 +89,9 @@ public class MapServiceImpl implements MapService {
             vo.setDescription(poi.getDescription());
 
             List<MediaEntity> list = mediaByPoi.getOrDefault(poi.getId(), List.of());
+            if (mediaRequired && list.isEmpty()) {
+                continue;
+            }
             vo.setAvailableYears(list.stream().map(MediaEntity::getYear).distinct().sorted().collect(Collectors.toList()));
             MediaEntity cover = selectCover(list, year);
             String coverPreviewUrl = previewUrl(cover);

@@ -8,6 +8,7 @@ import com.notfound.timecampusserver.controller.admin.AdminMapController;
 import com.notfound.timecampusserver.controller.admin.AdminMediaController;
 import com.notfound.timecampusserver.controller.admin.AdminUgcController;
 import com.notfound.timecampusserver.config.TencentMapProperties;
+import com.notfound.timecampusserver.controller.publicapi.PortalMapController;
 import com.notfound.timecampusserver.controller.user.AuthController;
 import com.notfound.timecampusserver.controller.user.CommentController;
 import com.notfound.timecampusserver.controller.user.ContentController;
@@ -72,6 +73,7 @@ class ControllerMappingRegressionTest {
                 new TimelineController(timelineService, userAuthInterceptor),
                 new MediaFileController(mediaFileService),
                 new UgcController(ugcService),
+                new PortalMapController(mapService),
                 new AdminContentController(adminMediaService),
                 new AdminMapController(adminMapService, new TencentMapProperties("test-map-key", "test-sk", null, null)),
                 new AdminDashboardController(adminDashboardService),
