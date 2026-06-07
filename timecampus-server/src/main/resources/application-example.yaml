@@ -68,7 +68,7 @@ timecampus:
       chat:
         enabled: ${DEEPSEEK_CHAT_ENABLED:false}
         api-key: ${DEEPSEEK_API_KEY:}
-        endpoint: ${DEEPSEEK_CHAT_ENDPOINT:https://api.deepseek.com/v1/chat/completions}
+        endpoint: ${DEEPSEEK_CHAT_ENDPOINT:https://api.deepseek.com/}
         model: ${DEEPSEEK_CHAT_MODEL:deepseek-v4-flash}
         temperature: ${DEEPSEEK_CHAT_TEMPERATURE:0.2}
         max-tokens: ${DEEPSEEK_CHAT_MAX_TOKENS:1200}
@@ -80,6 +80,13 @@ timecampus:
         model: ${ZHIPU_EMBEDDING_MODEL:embedding-3}
         dimensions: ${ZHIPU_EMBEDDING_DIMENSIONS:768}
         batch-size: ${ZHIPU_EMBEDDING_BATCH_SIZE:64}
+    ollama:
+      embedding:
+        enabled: ${OLLAMA_EMBEDDING_ENABLED:false}
+        base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+        model: ${OLLAMA_EMBEDDING_MODEL:all-minilm}
+        dimensions: ${OLLAMA_EMBEDDING_DIMENSIONS:384}
+        batch-size: ${OLLAMA_EMBEDDING_BATCH_SIZE:32}
   mcp:
     endpoint: ${TIMECAMPUS_MCP_ENDPOINT:/mcp}
     auth-required: ${TIMECAMPUS_MCP_AUTH_REQUIRED:false}
