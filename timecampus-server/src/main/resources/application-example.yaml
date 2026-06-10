@@ -69,7 +69,7 @@ timecampus:
         enabled: ${DEEPSEEK_CHAT_ENABLED:false}
         api-key: ${DEEPSEEK_API_KEY:}
         endpoint: ${DEEPSEEK_CHAT_ENDPOINT:https://api.deepseek.com/}
-        model: ${DEEPSEEK_CHAT_MODEL:deepseek-v4-flash}
+        model: ${DEEPSEEK_CHAT_MODEL:deepseek-chat}
         temperature: ${DEEPSEEK_CHAT_TEMPERATURE:0.2}
         max-tokens: ${DEEPSEEK_CHAT_MAX_TOKENS:1200}
     zhipu:

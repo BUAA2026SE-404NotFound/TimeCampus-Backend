@@ -75,7 +75,7 @@ public class MemoServiceImpl implements MemoService {
     @Override
     @Transactional
     public void deleteMemo(Long id, Long userId) {
-        int deleted = mediaMapper.deleteMemoByIdAndUserId(id, userId); // 需在 Mapper 中实现
+        int deleted = mediaMapper.deleteMemoByIdAndUserId(id, userId);
         if (deleted == 0) {
             throw new BizException(ResultCode.NOT_FOUND, "memo not found or permission denied");
         }

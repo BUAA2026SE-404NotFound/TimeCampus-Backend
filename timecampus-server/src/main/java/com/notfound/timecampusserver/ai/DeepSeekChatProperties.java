@@ -8,7 +8,7 @@ public class DeepSeekChatProperties {
     private boolean enabled = false;
     private String apiKey;
     private String endpoint = "https://api.deepseek.com/v1/chat/completions";
-    private String model = "deepseek-v4-flash";
+    private String model = "deepseek-chat";
     private double temperature = 0.2;
     private int maxTokens = 1200;
 

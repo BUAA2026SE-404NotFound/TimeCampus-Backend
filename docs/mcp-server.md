@@ -184,7 +184,7 @@ ZHIPU_EMBEDDING_DIMENSIONS=768
 ```bash
 DEEPSEEK_CHAT_ENABLED=true
 DEEPSEEK_API_KEY=<your-api-key>
-DEEPSEEK_CHAT_MODEL=deepseek-v4-flash
+DEEPSEEK_CHAT_MODEL=deepseek-chat
 ```
 
 本地真实 key 可写入被 `.gitignore` 忽略的 `timecampus-server/src/main/resources/application-dev.yaml`。
