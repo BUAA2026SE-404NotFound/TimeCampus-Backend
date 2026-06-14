@@ -7,6 +7,7 @@ public class AdminEntity {
     private Long adminId;
     private String adminName;
     private String password;
+    private String role;
     private Integer status;
     private LocalDateTime lastLoginTime;
     private LocalDateTime createTime;
@@ -44,6 +45,14 @@ public class AdminEntity {
         this.password = password;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public Integer getStatus() {
         return status;
     }
@@ -76,4 +85,3 @@ public class AdminEntity {
         this.updateTime = updateTime;
     }
 }
-

@@ -17,6 +17,8 @@ public interface MediaMapper {
 
     int insertBatch(@Param("list") List<MediaEntity> list);
 
+    int updateById(MediaEntity entity);
+
     int deleteById(Long id);
 
     int updateReview(@Param("id") Long id,

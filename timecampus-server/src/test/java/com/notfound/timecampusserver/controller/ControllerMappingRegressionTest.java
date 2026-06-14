@@ -2,11 +2,14 @@ package com.notfound.timecampusserver.controller;
 
 import com.notfound.timecampusserver.controller.admin.AdminContentController;
 import com.notfound.timecampusserver.controller.admin.AdminCommentController;
+import com.notfound.timecampusserver.controller.admin.AdminDashboardController;
 import com.notfound.timecampusserver.controller.admin.AdminLogController;
 import com.notfound.timecampusserver.controller.admin.AdminMapController;
 import com.notfound.timecampusserver.controller.admin.AdminMediaController;
 import com.notfound.timecampusserver.controller.admin.AdminUgcController;
 import com.notfound.timecampusserver.config.TencentMapProperties;
+import com.notfound.timecampusserver.controller.publicapi.PortalMapController;
+import com.notfound.timecampusserver.controller.publicapi.PortalSeedreamController;
 import com.notfound.timecampusserver.controller.user.AuthController;
 import com.notfound.timecampusserver.controller.user.CommentController;
 import com.notfound.timecampusserver.controller.user.ContentController;
@@ -21,6 +24,7 @@ import com.notfound.timecampusserver.controller.user.UserController;
 import com.notfound.timecampusserver.mapper.MediaMapper;
 import com.notfound.timecampusserver.service.AdminMediaService;
 import com.notfound.timecampusserver.service.AdminMapService;
+import com.notfound.timecampusserver.service.AdminDashboardService;
 import com.notfound.timecampusserver.service.CommentService;
 import com.notfound.timecampusserver.service.FavoriteService;
 import com.notfound.timecampusserver.service.LogService;
@@ -28,6 +32,8 @@ import com.notfound.timecampusserver.service.MapService;
 import com.notfound.timecampusserver.service.MediaFileService;
 import com.notfound.timecampusserver.service.PoiService;
 import com.notfound.timecampusserver.service.ReviewResultService;
+import com.notfound.timecampusserver.service.SeedreamImageService;
+import com.notfound.timecampusserver.service.SeedreamGenerationGuardService;
 import com.notfound.timecampusserver.service.TimelineService;
 import com.notfound.timecampusserver.service.UgcService;
 import com.notfound.timecampusserver.service.UserService;
@@ -55,7 +61,10 @@ class ControllerMappingRegressionTest {
         UserAuthInterceptor userAuthInterceptor = mock(UserAuthInterceptor.class);
         AdminMediaService adminMediaService = mock(AdminMediaService.class);
         AdminMapService adminMapService = mock(AdminMapService.class);
+        AdminDashboardService adminDashboardService = mock(AdminDashboardService.class);
         LogService logService = mock(LogService.class);
+        SeedreamImageService seedreamImageService = mock(SeedreamImageService.class);
+        SeedreamGenerationGuardService seedreamGenerationGuardService = mock(SeedreamGenerationGuardService.class);
 
         MockMvcBuilders.standaloneSetup(
                 new AuthController(userService),
@@ -69,8 +78,11 @@ class ControllerMappingRegressionTest {
                 new TimelineController(timelineService, userAuthInterceptor),
                 new MediaFileController(mediaFileService),
                 new UgcController(ugcService),
+                new PortalMapController(mapService),
+                new PortalSeedreamController(seedreamImageService, seedreamGenerationGuardService),
                 new AdminContentController(adminMediaService),
                 new AdminMapController(adminMapService, new TencentMapProperties("test-map-key", "test-sk", null, null)),
+                new AdminDashboardController(adminDashboardService),
                 new AdminMediaController(adminMediaService, mediaFileService),
                 new AdminCommentController(commentService),
                 new AdminUgcController(ugcService),

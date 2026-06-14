@@ -2,6 +2,7 @@ package com.notfound.timecampusserver.controller.admin;
 
 import com.notfound.timecampuscommon.api.ApiResponse;
 import com.notfound.timecampuspojo.dto.AdminLoginRequest;
+import com.notfound.timecampuspojo.dto.AdminRegisterRequest;
 import com.notfound.timecampuspojo.vo.AdminLoginVO;
 import com.notfound.timecampusserver.service.AdminAuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -38,6 +39,12 @@ public class AdminAuthController {
         String token = extractBearer(authorization);
         adminAuthService.logout(token);
         return ApiResponse.success();
+    }
+
+    @PostMapping("/register")
+    @Operation(summary = "管理员注册", description = "需通过人机验证；注册后默认无权限，仅可登录。")
+    public ApiResponse<AdminLoginVO> register(@Valid @RequestBody AdminRegisterRequest request) {
+        return ApiResponse.success(adminAuthService.register(request));
     }
 
     private String extractBearer(String authorization) {

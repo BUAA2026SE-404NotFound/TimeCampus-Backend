@@ -23,6 +23,8 @@ public class MapPoiVO {
     private String coverImagePath;
     @Schema(description = "前端可直接访问的封面预览 URL")
     private String coverPreviewUrl;
+    @Schema(description = "前端可直接访问的低清封面缩略 URL")
+    private String coverThumbnailUrl;
     @Schema(description = "该地点可用年份列表（官方已通过影像的年份集合）", example = "[1952, 1980, 2000]")
     private List<Integer> availableYears;
 
@@ -91,6 +93,14 @@ public class MapPoiVO {
 
     public void setCoverPreviewUrl(String coverPreviewUrl) {
         this.coverPreviewUrl = coverPreviewUrl;
+    }
+
+    public String getCoverThumbnailUrl() {
+        return coverThumbnailUrl;
+    }
+
+    public void setCoverThumbnailUrl(String coverThumbnailUrl) {
+        this.coverThumbnailUrl = coverThumbnailUrl;
     }
 
     public List<Integer> getAvailableYears() {

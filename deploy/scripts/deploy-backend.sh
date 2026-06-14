@@ -1,19 +1,28 @@
 #!/usr/bin/env bash
-# Deploy TimeCampus backend on the production server layout:
-#   ~/TimeCampus-Backend  backend repository
-#   ~/app                 runtime directory: app.jar, config/, logs, backups
+# Deploy TimeCampus backend on the production server layout.
+#
+# Current production layout:
+#   ~/TimeCampus/TimeCampus-Backend  backend repository as the root-project submodule
+#   ~/app                            runtime directory: app.jar, config/, logs, backups
 #
 # The script is intended to be run directly on the server.
 
 set -Eeuo pipefail
 
-REPO_DIR="${REPO_DIR:-$HOME/TimeCampus-Backend}"
+if [ -z "${REPO_DIR:-}" ]; then
+    if [ -e "$HOME/TimeCampus/TimeCampus-Backend/.git" ]; then
+        REPO_DIR="$HOME/TimeCampus/TimeCampus-Backend"
+    else
+        REPO_DIR="$HOME/TimeCampus-Backend"
+    fi
+fi
 APP_DIR="${APP_DIR:-$HOME/app}"
 SERVICE_NAME="${SERVICE_NAME:-timecampus-backend}"
 SPRING_PROFILE="${SPRING_PROFILE:-prod}"
 MAVEN_BIN="${MAVEN_BIN:-mvn}"
 JAVA_BIN="${JAVA_BIN:-/usr/bin/java}"
 SKIP_GIT_PULL="${SKIP_GIT_PULL:-false}"
+DEPLOY_BRANCH="${DEPLOY_BRANCH:-}"
 HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:8080/api/v1/health}"
 HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-45}"
 
@@ -118,8 +127,13 @@ cd "$REPO_DIR"
 if [ "$SKIP_GIT_PULL" != "true" ]; then
     log "Updating backend repository"
     git fetch origin
-    current_branch="$(git rev-parse --abbrev-ref HEAD)"
-    git pull --ff-only origin "$current_branch"
+    if [ -n "$DEPLOY_BRANCH" ]; then
+        log "Checking out branch: $DEPLOY_BRANCH"
+        git checkout -B "$DEPLOY_BRANCH" "origin/$DEPLOY_BRANCH"
+    else
+        current_branch="$(git rev-parse --abbrev-ref HEAD)"
+        git pull --ff-only origin "$current_branch"
+    fi
 else
     log "SKIP_GIT_PULL=true; using existing repository contents"
 fi
@@ -139,6 +153,7 @@ fi
 
 log "Copying jar to $APP_JAR"
 cp "$latest_jar" "$APP_JAR"
+chown "$USER:$USER" "$APP_JAR" 2>/dev/null || true
 
 ensure_systemd_unit
 

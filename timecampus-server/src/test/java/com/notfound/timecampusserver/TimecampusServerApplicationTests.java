@@ -26,4 +26,12 @@ class TimecampusServerApplicationTests {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.status").value("UP"));
     }
+
+    @Test
+    void actuatorStyleHealthEndpointReturnsOk() throws Exception {
+        mockMvc.perform(get("/api/v1/actuator/health"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.status").value("UP"));
+    }
 }

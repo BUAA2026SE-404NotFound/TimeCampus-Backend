@@ -54,6 +54,15 @@ public class MapServiceImpl implements MapService {
 
     @Override
     public MapHomeVO getHome(Integer year) {
+        return buildHome(year, false);
+    }
+
+    @Override
+    public MapHomeVO getPortalHome(Integer year) {
+        return buildHome(year, true);
+    }
+
+    private MapHomeVO buildHome(Integer year, boolean mediaRequired) {
         List<PoiEntity> pois = poiMapper.list(1, null);
         MapHomeVO homeVO = new MapHomeVO();
         if (pois.isEmpty()) {
@@ -80,11 +89,15 @@ public class MapServiceImpl implements MapService {
             vo.setDescription(poi.getDescription());
 
             List<MediaEntity> list = mediaByPoi.getOrDefault(poi.getId(), List.of());
+            if (mediaRequired && list.isEmpty()) {
+                continue;
+            }
             vo.setAvailableYears(list.stream().map(MediaEntity::getYear).distinct().sorted().collect(Collectors.toList()));
             MediaEntity cover = selectCover(list, year);
             String coverPreviewUrl = previewUrl(cover);
             vo.setCoverImagePath(coverPreviewUrl);
             vo.setCoverPreviewUrl(coverPreviewUrl);
+            vo.setCoverThumbnailUrl(thumbnailUrl(cover));
             vo.setMediaList(list.stream().map(this::toMapMediaVO).collect(Collectors.toList()));
 
             mapPois.add(vo);
@@ -218,6 +231,7 @@ public class MapServiceImpl implements MapService {
         String previewUrl = previewUrl(entity);
         vo.setImagePath(previewUrl);
         vo.setPreviewUrl(previewUrl);
+        vo.setThumbnailUrl(thumbnailUrl(entity));
         vo.setDescription(entity.getDescription());
         vo.setType(entity.getType());
         return vo;
@@ -225,6 +239,10 @@ public class MapServiceImpl implements MapService {
 
     private String previewUrl(MediaEntity entity) {
         return entity == null ? null : mediaFileService.previewUrl(entity.getId(), entity.getImagePath());
+    }
+
+    private String thumbnailUrl(MediaEntity entity) {
+        return entity == null ? null : mediaFileService.previewUrl(entity.getId(), entity.getImagePath(), 192);
     }
 
     private void requireTencentKey() {

@@ -48,6 +48,22 @@
         </foreach>
     </insert>
 
+    <update id="updateById" parameterType="com.notfound.timecampuspojo.entity.MediaEntity">
+        update media
+        set poi_id = #{poiId},
+            type = #{type},
+            image_path = #{imagePath},
+            year = #{year},
+            description = #{description},
+            upload_user_id = #{uploadUserId},
+            review_status = #{reviewStatus},
+            reject_reason = #{rejectReason},
+            review_time = #{reviewTime},
+            reviewer_id = #{reviewerId},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+
     <delete id="deleteById">
         delete from media where id = #{id}
     </delete>

@@ -16,6 +16,9 @@ public class MapMediaVO {
     @Schema(description = "前端可直接访问的图片预览 URL")
     private String previewUrl;
 
+    @Schema(description = "前端可直接访问的低清缩略 URL")
+    private String thumbnailUrl;
+
     @Schema(description = "影像说明（media.description）", example = "主楼 2000 年旧照")
     private String description;
 
@@ -52,6 +55,14 @@ public class MapMediaVO {
 
     public void setPreviewUrl(String previewUrl) {
         this.previewUrl = previewUrl;
+    }
+
+    public String getThumbnailUrl() {
+        return thumbnailUrl;
+    }
+
+    public void setThumbnailUrl(String thumbnailUrl) {
+        this.thumbnailUrl = thumbnailUrl;
     }
 
     public String getDescription() {
