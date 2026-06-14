@@ -102,32 +102,39 @@ public class SeedreamImageProperties {
     private static List<Background> defaultBackgrounds() {
         return List.of(
                 new Background(
-                        "main-building-1987",
-                        "主楼合影",
-                        "1987",
-                        "主楼前的历史集体照",
-                        "classpath:seedream-backgrounds/main-building-1987.jpg"
-                ),
-                new Background(
-                        "track-meet-1953",
-                        "运动场主席台",
-                        "1953",
-                        "建校早期运动场场景",
-                        "classpath:seedream-backgrounds/track-meet-1953.jpg"
-                ),
-                new Background(
-                        "building-one-old",
-                        "一号楼俯瞰",
+                        "campus-gate-001",
+                        "北航校门",
                         "历史影像",
-                        "八楼区域早期校园景象",
-                        "classpath:seedream-backgrounds/building-one-old.jpg"
+                        "北航校门历史场景",
+                        "classpath:seedream-backgrounds/gate-001.jpg"
                 ),
                 new Background(
-                        "library-opening-1986",
-                        "图书馆开馆典礼",
-                        "1986",
-                        "图书馆开馆典礼现场",
-                        "classpath:seedream-backgrounds/library-opening-1986.jpg"
+                        "building-one-002",
+                        "一号楼",
+                        "历史影像",
+                        "八楼区域一号楼历史场景",
+                        "classpath:seedream-backgrounds/building-one-002.jpg"
+                ),
+                new Background(
+                        "building-eight-001",
+                        "八号楼如心楼",
+                        "历史影像",
+                        "八楼区域如心楼历史场景",
+                        "classpath:seedream-backgrounds/building-eight-001.jpg"
+                ),
+                new Background(
+                        "main-building-2010",
+                        "主楼",
+                        "2010",
+                        "主楼历史影像场景",
+                        "classpath:seedream-backgrounds/main-building-2010-001.jpg"
+                ),
+                new Background(
+                        "library-007",
+                        "图书馆",
+                        "历史影像",
+                        "图书馆历史影像场景",
+                        "classpath:seedream-backgrounds/library-007.jpg"
                 )
         );
     }

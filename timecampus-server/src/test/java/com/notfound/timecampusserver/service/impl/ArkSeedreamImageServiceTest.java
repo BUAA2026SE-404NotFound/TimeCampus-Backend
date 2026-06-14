@@ -59,10 +59,10 @@ class ArkSeedreamImageServiceTest {
                         MediaType.APPLICATION_JSON
                 ));
 
-        var result = service.generate("main-building-1987", pngFile());
+        var result = service.generate("campus-gate-001", pngFile());
 
         assertThat(result.imageUrl()).isEqualTo("https://example.com/generated.jpg");
-        assertThat(result.background().id()).isEqualTo("main-building-1987");
+        assertThat(result.background().id()).isEqualTo("campus-gate-001");
         assertThat(result.promptVersion()).isEqualTo(ArkSeedreamImageService.PROMPT_VERSION);
         server.verify();
     }
@@ -75,6 +75,26 @@ class ArkSeedreamImageServiceTest {
     }
 
     @Test
+    void defaultBackgroundsAreTheConfiguredCampusTemplates() throws Exception {
+        var backgrounds = service.listBackgrounds();
+
+        assertThat(backgrounds)
+                .extracting(background -> background.id())
+                .containsExactly(
+                        "campus-gate-001",
+                        "building-one-002",
+                        "building-eight-001",
+                        "main-building-2010",
+                        "library-007"
+                );
+
+        for (var background : backgrounds) {
+            assertThat(service.loadBackgroundResource(background.id()).getContentAsByteArray())
+                    .isNotEmpty();
+        }
+    }
+
+    @Test
     void unsupportedUploadTypeIsRejectedBeforeApiCall() {
         MockMultipartFile file = new MockMultipartFile(
                 "file",
@@ -83,7 +103,7 @@ class ArkSeedreamImageServiceTest {
                 "hello".getBytes()
         );
 
-        assertThatThrownBy(() -> service.generate("main-building-1987", file))
+        assertThatThrownBy(() -> service.generate("campus-gate-001", file))
                 .isInstanceOf(BizException.class)
                 .hasMessageContaining("jpeg, png and webp");
     }

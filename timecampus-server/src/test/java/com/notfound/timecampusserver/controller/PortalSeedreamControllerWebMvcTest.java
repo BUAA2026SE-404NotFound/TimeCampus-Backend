@@ -38,31 +38,31 @@ class PortalSeedreamControllerWebMvcTest {
     void backgroundsReturnsAllowedTemplates() throws Exception {
         when(seedreamImageService.listBackgrounds()).thenReturn(List.of(
                 new SeedreamBackground(
-                        "main-building-1987",
-                        "主楼合影",
-                        "1987",
-                        "主楼前的历史集体照",
-                        "/api/v1/portal/seedream/backgrounds/main-building-1987/preview"
+                        "campus-gate-001",
+                        "北航校门",
+                        "历史影像",
+                        "北航校门历史场景",
+                        "/api/v1/portal/seedream/backgrounds/campus-gate-001/preview"
                 )
         ));
 
         mockMvc.perform(get("/api/v1/portal/seedream/backgrounds"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
-                .andExpect(jsonPath("$.data[0].id").value("main-building-1987"))
-                .andExpect(jsonPath("$.data[0].previewUrl").value("/api/v1/portal/seedream/backgrounds/main-building-1987/preview"));
+                .andExpect(jsonPath("$.data[0].id").value("campus-gate-001"))
+                .andExpect(jsonPath("$.data[0].previewUrl").value("/api/v1/portal/seedream/backgrounds/campus-gate-001/preview"));
     }
 
     @Test
     void generateAcceptsOnlyFileAndBackgroundIdFormFields() throws Exception {
         SeedreamBackground background = new SeedreamBackground(
-                "main-building-1987",
-                "主楼合影",
-                "1987",
-                "主楼前的历史集体照",
-                "/api/v1/portal/seedream/backgrounds/main-building-1987/preview"
+                "campus-gate-001",
+                "北航校门",
+                "历史影像",
+                "北航校门历史场景",
+                "/api/v1/portal/seedream/backgrounds/campus-gate-001/preview"
         );
-        when(seedreamImageService.generate(eq("main-building-1987"), any()))
+        when(seedreamImageService.generate(eq("campus-gate-001"), any()))
                 .thenReturn(new SeedreamGenerationResult(
                         "https://example.com/generated.jpg",
                         background,
@@ -79,11 +79,11 @@ class PortalSeedreamControllerWebMvcTest {
 
         mockMvc.perform(multipart("/api/v1/portal/seedream/generations")
                         .file(file)
-                        .param("backgroundId", "main-building-1987"))
+                        .param("backgroundId", "campus-gate-001"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.imageUrl").value("https://example.com/generated.jpg"))
-                .andExpect(jsonPath("$.data.background.id").value("main-building-1987"))
+                .andExpect(jsonPath("$.data.background.id").value("campus-gate-001"))
                 .andExpect(jsonPath("$.data.promptVersion").value("timecampus-seedream-person-in-history-v1"));
     }
 }
