@@ -87,6 +87,16 @@ timecampus:
         model: ${OLLAMA_EMBEDDING_MODEL:all-minilm}
         dimensions: ${OLLAMA_EMBEDDING_DIMENSIONS:384}
         batch-size: ${OLLAMA_EMBEDDING_BATCH_SIZE:32}
+    seedream:
+      enabled: ${ARK_SEEDREAM_ENABLED:false}
+      api-key: ${ARK_SEEDREAM_API_KEY:}
+      endpoint: ${ARK_SEEDREAM_ENDPOINT:https://ark.cn-beijing.volces.com/api/plan/v3/images/generations}
+      model: ${ARK_SEEDREAM_MODEL:doubao-seedream-5.0-lite}
+      size: ${ARK_SEEDREAM_SIZE:2K}
+      output-format: ${ARK_SEEDREAM_OUTPUT_FORMAT:jpeg}
+      watermark: ${ARK_SEEDREAM_WATERMARK:false}
+      reference-strength: ${ARK_SEEDREAM_REFERENCE_STRENGTH:0.82}
+      max-upload-bytes: ${ARK_SEEDREAM_MAX_UPLOAD_BYTES:10485760}
   mcp:
     endpoint: ${TIMECAMPUS_MCP_ENDPOINT:/mcp}
     auth-required: ${TIMECAMPUS_MCP_AUTH_REQUIRED:false}

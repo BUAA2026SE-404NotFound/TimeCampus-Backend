@@ -9,6 +9,7 @@ import com.notfound.timecampusserver.controller.admin.AdminMediaController;
 import com.notfound.timecampusserver.controller.admin.AdminUgcController;
 import com.notfound.timecampusserver.config.TencentMapProperties;
 import com.notfound.timecampusserver.controller.publicapi.PortalMapController;
+import com.notfound.timecampusserver.controller.publicapi.PortalSeedreamController;
 import com.notfound.timecampusserver.controller.user.AuthController;
 import com.notfound.timecampusserver.controller.user.CommentController;
 import com.notfound.timecampusserver.controller.user.ContentController;
@@ -31,6 +32,7 @@ import com.notfound.timecampusserver.service.MapService;
 import com.notfound.timecampusserver.service.MediaFileService;
 import com.notfound.timecampusserver.service.PoiService;
 import com.notfound.timecampusserver.service.ReviewResultService;
+import com.notfound.timecampusserver.service.SeedreamImageService;
 import com.notfound.timecampusserver.service.TimelineService;
 import com.notfound.timecampusserver.service.UgcService;
 import com.notfound.timecampusserver.service.UserService;
@@ -60,6 +62,7 @@ class ControllerMappingRegressionTest {
         AdminMapService adminMapService = mock(AdminMapService.class);
         AdminDashboardService adminDashboardService = mock(AdminDashboardService.class);
         LogService logService = mock(LogService.class);
+        SeedreamImageService seedreamImageService = mock(SeedreamImageService.class);
 
         MockMvcBuilders.standaloneSetup(
                 new AuthController(userService),
@@ -74,6 +77,7 @@ class ControllerMappingRegressionTest {
                 new MediaFileController(mediaFileService),
                 new UgcController(ugcService),
                 new PortalMapController(mapService),
+                new PortalSeedreamController(seedreamImageService),
                 new AdminContentController(adminMediaService),
                 new AdminMapController(adminMapService, new TencentMapProperties("test-map-key", "test-sk", null, null)),
                 new AdminDashboardController(adminDashboardService),
