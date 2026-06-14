@@ -45,3 +45,4 @@ timecampus:
     seedream:
       enabled: ${ARK_SEEDREAM_ENABLED:false}
       api-key: ${ARK_SEEDREAM_API_KEY:}
+      daily-ip-limit: ${ARK_SEEDREAM_DAILY_IP_LIMIT:5}

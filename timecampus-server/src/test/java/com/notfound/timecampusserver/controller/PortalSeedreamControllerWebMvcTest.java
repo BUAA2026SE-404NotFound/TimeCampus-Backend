@@ -4,6 +4,7 @@ import com.notfound.timecampusserver.controller.publicapi.PortalSeedreamControll
 import com.notfound.timecampusserver.service.SeedreamImageService;
 import com.notfound.timecampusserver.service.SeedreamImageService.SeedreamBackground;
 import com.notfound.timecampusserver.service.SeedreamImageService.SeedreamGenerationResult;
+import com.notfound.timecampusserver.service.SeedreamGenerationGuardService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockMultipartFile;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -25,12 +27,14 @@ class PortalSeedreamControllerWebMvcTest {
 
     private MockMvc mockMvc;
     private SeedreamImageService seedreamImageService;
+    private SeedreamGenerationGuardService seedreamGenerationGuardService;
 
     @BeforeEach
     void setUp() {
         seedreamImageService = mock(SeedreamImageService.class);
+        seedreamGenerationGuardService = mock(SeedreamGenerationGuardService.class);
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new PortalSeedreamController(seedreamImageService))
+                .standaloneSetup(new PortalSeedreamController(seedreamImageService, seedreamGenerationGuardService))
                 .build();
     }
 
@@ -79,11 +83,17 @@ class PortalSeedreamControllerWebMvcTest {
 
         mockMvc.perform(multipart("/api/v1/portal/seedream/generations")
                         .file(file)
-                        .param("backgroundId", "campus-gate-001"))
+                        .param("backgroundId", "campus-gate-001")
+                        .param("capToken", "cap-token")
+                        .header("X-Forwarded-For", "203.0.113.10, 127.0.0.1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.imageUrl").value("https://example.com/generated.jpg"))
                 .andExpect(jsonPath("$.data.background.id").value("campus-gate-001"))
                 .andExpect(jsonPath("$.data.promptVersion").value("timecampus-seedream-person-in-history-v1"));
+
+        var orderedCalls = inOrder(seedreamGenerationGuardService, seedreamImageService);
+        orderedCalls.verify(seedreamGenerationGuardService).verifyBeforeGenerate("cap-token", "203.0.113.10");
+        orderedCalls.verify(seedreamImageService).generate(eq("campus-gate-001"), any());
     }
 }

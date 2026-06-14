@@ -4,12 +4,15 @@ import com.notfound.timecampuscommon.api.ApiResponse;
 import com.notfound.timecampusserver.service.SeedreamImageService;
 import com.notfound.timecampusserver.service.SeedreamImageService.SeedreamBackground;
 import com.notfound.timecampusserver.service.SeedreamImageService.SeedreamGenerationResult;
+import com.notfound.timecampusserver.service.SeedreamGenerationGuardService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.core.io.Resource;
 import org.springframework.http.CacheControl;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -28,9 +31,12 @@ import java.util.concurrent.TimeUnit;
 public class PortalSeedreamController {
 
     private final SeedreamImageService seedreamImageService;
+    private final SeedreamGenerationGuardService seedreamGenerationGuardService;
 
-    public PortalSeedreamController(SeedreamImageService seedreamImageService) {
+    public PortalSeedreamController(SeedreamImageService seedreamImageService,
+                                    SeedreamGenerationGuardService seedreamGenerationGuardService) {
         this.seedreamImageService = seedreamImageService;
+        this.seedreamGenerationGuardService = seedreamGenerationGuardService;
     }
 
     @GetMapping("/backgrounds")
@@ -51,7 +57,22 @@ public class PortalSeedreamController {
     @PostMapping(path = "/generations", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "生成历史影像人物置入图", description = "只允许上传人物图片并选择白名单背景模板，不接收自由提示词。")
     public ApiResponse<SeedreamGenerationResult> generate(@RequestPart("file") MultipartFile file,
-                                                          @RequestParam("backgroundId") String backgroundId) {
+                                                          @RequestParam("backgroundId") String backgroundId,
+                                                          @RequestParam("capToken") String capToken,
+                                                          HttpServletRequest request) {
+        seedreamGenerationGuardService.verifyBeforeGenerate(capToken, resolveClientIp(request));
         return ApiResponse.success(seedreamImageService.generate(backgroundId, file));
+    }
+
+    private String resolveClientIp(HttpServletRequest request) {
+        String realIp = request.getHeader("X-Real-IP");
+        if (StringUtils.hasText(realIp)) {
+            return realIp.trim();
+        }
+        String forwardedFor = request.getHeader("X-Forwarded-For");
+        if (StringUtils.hasText(forwardedFor)) {
+            return forwardedFor.split(",", 2)[0].trim();
+        }
+        return request.getRemoteAddr();
     }
 }

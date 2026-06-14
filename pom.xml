@@ -13,7 +13,7 @@
 
     <groupId>com.notfound</groupId>
     <artifactId>timecampus</artifactId>
-    <version>0.2.0-beta</version>
+    <version>0.3.0-beta</version>
     <packaging>pom</packaging>
     <name>timecampus-backend</name>
     <description>Multi-module backend prototype for TimeCampus mini program.</description>

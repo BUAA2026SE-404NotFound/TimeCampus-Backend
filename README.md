@@ -1,6 +1,6 @@
 # TimeCampus Backend
 
-TimeCampus Backend 是“时光航迹”的后端子模块，提供用户端、小程序、公开 Portal、Web 管理端、Agent HTTP API 和 MCP Server。当前 Maven 版本为 `0.2.0-beta`，基于 Java 21、Spring Boot 3.5.14、Spring AI 1.1.7、MyBatis、MySQL、Valkey/Redis、Qdrant 和腾讯地图 WebService。
+TimeCampus Backend 是“时光航迹”的后端子模块，提供用户端、小程序、公开 Portal、Web 管理端、Agent HTTP API 和 MCP Server。当前 Maven 版本为 `0.3.0-beta`，基于 Java 21、Spring Boot 3.5.14、Spring AI 1.1.7、MyBatis、MySQL、Valkey/Redis、Qdrant 和腾讯地图 WebService。
 
 ## 模块结构
 
@@ -68,6 +68,7 @@ http://localhost:8080/swagger-ui/index.html
 | 收藏/UGC/评论 | `/favorites`、`/ugc`、`/comments` |
 | 地图/媒体 | `/map/**`、`/media/{id}/file` |
 | Portal 公开地图 | `/portal/map/home` |
+| Portal 时光合影 | `/portal/seedream/**` |
 | 管理端登录/账号 | `/admin/login`、`/admin/register`、`/admin/accounts` |
 | 管理端内容 | `/admin/pois`、`/admin/contents`、`/admin/media` |
 | 管理端审核/运营 | `/admin/ugc`、`/admin/comments`、`/admin/dashboard`、`/admin/map`、`/admin/logs` |
@@ -102,6 +103,9 @@ TENCENT_MAP_SK
 CAP_ENABLED
 CAP_SITEVERIFY_URL
 CAP_SECRET
+ARK_SEEDREAM_ENABLED
+ARK_SEEDREAM_API_KEY
+ARK_SEEDREAM_DAILY_IP_LIMIT
 TIMECAMPUS_MCP_ENABLED
 TIMECAMPUS_MCP_AUTH_REQUIRED
 TIMECAMPUS_MCP_TOKEN
@@ -116,6 +120,7 @@ TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS
 - 用户端和管理端都使用 `Authorization: Bearer <token>`。
 - 管理端角色为 `super`、`admin`、`read`、`none`。
 - 生产管理端登录必须开启 Cap 服务端校验。
+- Portal Seedream 生成接口必须通过 Cap 校验，并对同一 IP 执行每日限额；接口只接受人物图片和白名单背景，不接受自由 prompt。
 - 用户端媒体文件 URL 使用短期 accessToken，默认有效期 600 秒。
 - 本地文件读取必须位于 `storage.local-root-dir` 下，避免路径穿越。
 - `TimeFillAspect` 自动填充 `createTime` 和 `updateTime`。
@@ -179,6 +184,7 @@ mvn -pl timecampus-server -am test
 - 项目技术规格：[../docs/technical-spec.md](../docs/technical-spec.md)
 - 文档维护指南：[../docs/documentation-maintenance.md](../docs/documentation-maintenance.md)
 - MCP Server：[docs/mcp-server.md](docs/mcp-server.md)
+- Seedream Image Agent：[docs/seedream-agent.md](docs/seedream-agent.md)
 - 数据库设计：[docs/database.md](docs/database.md)
 - Alpha Release Notes：[docs/alpha-release-notes.md](docs/alpha-release-notes.md)
 - Alpha Test Report：[docs/alpha-test-report.md](docs/alpha-test-report.md)

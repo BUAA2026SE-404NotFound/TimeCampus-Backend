@@ -17,6 +17,14 @@ Accepted inputs:
 
 - `file`: JPEG, PNG or WebP person image.
 - `backgroundId`: one id from the backend whitelist.
+- `capToken`: one Cap verification token, checked by the backend before generation.
+
+Runtime guardrails:
+
+- Portal users must agree to the privacy/safety notice and content rules before uploading.
+- Backend verifies Cap with the server-side secret; the frontend never receives that secret.
+- Redis/Valkey limits the same client IP to 5 generation attempts per Asia/Shanghai calendar day by default.
+- Uploads are used only for the generation request; the backend does not persist user-uploaded person images.
 
 Rejected or unavailable by design:
 

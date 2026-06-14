@@ -33,6 +33,7 @@ import com.notfound.timecampusserver.service.MediaFileService;
 import com.notfound.timecampusserver.service.PoiService;
 import com.notfound.timecampusserver.service.ReviewResultService;
 import com.notfound.timecampusserver.service.SeedreamImageService;
+import com.notfound.timecampusserver.service.SeedreamGenerationGuardService;
 import com.notfound.timecampusserver.service.TimelineService;
 import com.notfound.timecampusserver.service.UgcService;
 import com.notfound.timecampusserver.service.UserService;
@@ -63,6 +64,7 @@ class ControllerMappingRegressionTest {
         AdminDashboardService adminDashboardService = mock(AdminDashboardService.class);
         LogService logService = mock(LogService.class);
         SeedreamImageService seedreamImageService = mock(SeedreamImageService.class);
+        SeedreamGenerationGuardService seedreamGenerationGuardService = mock(SeedreamGenerationGuardService.class);
 
         MockMvcBuilders.standaloneSetup(
                 new AuthController(userService),
@@ -77,7 +79,7 @@ class ControllerMappingRegressionTest {
                 new MediaFileController(mediaFileService),
                 new UgcController(ugcService),
                 new PortalMapController(mapService),
-                new PortalSeedreamController(seedreamImageService),
+                new PortalSeedreamController(seedreamImageService, seedreamGenerationGuardService),
                 new AdminContentController(adminMediaService),
                 new AdminMapController(adminMapService, new TencentMapProperties("test-map-key", "test-sk", null, null)),
                 new AdminDashboardController(adminDashboardService),

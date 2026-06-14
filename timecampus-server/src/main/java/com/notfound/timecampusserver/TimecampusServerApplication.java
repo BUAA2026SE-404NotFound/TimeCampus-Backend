@@ -20,7 +20,7 @@ public class TimecampusServerApplication {
                 entry("spring.ai.mcp.server.enabled", env("TIMECAMPUS_MCP_ENABLED", "true")),
                 entry("spring.ai.mcp.server.protocol", "STREAMABLE"),
                 entry("spring.ai.mcp.server.name", "timecampus-admin-mcp"),
-                entry("spring.ai.mcp.server.version", env("TIMECAMPUS_MCP_VERSION", "0.1.0-alpha")),
+                entry("spring.ai.mcp.server.version", env("TIMECAMPUS_MCP_VERSION", "0.3.0-beta")),
                 entry("spring.ai.mcp.server.type", "SYNC"),
                 entry("spring.ai.mcp.server.instructions",
                         "TimeCampus admin MCP server for POI, media, review and copy maintenance. Use read tools/resources before destructive writes."),

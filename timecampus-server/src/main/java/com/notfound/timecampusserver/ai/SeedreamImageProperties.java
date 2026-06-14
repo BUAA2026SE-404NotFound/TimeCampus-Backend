@@ -17,6 +17,7 @@ public class SeedreamImageProperties {
     private boolean watermark = false;
     private double referenceStrength = 0.82;
     private long maxUploadBytes = 10 * 1024 * 1024;
+    private int dailyIpLimit = 5;
     private List<Background> backgrounds = defaultBackgrounds();
 
     public boolean isEnabled() {
@@ -89,6 +90,14 @@ public class SeedreamImageProperties {
 
     public void setMaxUploadBytes(long maxUploadBytes) {
         this.maxUploadBytes = maxUploadBytes;
+    }
+
+    public int getDailyIpLimit() {
+        return Math.max(1, dailyIpLimit);
+    }
+
+    public void setDailyIpLimit(int dailyIpLimit) {
+        this.dailyIpLimit = dailyIpLimit;
     }
 
     public List<Background> getBackgrounds() {
