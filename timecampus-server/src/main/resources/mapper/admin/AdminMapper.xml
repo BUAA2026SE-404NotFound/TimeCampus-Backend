@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.notfound.timecampusserver.mapper.AdminMapper">
+
+    <resultMap id="BaseResultMap" type="com.notfound.timecampuspojo.entity.AdminEntity">
+        <id column="id" property="id"/>
+        <result column="admin_id" property="adminId"/>
+        <result column="admin_name" property="adminName"/>
+        <result column="password" property="password"/>
+        <result column="role" property="role"/>
+        <result column="status" property="status"/>
+        <result column="last_login_time" property="lastLoginTime"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <select id="findByAdminName" resultMap="BaseResultMap">
+        select id, admin_id, admin_name, password, role, status, last_login_time, create_time, update_time
+        from admin
+        where admin_name = #{adminName}
+        limit 1
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        select id, admin_id, admin_name, password, role, status, last_login_time, create_time, update_time
+        from admin
+        where id = #{id}
+        limit 1
+    </select>
+
+    <select id="findAll" resultMap="BaseResultMap">
+        select id, admin_id, admin_name, password, role, status, last_login_time, create_time, update_time
+        from admin
+        order by create_time desc, id desc
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into admin (admin_id, admin_name, password, role, status)
+        values (#{adminId}, #{adminName}, #{password}, #{role}, #{status})
+    </insert>
+
+    <update id="updateStatus">
+        update admin
+        set status = #{status},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+
+    <update id="updateLastLoginTime">
+        update admin
+        set last_login_time = #{lastLoginTime},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+
+    <update id="updateRole">
+        update admin
+        set role = #{role},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+</mapper>

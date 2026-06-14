@@ -1,0 +1,243 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.notfound.timecampusserver.mapper.MediaMapper">
+
+    <resultMap id="BaseResultMap" type="com.notfound.timecampuspojo.entity.MediaEntity">
+        <id column="id" property="id"/>
+        <result column="poi_id" property="poiId"/>
+        <result column="type" property="type"/>
+        <result column="image_path" property="imagePath"/>
+        <result column="year" property="year"/>
+        <result column="description" property="description"/>
+        <result column="upload_user_id" property="uploadUserId"/>
+        <result column="review_status" property="reviewStatus"/>
+        <result column="reject_reason" property="rejectReason"/>
+        <result column="review_time" property="reviewTime"/>
+        <result column="reviewer_id" property="reviewerId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+    </resultMap>
+
+    <!-- 按单个 ID 查询 -->
+    <select id="findById" resultMap="BaseResultMap">
+        select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+            review_time, reviewer_id, create_time, update_time
+        from media
+        where id = #{id}
+            limit 1
+    </select>
+
+    <insert id="insert" parameterType="com.notfound.timecampuspojo.entity.MediaEntity"
+            useGeneratedKeys="true" keyProperty="id">
+        insert into media (poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+                           review_time, reviewer_id, create_time, update_time)
+        values (#{poiId}, #{type}, #{imagePath}, #{year}, #{description}, #{uploadUserId}, #{reviewStatus},
+                #{rejectReason}, #{reviewTime}, #{reviewerId}, #{createTime}, #{updateTime})
+    </insert>
+
+    <insert id="insertBatch">
+        insert into media (poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+                           review_time, reviewer_id, create_time, update_time)
+        values
+        <foreach collection="list" item="item" separator=",">
+            (#{item.poiId}, #{item.type}, #{item.imagePath}, #{item.year}, #{item.description}, #{item.uploadUserId},
+             #{item.reviewStatus}, #{item.rejectReason}, #{item.reviewTime}, #{item.reviewerId}, #{item.createTime},
+             #{item.updateTime})
+        </foreach>
+    </insert>
+
+    <update id="updateById" parameterType="com.notfound.timecampuspojo.entity.MediaEntity">
+        update media
+        set poi_id = #{poiId},
+            type = #{type},
+            image_path = #{imagePath},
+            year = #{year},
+            description = #{description},
+            upload_user_id = #{uploadUserId},
+            review_status = #{reviewStatus},
+            reject_reason = #{rejectReason},
+            review_time = #{reviewTime},
+            reviewer_id = #{reviewerId},
+            update_time = #{updateTime}
+        where id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        delete from media where id = #{id}
+    </delete>
+
+    <update id="updateReview">
+        update media
+        set review_status = #{reviewStatus},
+            reject_reason = #{rejectReason},
+            review_time = now(),
+            reviewer_id = #{reviewerId},
+            update_time = now()
+        where id = #{id}
+    </update>
+
+    <select id="list" resultMap="BaseResultMap">
+        select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+        review_time, reviewer_id, create_time, update_time
+        from media
+        <where>
+            <if test="poiId != null">
+                and poi_id = #{poiId}
+            </if>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="reviewStatus != null and reviewStatus != ''">
+                and review_status = #{reviewStatus}
+            </if>
+            <if test="yearFrom != null">
+                and year &gt;= #{yearFrom}
+            </if>
+            <if test="yearTo != null">
+                and year &lt;= #{yearTo}
+            </if>
+        </where>
+        order by poi_id asc, year asc, id asc
+    </select>
+
+    <select id="listByPoiIds" resultMap="BaseResultMap">
+        select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+        review_time, reviewer_id, create_time, update_time
+        from media
+        <where>
+            <if test="poiIds != null and poiIds.size() &gt; 0">
+                poi_id in
+                <foreach collection="poiIds" item="id" open="(" close=")" separator=",">
+                    #{id}
+                </foreach>
+            </if>
+            <if test="type != null and type != ''">
+                and type = #{type}
+            </if>
+            <if test="reviewStatus != null and reviewStatus != ''">
+                and review_status = #{reviewStatus}
+            </if>
+        </where>
+        order by poi_id asc, year asc, id asc
+    </select>
+
+    <select id="listByIds" resultMap="BaseResultMap">
+        select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+               review_time, reviewer_id, create_time, update_time
+        from media
+        where id in
+        <foreach collection="ids" item="id" open="(" close=")" separator=",">
+            #{id}
+        </foreach>
+    </select>
+
+    <select id="listByUploadUser" resultMap="BaseResultMap">
+        select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+               review_time, reviewer_id, create_time, update_time
+        from media
+        where upload_user_id = #{uploadUserId}
+        <if test="type != null and type != ''">
+            and type = #{type}
+        </if>
+        <if test="reviewStatus != null and reviewStatus != ''">
+            and review_status = #{reviewStatus}
+        </if>
+        order by create_time desc, id desc
+    </select>
+
+    <select id="findBestByPoiAndYear" resultMap="BaseResultMap">
+        select id, poi_id, type, image_path, year, description, upload_user_id, review_status, reject_reason,
+               review_time, reviewer_id, create_time, update_time
+        from media
+        where poi_id = #{poiId}
+          and review_status = #{reviewStatus}
+        <if test="type != null and type != ''">
+          and type = #{type}
+        </if>
+        order by abs(year - #{year}) , year desc, id desc
+        limit 1
+    </select>
+
+    <select id="listMemosByUser" resultType="com.notfound.timecampuspojo.vo.MediaVO">
+        SELECT
+        m.id,
+        m.poi_id AS poiId,
+        p.name AS poiName,
+        m.year,
+        m.description,
+        m.review_status AS reviewStatus,
+        m.reject_reason AS rejectReason,
+        m.create_time AS createTime,
+        m.update_time AS updateTime,
+        m.image_path AS imagePath
+        FROM media m
+        INNER JOIN poi p ON m.poi_id = p.id
+        WHERE m.upload_user_id = #{userId}
+        AND m.type = 'memo'
+        <if test="poiId != null">
+            AND m.poi_id = #{poiId}
+        </if>
+        <if test="yearFrom != null">
+            AND m.year >= #{yearFrom}
+        </if>
+        <if test="yearTo != null">
+            AND m.year &lt;= #{yearTo}
+        </if>
+        ORDER BY m.create_time DESC
+    </select>
+
+    <select id="listTimelineMemos" resultType="com.notfound.timecampuspojo.vo.TimelineItemVO">
+        SELECT
+            m.id,
+            m.poi_id AS poiId,
+            p.name AS poiName,
+            m.year,
+            m.description,
+            m.image_path AS imagePath,
+            m.create_time AS createTime
+        FROM media m
+        INNER JOIN poi p ON m.poi_id = p.id
+        WHERE m.upload_user_id = #{userId}
+          AND m.type = 'memo'
+        <if test="poiId != null">
+            AND m.poi_id = #{poiId}
+        </if>
+        <if test="yearFrom != null">
+            AND m.year &gt;= #{yearFrom}
+        </if>
+        <if test="yearTo != null">
+            AND m.year &lt;= #{yearTo}
+        </if>
+        ORDER BY m.year DESC, m.create_time DESC, m.id DESC
+    </select>
+
+    <delete id="deleteMemoByIdAndUserId">
+        DELETE FROM media
+        WHERE id = #{id}
+          AND upload_user_id = #{userId}
+          AND type = 'memo'
+    </delete>
+
+    <select id="listTimelineOfficial" resultType="com.notfound.timecampuspojo.vo.TimelineItemVO">
+        SELECT
+            m.id,
+            m.poi_id AS poiId,
+            p.name AS poiName,
+            m.year,
+            m.description,
+            m.image_path AS imagePath,
+            m.create_time AS createTime
+        FROM media m
+        INNER JOIN poi p ON m.poi_id = p.id
+        WHERE m.type = 'official'
+          AND m.review_status = 'approved'
+          AND m.year &gt;= #{yearFrom}
+          AND m.year &lt;= #{yearTo}
+        <if test="poiId != null">
+            AND m.poi_id = #{poiId}
+        </if>
+        ORDER BY m.year DESC, m.create_time DESC, m.id DESC
+    </select>
+</mapper>

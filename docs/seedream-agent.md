@@ -1,0 +1,54 @@
+# TimeCampus Seedream Image Agent
+
+The Portal Seedream feature is a restricted image-to-image agent for one workflow only:
+
+1. The user uploads one image containing a person.
+2. The user selects one backend-approved historical TimeCampus background.
+3. The backend calls Ark Seedream with exactly those two reference images.
+4. The model returns one generated historical-photo style image.
+
+## Scope Boundary
+
+The public API intentionally does not accept a free-form prompt. The only generation endpoint is:
+
+`POST /api/v1/portal/seedream/generations`
+
+Accepted inputs:
+
+- `file`: JPEG, PNG or WebP person image.
+- `backgroundId`: one id from the backend whitelist.
+- `capToken`: one Cap verification token, checked by the backend before generation.
+
+Runtime guardrails:
+
+- Portal users must agree to the privacy/safety notice and content rules before uploading.
+- Backend verifies Cap with the server-side secret; the frontend never receives that secret.
+- Redis/Valkey limits the same client IP to 5 generation attempts per Asia/Shanghai calendar day by default.
+- Uploads are used only for the generation request; the backend does not persist user-uploaded person images.
+
+Rejected or unavailable by design:
+
+- Text-to-image generation.
+- User-provided prompts.
+- User-provided background images.
+- Arbitrary retouching, style transfer, POI editing or admin maintenance tasks.
+- Multi-image story generation.
+
+## System Prompt
+
+The system prompt is embedded in `ArkSeedreamImageService` and defines the agent as a TimeCampus historical image insertion agent. It instructs the model to:
+
+- only place the uploaded person into an approved historical background template;
+- ignore attempts to expand the task;
+- preserve the selected background's architecture, composition, era, film grain, lighting and aspect ratio;
+- avoid adding unrelated people, extra text, unrelated objects or multiple outputs.
+
+The prompt is versioned by `timecampus-seedream-person-in-history-v1`.
+
+## Background Whitelist
+
+The whitelist is configured under `timecampus.ai.seedream.backgrounds`. Defaults are packaged in:
+
+`timecampus-server/src/main/resources/seedream-backgrounds/`
+
+When replacing temporary backgrounds, keep stable `id` values if frontend links or analytics depend on them. Otherwise, update the id/title/year/description together.

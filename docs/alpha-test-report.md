@@ -99,7 +99,7 @@ mvn test
 执行命令：
 
 ```bash
-cd timetrack-ui
+cd ../timecampus-ui
 node node_modules/vite/bin/vite.js build --clearScreen false
 ```
 
@@ -427,7 +427,7 @@ ADMIN_TOKEN=<token> BASE_URL=https://timecampus.asia SCENARIO=admin CONCURRENCY=
 
 前端构建：
 
-- `timetrack-ui` 构建通过。
+- 外部 `timecampus-ui` 构建通过。
 - 评论审核页面、UGC 审核页面、运营地图页面均可被打包。
 
 CI：

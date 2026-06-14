@@ -7,6 +7,11 @@ on:
   pull_request:
     branches:
       - "**"
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - closed
   workflow_dispatch:
     inputs:
       run_smoke:
@@ -26,6 +31,7 @@ jobs:
   backend:
     name: Backend Test And Package (Java 21)
     runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || github.event.action != 'closed' }}
 
     steps:
       - name: Checkout
@@ -42,44 +48,49 @@ jobs:
         run: mvn -B clean test
 
       - name: Package Server Module
-        run: mvn -B -pl timetrack-server -am package -DskipTests
+        run: mvn -B -pl timecampus-server -am package -DskipTests
 
-#      - name: Upload Server Artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: timetrack-server-jar
-#          path: timetrack-server/target/*.jar
-#          if-no-files-found: error
-
-  frontend:
-    name: Frontend Build (Vue 3)
+  deploy-dev:
+    name: Deploy Backend On Dev Merge
     runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'dev' }}
+    env:
+      SERVER_HOST: ${{ secrets.DEPLOY_HOST }}
+      SERVER_USERNAME: ${{ secrets.DEPLOY_USERNAME || secrets.DEPLOY_USER }}
+      SERVER_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
+      DEPLOY_BRANCH: dev
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Deploy on cloud server
+        if: ${{ env.SERVER_HOST != '' && env.SERVER_USERNAME != '' && env.SERVER_PASSWORD != '' }}
+        uses: appleboy/ssh-action@v1.2.0
         with:
-          node-version: "22"
-          cache: npm
-          cache-dependency-path: timetrack-ui/package-lock.json
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USERNAME }}
+          password: ${{ env.SERVER_PASSWORD }}
+          script: |
+            set -e
 
-      - name: Install Frontend Dependencies
-        working-directory: timetrack-ui
-        run: npm ci
+            if [ -e "$HOME/TimeCampus/TimeCampus-Backend/.git" ]; then
+              REPO_DIR="$HOME/TimeCampus/TimeCampus-Backend"
+            elif [ -e "$HOME/TimeCampus-Backend/.git" ]; then
+              REPO_DIR="$HOME/TimeCampus-Backend"
+            else
+              echo "Backend repository not found on server"
+              exit 1
+            fi
 
-      - name: Build Frontend
-        working-directory: timetrack-ui
-        run: npm run build
+            cd "$REPO_DIR"
+            git fetch origin
+            git checkout -B "${{ env.DEPLOY_BRANCH }}" "origin/${{ env.DEPLOY_BRANCH }}"
+            chmod +x deploy/scripts/deploy-backend.sh
 
-#      - name: Upload Frontend Artifact
-#        uses: actions/upload-artifact@v4
-#        with:
-#          name: timetrack-ui-dist
-#          path: timetrack-ui/dist
-#          if-no-files-found: error
+            DEPLOY_BRANCH="${{ env.DEPLOY_BRANCH }}" \
+            REPO_DIR="$REPO_DIR" \
+            APP_DIR="$HOME/app" \
+            SERVICE_NAME="timecampus-backend" \
+            HEALTH_URL="http://127.0.0.1:8080/api/v1/health" \
+              bash deploy/scripts/deploy-backend.sh
 
   third-party-smoke:
     name: Third Party Smoke Tests
@@ -102,11 +113,11 @@ jobs:
           RUN_TENCENT_SMOKE: "true"
           TENCENT_MAP_KEY: ${{ secrets.TENCENT_MAP_KEY }}
           TENCENT_MAP_SK: ${{ secrets.TENCENT_MAP_SK }}
-        run: mvn -B -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.TencentMapSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
+        run: mvn -B -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.TencentMapSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
 
       - name: Run WeChat Smoke Test
         env:
           RUN_WECHAT_SMOKE: "true"
           WECHAT_APPID: ${{ secrets.WECHAT_APPID }}
           WECHAT_SECRET: ${{ secrets.WECHAT_SECRET }}
-        run: mvn -B -pl timetrack-server -am "-Dtest=com.notfound.timetrackserver.smoke.WechatAuthSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test
+        run: mvn -B -pl timecampus-server -am "-Dtest=com.notfound.timecampusserver.smoke.WechatAuthSmokeTest" "-Dsurefire.failIfNoSpecifiedTests=false" test

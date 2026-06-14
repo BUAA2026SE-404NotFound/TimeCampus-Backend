@@ -20,7 +20,7 @@
 ## 2. 版本号
 
 - Maven 根工程版本：`0.1.0-alpha`
-- 管理端 `timetrack-ui` 版本：`0.1.0-alpha`
+- 管理端外部仓库 `timecampus-ui` 版本：`0.1.0-alpha`
 
 子模块继承 Maven 根工程版本。
 
@@ -47,7 +47,7 @@
 建议发布前按以下顺序确认：
 
 1. 在本地执行 `mvn test`。
-2. 在 `timetrack-ui` 下执行 `npm run build`。
+2. 在外部 `timecampus-ui` 仓库下执行 `npm run build`，并将 `dist` 发布到 Nginx 静态目录。
 3. 在测试库执行 `schema.sql`，必要时执行 `dev-seed-buaa.sql`。
 4. 在服务器 `app/config/application-prod.yaml` 中确认 MySQL、Redis、微信、腾讯地图和存储目录配置。
 5. 通过 `curl http://127.0.0.1:8080/api/v1/health` 确认后端健康。

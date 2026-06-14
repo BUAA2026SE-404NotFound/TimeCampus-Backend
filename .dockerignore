@@ -1,0 +1,6 @@
+.git
+**/target
+**/.idea
+out
+storage
+deploy/data

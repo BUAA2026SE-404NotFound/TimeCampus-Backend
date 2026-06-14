@@ -1,0 +1,272 @@
+package com.notfound.timecampusserver.service.impl;
+
+import com.notfound.timecampuscommon.api.ResultCode;
+import com.notfound.timecampuscommon.exception.BizException;
+import com.notfound.timecampuspojo.constant.ReviewStatuses;
+import com.notfound.timecampuspojo.dto.MediaMetadataUpdateRequest;
+import com.notfound.timecampuspojo.dto.OfficialMediaImportRequest;
+import com.notfound.timecampuspojo.entity.MediaEntity;
+import com.notfound.timecampuspojo.vo.ImportResultVO;
+import com.notfound.timecampuspojo.vo.MediaVO;
+import com.notfound.timecampusserver.mapper.MediaMapper;
+import com.notfound.timecampusserver.mapper.PoiMapper;
+import com.notfound.timecampusserver.service.AdminMediaService;
+import com.notfound.timecampusserver.security.AdminContext;
+import com.notfound.timecampusserver.service.LogService;
+import com.notfound.timecampusserver.service.StorageService;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+public class AdminMediaServiceImpl implements AdminMediaService {
+
+    private static final String TYPE_OFFICIAL = "official";
+    private static final String REVIEW_APPROVED = "approved";
+    private static final String REVIEW_PENDING = "pending";
+
+    private final MediaMapper mediaMapper;
+    private final PoiMapper poiMapper;
+    private final MediaStructMapper mediaStructMapper;
+    private final LogService logService;
+    private final StorageService storageService;
+
+    public AdminMediaServiceImpl(MediaMapper mediaMapper,
+                                 PoiMapper poiMapper,
+                                 MediaStructMapper mediaStructMapper,
+                                 LogService logService,
+                                 StorageService storageService) {
+        this.mediaMapper = mediaMapper;
+        this.poiMapper = poiMapper;
+        this.mediaStructMapper = mediaStructMapper;
+        this.logService = logService;
+        this.storageService = storageService;
+    }
+
+    @Override
+    public ImportResultVO importOfficial(OfficialMediaImportRequest request) {
+        ImportResultVO result = new ImportResultVO();
+        result.setTotal(request.getItems().size());
+
+        List<MediaEntity> toInsert = new ArrayList<>();
+        for (int i = 0; i < request.getItems().size(); i++) {
+            OfficialMediaImportRequest.OfficialMediaItem item = request.getItems().get(i);
+            String error = validateItem(item);
+            if (error != null) {
+                result.addFailure(i, error);
+                continue;
+            }
+
+            if (!poiMapper.existsById(item.getPoiId())) {
+                result.addFailure(i, "poi not found: " + item.getPoiId());
+                continue;
+            }
+
+            MediaEntity entity = new MediaEntity();
+            entity.setPoiId(item.getPoiId());
+            entity.setType(TYPE_OFFICIAL);
+            entity.setImagePath(item.getImagePath());
+            entity.setYear(item.getYear());
+            entity.setDescription(item.getDescription());
+
+            String reviewStatus = normalizeReviewStatus(item.getReviewStatus());
+            entity.setReviewStatus(reviewStatus);
+            if (REVIEW_APPROVED.equals(reviewStatus)) {
+                entity.setReviewTime(LocalDateTime.now());
+            }
+
+            entity.setCreateTime(LocalDateTime.now());
+            entity.setUpdateTime(LocalDateTime.now());
+            toInsert.add(entity);
+        }
+
+        if (!toInsert.isEmpty()) {
+            mediaMapper.insertBatch(toInsert);
+            logService.record("ADMIN", AdminContext.getAdminId(), "content", "batch_import_official",
+                    "media", null, "success=" + toInsert.size());
+        }
+
+        result.setFailCount(result.getFailures() == null ? 0 : result.getFailures().size());
+        result.setSuccessCount(result.getTotal() - result.getFailCount());
+        return result;
+    }
+
+    @Override
+    public MediaVO uploadOfficial(MultipartFile file, Long poiId, Integer year, String description, Long reviewerId) {
+        if (reviewerId == null) {
+            throw new BizException(ResultCode.UNAUTHORIZED, "admin login required");
+        }
+        if (poiId == null || !poiMapper.existsById(poiId)) {
+            throw new BizException(ResultCode.NOT_FOUND, "poi not found: " + poiId);
+        }
+        validateYear(year);
+
+        String imagePath = storageService.store(file, reviewerId);
+        MediaEntity entity = new MediaEntity();
+        entity.setPoiId(poiId);
+        entity.setType(TYPE_OFFICIAL);
+        entity.setImagePath(imagePath);
+        entity.setYear(year);
+        entity.setDescription(description);
+        entity.setReviewStatus(REVIEW_APPROVED);
+        entity.setReviewTime(LocalDateTime.now());
+        entity.setReviewerId(reviewerId);
+        entity.setCreateTime(LocalDateTime.now());
+        entity.setUpdateTime(LocalDateTime.now());
+        mediaMapper.insert(entity);
+        logService.record("ADMIN", reviewerId, "content", "upload_official", "media", entity.getId(), imagePath);
+        return mediaStructMapper.toAdminVO(entity);
+    }
+
+    @Override
+    public MediaVO getById(Long id) {
+        MediaEntity entity = mediaMapper.findById(id);
+        if (entity == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "media not found: " + id);
+        }
+        return mediaStructMapper.toAdminVO(entity);
+    }
+
+    @Override
+    public List<MediaVO> list(Long poiId, String type, String reviewStatus, Integer yearFrom, Integer yearTo) {
+        return mediaMapper.list(poiId, type, reviewStatus, yearFrom, yearTo)
+                .stream()
+                .map(mediaStructMapper::toAdminVO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public MediaVO updateMetadata(Long id, MediaMetadataUpdateRequest request, Long reviewerId) {
+        MediaEntity existing = mediaMapper.findById(id);
+        if (existing == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "media not found: " + id);
+        }
+        if (request == null) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "request cannot be null");
+        }
+        if (request.getPoiId() != null) {
+            if (!poiMapper.existsById(request.getPoiId())) {
+                throw new BizException(ResultCode.NOT_FOUND, "poi not found: " + request.getPoiId());
+            }
+            existing.setPoiId(request.getPoiId());
+        }
+        if (request.getImagePath() != null) {
+            if (request.getImagePath().isBlank()) {
+                throw new BizException(ResultCode.VALIDATION_ERROR, "imagePath cannot be blank");
+            }
+            existing.setImagePath(request.getImagePath());
+        }
+        if (request.getYear() != null) {
+            validateYear(request.getYear());
+            existing.setYear(request.getYear());
+        }
+        if (request.getDescription() != null) {
+            existing.setDescription(request.getDescription());
+        }
+        if (request.getReviewStatus() != null && !request.getReviewStatus().isBlank()) {
+            String reviewStatus = request.getReviewStatus();
+            if (!ReviewStatuses.APPROVED.equals(reviewStatus)
+                    && !ReviewStatuses.PENDING.equals(reviewStatus)
+                    && !ReviewStatuses.REJECTED.equals(reviewStatus)) {
+                throw new BizException(ResultCode.VALIDATION_ERROR,
+                        "reviewStatus must be pending, approved or rejected");
+            }
+            existing.setReviewStatus(reviewStatus);
+            if (ReviewStatuses.APPROVED.equals(reviewStatus)) {
+                existing.setReviewTime(LocalDateTime.now());
+                existing.setReviewerId(reviewerId == null ? AdminContext.getAdminId() : reviewerId);
+                existing.setRejectReason(null);
+            }
+        }
+        existing.setUpdateTime(LocalDateTime.now());
+        int rows = mediaMapper.updateById(existing);
+        if (rows != 1) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "media update failed: " + id);
+        }
+        logService.record("ADMIN", reviewerId == null ? AdminContext.getAdminId() : reviewerId, "content",
+                "update_media_metadata", "media", id, existing.getDescription());
+        return mediaStructMapper.toAdminVO(existing);
+    }
+
+    @Override
+    public void deleteById(Long id) {
+        mediaMapper.deleteById(id);
+        logService.record("ADMIN", AdminContext.getAdminId(), "content", "delete_media", "media", id, null);
+    }
+
+    private String validateItem(OfficialMediaImportRequest.OfficialMediaItem item) {
+        if (item == null) {
+            return "item is null";
+        }
+        if (item.getPoiId() == null) {
+            return "poiId is required";
+        }
+        if (item.getImagePath() == null || item.getImagePath().isBlank()) {
+            return "imagePath is required";
+        }
+        if (item.getYear() == null) {
+            return "year is required";
+        }
+        try {
+            validateYear(item.getYear());
+        } catch (BizException e) {
+            return e.getMessage();
+        }
+        return null;
+    }
+
+    private void validateYear(Integer year) {
+        int currentYear = LocalDateTime.now().getYear();
+        if (year == null || year < 1953 || year > currentYear) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "year must be between 1953 and " + currentYear);
+        }
+    }
+
+    @Override
+    public void approveMedia(Long id, Long reviewerId) {
+        MediaEntity media = mediaMapper.findById(id);
+        if (media == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "影像不存在: " + id);
+        }
+        // 仅对 pending 状态进行审核
+        if (!"pending".equalsIgnoreCase(media.getReviewStatus())) {
+            throw new BizException(ResultCode.BIZ_ERROR, "该影像已经审核过，无法重复审核");
+        }
+        int rows = mediaMapper.updateReview(id, "approved", null, reviewerId);
+        if (rows != 1) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "审核更新失败");
+        }
+    }
+
+    @Override
+    public void rejectMedia(Long id, Long reviewerId, String rejectReason) {
+        if (rejectReason == null || rejectReason.isBlank()) {
+            throw new BizException(ResultCode.VALIDATION_ERROR, "驳回原因不能为空");
+        }
+        MediaEntity media = mediaMapper.findById(id);
+        if (media == null) {
+            throw new BizException(ResultCode.NOT_FOUND, "影像不存在: " + id);
+        }
+        if (!"pending".equalsIgnoreCase(media.getReviewStatus())) {
+            throw new BizException(ResultCode.BIZ_ERROR, "该影像已经审核过，无法重复审核");
+        }
+        int rows = mediaMapper.updateReview(id, "rejected", rejectReason, reviewerId);
+        if (rows != 1) {
+            throw new BizException(ResultCode.INTERNAL_ERROR, "审核更新失败");
+        }
+    }
+
+    private String normalizeReviewStatus(String value) {
+        if (value == null || value.isBlank()) {
+            return REVIEW_APPROVED;
+        }
+        if (REVIEW_APPROVED.equals(value) || REVIEW_PENDING.equals(value) || ReviewStatuses.REJECTED.equals(value)) {
+            return value;
+        }
+        return REVIEW_APPROVED;
+    }
+}
