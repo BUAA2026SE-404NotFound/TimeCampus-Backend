@@ -68,8 +68,45 @@ public class TencentRouteServiceImpl implements TencentRouteService {
                 intValue(route.get("distance")),
                 intValue(route.get("duration")) * 60,
                 route.get("polyline"),
+                decodePolyline(route.get("polyline")),
                 route
         );
+    }
+
+    List<RouteCoordinate> decodePolyline(Object value) {
+        if (value == null) {
+            return List.of();
+        }
+        if (!(value instanceof List<?> values) || values.size() < 2 || values.size() % 2 != 0) {
+            throw new BizException(ResultCode.BIZ_ERROR, "tencent route polyline is invalid");
+        }
+
+        double[] coordinates = new double[values.size()];
+        for (int index = 0; index < values.size(); index++) {
+            if (!(values.get(index) instanceof Number number)) {
+                throw new BizException(ResultCode.BIZ_ERROR, "tencent route polyline is invalid");
+            }
+            coordinates[index] = number.doubleValue();
+            if (index >= 2) {
+                coordinates[index] = coordinates[index - 2] + coordinates[index] / 1_000_000D;
+            }
+        }
+
+        List<RouteCoordinate> path = new ArrayList<>(coordinates.length / 2);
+        for (int index = 0; index < coordinates.length; index += 2) {
+            double lat = microdegree(coordinates[index]);
+            double lng = microdegree(coordinates[index + 1]);
+            if (!Double.isFinite(lat) || !Double.isFinite(lng)
+                    || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+                throw new BizException(ResultCode.BIZ_ERROR, "tencent route polyline coordinate is invalid");
+            }
+            path.add(new RouteCoordinate(lat, lng));
+        }
+        return List.copyOf(path);
+    }
+
+    private double microdegree(double value) {
+        return Math.round(value * 1_000_000D) / 1_000_000D;
     }
 
     @SuppressWarnings("unchecked")

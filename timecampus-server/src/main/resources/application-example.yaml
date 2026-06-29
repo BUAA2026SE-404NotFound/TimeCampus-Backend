@@ -63,12 +63,15 @@ tencent-map:
   walking-route-url: https://apis.map.qq.com/ws/direction/v1/walking/
 
 timecampus:
+  agent:
+    base-url: ${TIMECAMPUS_AGENT_BASE_URL:http://127.0.0.1:8090}
+    token: ${TIMECAMPUS_AGENT_API_TOKEN:}
   ai:
     deepseek:
       chat:
         enabled: ${DEEPSEEK_CHAT_ENABLED:false}
         api-key: ${DEEPSEEK_API_KEY:}
-        endpoint: ${DEEPSEEK_CHAT_ENDPOINT:https://api.deepseek.com/}
+        endpoint: ${DEEPSEEK_CHAT_ENDPOINT:https://api.deepseek.com/v1/chat/completions}
         model: ${DEEPSEEK_CHAT_MODEL:deepseek-chat}
         temperature: ${DEEPSEEK_CHAT_TEMPERATURE:0.2}
         max-tokens: ${DEEPSEEK_CHAT_MAX_TOKENS:1200}

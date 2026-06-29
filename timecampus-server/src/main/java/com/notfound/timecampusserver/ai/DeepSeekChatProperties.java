@@ -8,7 +8,7 @@ public class DeepSeekChatProperties {
     private boolean enabled = false;
     private String apiKey;
     private String endpoint = "https://api.deepseek.com/v1/chat/completions";
-    private String model = "deepseek-chat";
+    private String model = "deepseek-v4-flash";
     private double temperature = 0.2;
     private int maxTokens = 1200;
 
@@ -29,7 +29,15 @@ public class DeepSeekChatProperties {
     }
 
     public String getEndpoint() {
-        return endpoint;
+        String value = endpoint == null || endpoint.isBlank()
+                ? "https://api.deepseek.com"
+                : endpoint.replaceAll("/+$", "");
+        if (value.endsWith("/chat/completions")) {
+            return value;
+        }
+        return value.endsWith("/v1")
+                ? value + "/chat/completions"
+                : value + "/v1/chat/completions";
     }
 
     public void setEndpoint(String endpoint) {

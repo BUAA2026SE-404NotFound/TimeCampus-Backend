@@ -10,7 +10,16 @@ class DeepSeekChatPropertiesTest {
     void defaultsUseStableDeepSeekChatModel() {
         DeepSeekChatProperties properties = new DeepSeekChatProperties();
 
-        assertThat(properties.getModel()).isEqualTo("deepseek-chat");
+        assertThat(properties.getModel()).isEqualTo("deepseek-v4-flash");
+        assertThat(properties.getEndpoint()).isEqualTo("https://api.deepseek.com/v1/chat/completions");
+    }
+
+    @Test
+    void baseEndpointIsNormalizedToChatCompletions() {
+        DeepSeekChatProperties properties = new DeepSeekChatProperties();
+
+        properties.setEndpoint("https://api.deepseek.com/v1/");
+
         assertThat(properties.getEndpoint()).isEqualTo("https://api.deepseek.com/v1/chat/completions");
     }
 

@@ -114,8 +114,14 @@ Portal 管理端可通过普通后台 API 使用同一套 RAG 和草案生成能
 - `POST /api/v1/admin/agent/rag/context-pack`
 - `POST /api/v1/admin/agent/rag/rebuild-index`
 - `POST /api/v1/admin/agent/draft`
+- `GET/POST /api/v1/admin/agent/operations/sessions`
+- `GET /api/v1/admin/agent/operations/sessions/{sessionId}`
+- `POST /api/v1/admin/agent/operations/sessions/{sessionId}/messages/stream`
+- `POST /api/v1/admin/agent/operations/runs/{threadId}/decisions/stream`
 
 `/agent/draft` 默认返回规则草案；启用 DeepSeek chat 后返回模型草案，同时保留 RAG context、质量分和执行门槛。
+
+会话与流式接口由 Backend 使用 `TIMECAMPUS_AGENT_API_TOKEN` 代理到仅监听内网/本机的 Agent 服务。浏览器继续只携带管理员 Bearer Token，不直接接触 Agent 或 MCP Token。流式接口使用 SSE，依次返回质量门禁状态、Markdown token、最终执行状态和待审批动作。
 
 质量门禁字段：
 

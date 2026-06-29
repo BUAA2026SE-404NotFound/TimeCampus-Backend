@@ -10,11 +10,15 @@ public interface TencentRouteService {
     record RoutePoint(String name, double lat, double lng) {
     }
 
+    record RouteCoordinate(double lat, double lng) {
+    }
+
     record WalkingRouteLeg(RoutePoint from,
                            RoutePoint to,
                            int distanceMeters,
                            int durationSeconds,
                            Object polyline,
+                           List<RouteCoordinate> path,
                            Map<String, Object> rawRoute) {
     }
 

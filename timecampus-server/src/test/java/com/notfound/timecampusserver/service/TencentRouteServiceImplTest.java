@@ -49,6 +49,10 @@ class TencentRouteServiceImplTest {
         assertThat(plan.totalDurationSeconds()).isEqualTo(540);
         assertThat(plan.legs()).hasSize(2);
         assertThat(plan.legs().get(0).durationSeconds()).isEqualTo(300);
+        assertThat(plan.legs().get(0).path()).containsExactly(
+                new TencentRouteService.RouteCoordinate(39.981, 116.34),
+                new TencentRouteService.RouteCoordinate(39.982, 116.341)
+        );
         server.verify();
     }
 
@@ -63,7 +67,7 @@ class TencentRouteServiceImplTest {
                         "mode": "WALKING",
                         "distance": %d,
                         "duration": %d,
-                        "polyline": [39.981, 116.34],
+                        "polyline": [39.981, 116.34, 1000, 1000],
                         "steps": []
                       }
                     ]

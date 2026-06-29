@@ -12,6 +12,7 @@ import com.notfound.timecampusserver.mcp.TimeCampusRagService.TimeCampusRagDocum
 import com.notfound.timecampusserver.mcp.TimeCampusRagService.TimeCampusRagSearchResult;
 import com.notfound.timecampusserver.mcp.TimeCampusRagVectorIndexService;
 import com.notfound.timecampusserver.mcp.TimeCampusRagVectorIndexService.VectorIndexResult;
+import com.notfound.timecampusserver.service.TimeCampusAgentGateway;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.MediaType;
@@ -25,6 +26,7 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -37,14 +39,22 @@ class AdminAgentControllerWebMvcTest {
     private TimeCampusRagService ragService;
     private TimeCampusRagVectorIndexService vectorIndexService;
     private TimeCampusAgentDraftService draftService;
+    private TimeCampusAgentGateway agentGateway;
 
     @BeforeEach
     void setUp() {
         ragService = mock(TimeCampusRagService.class);
         vectorIndexService = mock(TimeCampusRagVectorIndexService.class);
         draftService = mock(TimeCampusAgentDraftService.class);
+        agentGateway = mock(TimeCampusAgentGateway.class);
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new AdminAgentController(ragService, vectorIndexService, draftService))
+                .standaloneSetup(new AdminAgentController(
+                        ragService,
+                        vectorIndexService,
+                        draftService,
+                        agentGateway,
+                        objectMapper
+                ))
                 .build();
     }
 
@@ -114,6 +124,56 @@ class AdminAgentControllerWebMvcTest {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.status").value("indexed"))
                 .andExpect(jsonPath("$.data.vectorDocumentCount").value(5));
+    }
+
+    @Test
+    void operationStopsWhenQualityGateBlocksExecution() throws Exception {
+        AgentDraftResult blocked = new AgentDraftResult(
+                "删除主楼",
+                "rule",
+                "仅生成草案",
+                contextPack("删除主楼"),
+                new AgentQualityScore(20, 60, 45, 20, 38),
+                new AgentQualityGate(false, 85, 80, List.of("overall 低于 85")),
+                List.of("仅草案")
+        );
+        when(draftService.draft(eq("删除主楼"), eq(null), eq(null), eq(null), eq(null)))
+                .thenReturn(blocked);
+
+        mockMvc.perform(post("/api/v1/admin/agent/operations/runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("task", "删除主楼"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("blocked"))
+                .andExpect(jsonPath("$.data.execution").doesNotExist());
+
+        verifyNoInteractions(agentGateway);
+    }
+
+    @Test
+    void operationStartsAgentAfterQualityGatePasses() throws Exception {
+        AgentDraftResult executable = new AgentDraftResult(
+                "更新主楼简介",
+                "rule",
+                "建议更新",
+                contextPack("更新主楼简介"),
+                new AgentQualityScore(96, 100, 90, 55, 90),
+                new AgentQualityGate(true, 85, 80, List.of("达到执行线")),
+                List.of("可执行")
+        );
+        when(draftService.draft(eq("更新主楼简介"), eq(null), eq(null), eq(null), eq(null)))
+                .thenReturn(executable);
+        when(agentGateway.startOperation("更新主楼简介"))
+                .thenReturn(objectMapper.readTree("""
+                        {"threadId":"thread-1","status":"approval_required","pendingActions":[]}
+                        """));
+
+        mockMvc.perform(post("/api/v1/admin/agent/operations/runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("task", "更新主楼简介"))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("approval_required"))
+                .andExpect(jsonPath("$.data.execution.threadId").value("thread-1"));
     }
 
     private TimeCampusRagContextPack contextPack(String task) {

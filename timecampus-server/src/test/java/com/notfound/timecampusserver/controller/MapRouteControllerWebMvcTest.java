@@ -45,7 +45,7 @@ class MapRouteControllerWebMvcTest {
                 "tencent-map",
                 320,
                 260,
-                List.of(new WalkingRouteLeg(from, to, 320, 260, List.of(), Map.of()))
+                List.of(new WalkingRouteLeg(from, to, 320, 260, List.of(), List.of(), Map.of()))
         ));
 
         mockMvc.perform(post("/api/v1/map/walking-route")
