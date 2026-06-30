@@ -3,6 +3,7 @@ package com.notfound.timecampusserver.controller;
 import com.notfound.timecampuspojo.vo.MapHomeVO;
 import com.notfound.timecampuspojo.vo.MapMediaVO;
 import com.notfound.timecampuspojo.vo.MapPoiVO;
+import com.notfound.timecampusserver.config.TencentMapProperties;
 import com.notfound.timecampusserver.controller.publicapi.PortalMapController;
 import com.notfound.timecampusserver.service.MapService;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,8 +28,14 @@ class PortalMapControllerWebMvcTest {
     @BeforeEach
     void setUp() {
         mapService = mock(MapService.class);
+        TencentMapProperties properties = new TencentMapProperties(
+                "public-js-key",
+                "private-signing-key",
+                "https://example.test/geocoder",
+                "https://example.test/place"
+        );
         mockMvc = MockMvcBuilders
-                .standaloneSetup(new PortalMapController(mapService))
+                .standaloneSetup(new PortalMapController(mapService, properties))
                 .build();
     }
 
@@ -57,5 +64,14 @@ class PortalMapControllerWebMvcTest {
                 .andExpect(jsonPath("$.code").value(0))
                 .andExpect(jsonPath("$.data.pois[0].name").value("主楼"))
                 .andExpect(jsonPath("$.data.pois[0].mediaList[0].previewUrl").value("/api/v1/media/10/file?accessToken=token"));
+    }
+
+    @Test
+    void configExposesOnlyPublicMapKey() throws Exception {
+        mockMvc.perform(get("/api/v1/portal/map/config"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value(0))
+                .andExpect(jsonPath("$.data.tencentMapKey").value("public-js-key"))
+                .andExpect(jsonPath("$.data.sk").doesNotExist());
     }
 }

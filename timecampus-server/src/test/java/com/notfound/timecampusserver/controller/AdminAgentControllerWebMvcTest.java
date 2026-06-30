@@ -26,8 +26,11 @@ import java.util.Map;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -174,6 +177,59 @@ class AdminAgentControllerWebMvcTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("approval_required"))
                 .andExpect(jsonPath("$.data.execution.threadId").value("thread-1"));
+    }
+
+    @Test
+    void evalRunForwardsRepeatAndCaseSelection() throws Exception {
+        when(agentGateway.runEval(
+                eq("maintenance"),
+                eq("live"),
+                eq(0.85),
+                eq(80.0),
+                eq(0.8),
+                eq(3),
+                eq(List.of("maintenance-multi-turn-context"))
+        )).thenReturn(objectMapper.readTree("""
+                {"runId":"run-1","gatePassed":true,"total":3}
+                """));
+
+        mockMvc.perform(post("/api/v1/admin/agent/evals/runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "suite", "maintenance",
+                                "mode", "live",
+                                "repetitions", 3,
+                                "caseIds", List.of("maintenance-multi-turn-context")
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.gatePassed").value(true))
+                .andExpect(jsonPath("$.data.total").value(3));
+    }
+
+    @Test
+    void evalHistoryAndBadCaseLifecycleAreProxied() throws Exception {
+        when(agentGateway.listEvalRuns(10)).thenReturn(objectMapper.readTree("""
+                {"runs":[{"runId":"run-1","gatePassed":false}]}
+                """));
+        when(agentGateway.updateBadCase("bad-1", "resolved", "已处理"))
+                .thenReturn(objectMapper.readTree("""
+                        {"id":"bad-1","status":"resolved","resolution":"已处理"}
+                        """));
+
+        mockMvc.perform(get("/api/v1/admin/agent/evals/runs").param("limit", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.runs[0].runId").value("run-1"));
+
+        mockMvc.perform(patch("/api/v1/admin/agent/evals/bad-cases/bad-1")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "status", "resolved",
+                                "resolution", "已处理"
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("resolved"));
+
+        verify(agentGateway).updateBadCase("bad-1", "resolved", "已处理");
     }
 
     private TimeCampusRagContextPack contextPack(String task) {

@@ -131,6 +131,16 @@ public class TimeCampusAgentGateway {
     }
 
     public JsonNode runEval(String suite, String mode, Double minPassRate, Double minOverall) {
+        return runEval(suite, mode, minPassRate, minOverall, null, null, null);
+    }
+
+    public JsonNode runEval(String suite,
+                            String mode,
+                            Double minPassRate,
+                            Double minOverall,
+                            Double minConsistency,
+                            Integer repetitions,
+                            List<String> caseIds) {
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("suite", suite);
         body.put("mode", mode);
@@ -140,7 +150,96 @@ public class TimeCampusAgentGateway {
         if (minOverall != null) {
             body.put("min_overall", minOverall);
         }
+        if (minConsistency != null) {
+            body.put("min_consistency", minConsistency);
+        }
+        if (repetitions != null) {
+            body.put("repetitions", repetitions);
+        }
+        if (caseIds != null && !caseIds.isEmpty()) {
+            body.put("case_ids", caseIds);
+        }
         return post("/internal/v1/evals/runs", body);
+    }
+
+    public void streamEval(String suite,
+                           String mode,
+                           Double minPassRate,
+                           Double minOverall,
+                           Double minConsistency,
+                           Integer repetitions,
+                           List<String> caseIds,
+                           OutputStream output) {
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("suite", suite);
+        body.put("mode", mode);
+        body.put("min_pass_rate", minPassRate);
+        body.put("min_overall", minOverall);
+        body.put("min_consistency", minConsistency);
+        body.put("repetitions", repetitions);
+        if (caseIds != null && !caseIds.isEmpty()) {
+            body.put("case_ids", caseIds);
+        }
+        streamPost("/internal/v1/evals/runs/stream", body, output);
+    }
+
+    public JsonNode listEvalRuns(int limit) {
+        requireToken();
+        try {
+            return restClient.get()
+                    .uri(uri -> uri.path("/internal/v1/evals/runs")
+                            .queryParam("limit", limit)
+                            .build())
+                    .header(TOKEN_HEADER, token)
+                    .retrieve()
+                    .body(JsonNode.class);
+        } catch (RestClientException exception) {
+            throw unavailable(exception);
+        }
+    }
+
+    public JsonNode getEvalRun(String runId) {
+        return get(uriPath("internal", "v1", "evals", "runs", runId));
+    }
+
+    public JsonNode listBadCases(String status) {
+        requireToken();
+        try {
+            return restClient.get()
+                    .uri(uri -> uri.path("/internal/v1/evals/bad-cases")
+                            .queryParam("status", status)
+                            .build())
+                    .header(TOKEN_HEADER, token)
+                    .retrieve()
+                    .body(JsonNode.class);
+        } catch (RestClientException exception) {
+            throw unavailable(exception);
+        }
+    }
+
+    public JsonNode createBadCase(String runId, String caseId, String note) {
+        return post("/internal/v1/evals/bad-cases", Map.of(
+                "runId", runId,
+                "caseId", caseId,
+                "note", note == null ? "" : note
+        ));
+    }
+
+    public JsonNode updateBadCase(String badCaseId, String status, String resolution) {
+        requireToken();
+        try {
+            return restClient.patch()
+                    .uri(uriPath("internal", "v1", "evals", "bad-cases", badCaseId))
+                    .header(TOKEN_HEADER, token)
+                    .body(Map.of(
+                            "status", status,
+                            "resolution", resolution == null ? "" : resolution
+                    ))
+                    .retrieve()
+                    .body(JsonNode.class);
+        } catch (RestClientException exception) {
+            throw unavailable(exception);
+        }
     }
 
     private JsonNode post(String path, Object body) {

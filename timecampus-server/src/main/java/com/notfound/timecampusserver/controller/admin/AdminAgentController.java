@@ -19,8 +19,12 @@ import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -239,7 +243,75 @@ public class AdminAgentController {
                 request.suite(),
                 request.mode(),
                 request.minPassRate(),
-                request.minOverall()
+                request.minOverall(),
+                request.minConsistency(),
+                request.repetitions(),
+                request.caseIds()
+        ));
+    }
+
+    @PostMapping(value = "/evals/runs/stream", produces = "text/event-stream")
+    @Operation(summary = "流式运行 Agent Eval")
+    @SecurityRequirement(name = "bearerAuth")
+    public StreamingResponseBody streamEval(@Valid @RequestBody AgentEvalRunRequest request) {
+        return output -> agentGateway.streamEval(
+                request.suite(),
+                request.mode(),
+                request.minPassRate(),
+                request.minOverall(),
+                request.minConsistency(),
+                request.repetitions(),
+                request.caseIds(),
+                output
+        );
+    }
+
+    @GetMapping("/evals/runs")
+    @Operation(summary = "查询 Agent Eval 运行历史")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<JsonNode> evalRuns(
+            @RequestParam(defaultValue = "20") @Min(1) @Max(20) int limit) {
+        return ApiResponse.success(agentGateway.listEvalRuns(limit));
+    }
+
+    @GetMapping("/evals/runs/{runId}")
+    @Operation(summary = "查询 Agent Eval 运行详情")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<JsonNode> evalRun(@PathVariable String runId) {
+        return ApiResponse.success(agentGateway.getEvalRun(runId));
+    }
+
+    @GetMapping("/evals/bad-cases")
+    @Operation(summary = "查询 Agent Bad Case")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<JsonNode> badCases(
+            @RequestParam(defaultValue = "all")
+            @Pattern(regexp = "all|open|resolved") String status) {
+        return ApiResponse.success(agentGateway.listBadCases(status));
+    }
+
+    @PostMapping("/evals/bad-cases")
+    @Operation(summary = "沉淀 Agent Bad Case")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<JsonNode> createBadCase(
+            @Valid @RequestBody AgentBadCaseCreateRequest request) {
+        return ApiResponse.success(agentGateway.createBadCase(
+                request.runId(),
+                request.caseId(),
+                request.note()
+        ));
+    }
+
+    @PatchMapping("/evals/bad-cases/{badCaseId}")
+    @Operation(summary = "更新 Agent Bad Case 状态")
+    @SecurityRequirement(name = "bearerAuth")
+    public ApiResponse<JsonNode> updateBadCase(
+            @PathVariable String badCaseId,
+            @Valid @RequestBody AgentBadCaseUpdateRequest request) {
+        return ApiResponse.success(agentGateway.updateBadCase(
+                badCaseId,
+                request.status(),
+                request.resolution()
         ));
     }
 
@@ -281,11 +353,29 @@ public class AdminAgentController {
             @Pattern(regexp = "all|maintenance|guide") String suite,
             @Pattern(regexp = "fixture|live") String mode,
             @DecimalMin("0.0") @DecimalMax("1.0") Double minPassRate,
-            @DecimalMin("0.0") @DecimalMax("100.0") Double minOverall) {
+            @DecimalMin("0.0") @DecimalMax("100.0") Double minOverall,
+            @DecimalMin("0.0") @DecimalMax("1.0") Double minConsistency,
+            @Min(1) @Max(5) Integer repetitions,
+            @Size(max = 50) List<@NotBlank String> caseIds) {
         public AgentEvalRunRequest {
             suite = suite == null ? "all" : suite;
             mode = mode == null ? "fixture" : mode;
+            minPassRate = minPassRate == null ? 0.85 : minPassRate;
+            minOverall = minOverall == null ? 80.0 : minOverall;
+            minConsistency = minConsistency == null ? 0.8 : minConsistency;
+            repetitions = repetitions == null ? 1 : repetitions;
         }
+    }
+
+    public record AgentBadCaseCreateRequest(
+            @NotBlank String runId,
+            @NotBlank String caseId,
+            @Size(max = 1000) String note) {
+    }
+
+    public record AgentBadCaseUpdateRequest(
+            @NotBlank @Pattern(regexp = "open|resolved") String status,
+            @Size(max = 2000) String resolution) {
     }
 
     public record AgentOperationRunResult(String status,

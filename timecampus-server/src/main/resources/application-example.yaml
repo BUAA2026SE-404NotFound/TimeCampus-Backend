@@ -87,8 +87,8 @@ timecampus:
       embedding:
         enabled: ${OLLAMA_EMBEDDING_ENABLED:false}
         base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
-        model: ${OLLAMA_EMBEDDING_MODEL:all-minilm}
-        dimensions: ${OLLAMA_EMBEDDING_DIMENSIONS:384}
+        model: ${OLLAMA_EMBEDDING_MODEL:embeddinggemma:300m}
+        dimensions: ${OLLAMA_EMBEDDING_DIMENSIONS:768}
         batch-size: ${OLLAMA_EMBEDDING_BATCH_SIZE:32}
     seedream:
       enabled: ${ARK_SEEDREAM_ENABLED:false}

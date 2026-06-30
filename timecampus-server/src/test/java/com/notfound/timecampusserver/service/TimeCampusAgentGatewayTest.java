@@ -8,8 +8,10 @@ import org.springframework.web.client.RestClient;
 
 import java.io.ByteArrayOutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.content;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.header;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
@@ -70,6 +72,50 @@ class TimeCampusAgentGatewayTest {
 
         assertThat(output.toString(StandardCharsets.UTF_8))
                 .contains("event: delta", "\"content\":\"主楼\"");
+        server.verify();
+    }
+
+    @Test
+    void forwardsEvalStreamConfigurationAndEvents() {
+        RestClient.Builder builder = RestClient.builder();
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        TimeCampusAgentGateway gateway = new TimeCampusAgentGateway(
+                builder,
+                "http://agent.test",
+                "shared-token"
+        );
+        server.expect(requestTo("http://agent.test/internal/v1/evals/runs/stream"))
+                .andExpect(method(HttpMethod.POST))
+                .andExpect(header("X-TimeCampus-Agent-Token", "shared-token"))
+                .andExpect(content().json("""
+                        {
+                          "suite":"maintenance",
+                          "mode":"live",
+                          "min_pass_rate":0.85,
+                          "min_overall":80.0,
+                          "min_consistency":0.8,
+                          "repetitions":3,
+                          "case_ids":["maintenance-multi-turn-context"]
+                        }
+                        """))
+                .andRespond(withSuccess(
+                        "event: case\ndata: {\"completed\":1,\"total\":3}\n\n",
+                        MediaType.TEXT_EVENT_STREAM
+                ));
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+
+        gateway.streamEval(
+                "maintenance",
+                "live",
+                0.85,
+                80.0,
+                0.8,
+                3,
+                List.of("maintenance-multi-turn-context"),
+                output
+        );
+
+        assertThat(output.toString(StandardCharsets.UTF_8)).contains("event: case");
         server.verify();
     }
 }

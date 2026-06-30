@@ -78,7 +78,10 @@ class ControllerMappingRegressionTest {
                 new TimelineController(timelineService, userAuthInterceptor),
                 new MediaFileController(mediaFileService),
                 new UgcController(ugcService),
-                new PortalMapController(mapService),
+                new PortalMapController(
+                        mapService,
+                        new TencentMapProperties("test-map-key", "test-sk", null, null)
+                ),
                 new PortalSeedreamController(seedreamImageService, seedreamGenerationGuardService),
                 new AdminContentController(adminMediaService),
                 new AdminMapController(adminMapService, new TencentMapProperties("test-map-key", "test-sk", null, null)),

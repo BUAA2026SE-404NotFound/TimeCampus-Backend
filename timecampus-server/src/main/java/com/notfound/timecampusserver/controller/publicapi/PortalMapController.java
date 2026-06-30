@@ -2,6 +2,7 @@ package com.notfound.timecampusserver.controller.publicapi;
 
 import com.notfound.timecampuscommon.api.ApiResponse;
 import com.notfound.timecampuspojo.vo.MapHomeVO;
+import com.notfound.timecampusserver.config.TencentMapProperties;
 import com.notfound.timecampusserver.service.MapService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -11,15 +12,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @Tag(name = "Portal-Map", description = "项目主页：公开校园地图数据")
 @RestController
 @RequestMapping("/api/v1/portal/map")
 public class PortalMapController {
 
     private final MapService mapService;
+    private final TencentMapProperties tencentMapProperties;
 
-    public PortalMapController(MapService mapService) {
+    public PortalMapController(
+            MapService mapService,
+            TencentMapProperties tencentMapProperties
+    ) {
         this.mapService = mapService;
+        this.tencentMapProperties = tencentMapProperties;
     }
 
     @GetMapping("/home")
@@ -28,5 +36,12 @@ public class PortalMapController {
             @Parameter(description = "目标年份（可选，用于选择最接近年份的封面图）", example = "2000")
             @RequestParam(required = false) Integer year) {
         return ApiResponse.success(mapService.getPortalHome(year));
+    }
+
+    @GetMapping("/config")
+    @Operation(summary = "门户地图前端配置", description = "无需登录，仅返回浏览器渲染腾讯地图所需的公开 JS Key，不返回 SK。")
+    public ApiResponse<Map<String, String>> config() {
+        String key = tencentMapProperties.key();
+        return ApiResponse.success(Map.of("tencentMapKey", key == null ? "" : key));
     }
 }

@@ -19,6 +19,11 @@ on:
         required: false
         default: false
         type: boolean
+      deploy:
+        description: "Deploy the tested jar to the production host"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -50,47 +55,57 @@ jobs:
       - name: Package Server Module
         run: mvn -B -pl timecampus-server -am package -DskipTests
 
+      - name: Prepare release artifact
+        run: |
+          mkdir release
+          cp timecampus-server/target/timecampus-server-*.jar release/timecampus-server.jar
+          cp deploy/scripts/deploy-backend-artifact.sh release/
+
+      - name: Upload release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: timecampus-backend-${{ github.sha }}
+          path: release/
+          if-no-files-found: error
+
   deploy-dev:
-    name: Deploy Backend On Dev Merge
+    name: Deploy Backend Artifact
+    needs: backend
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'dev' }}
+    if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/dev') || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
     env:
       SERVER_HOST: ${{ secrets.DEPLOY_HOST }}
       SERVER_USERNAME: ${{ secrets.DEPLOY_USERNAME || secrets.DEPLOY_USER }}
       SERVER_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
-      DEPLOY_BRANCH: dev
 
     steps:
-      - name: Deploy on cloud server
-        if: ${{ env.SERVER_HOST != '' && env.SERVER_USERNAME != '' && env.SERVER_PASSWORD != '' }}
+      - name: Download release artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: timecampus-backend-${{ github.sha }}
+          path: release
+
+      - name: Upload release
+        uses: appleboy/scp-action@v1
+        with:
+          host: ${{ env.SERVER_HOST }}
+          username: ${{ env.SERVER_USERNAME }}
+          password: ${{ env.SERVER_PASSWORD }}
+          source: "release/*"
+          target: "/home/${{ env.SERVER_USERNAME }}/backend-incoming/${{ github.sha }}"
+          strip_components: 1
+
+      - name: Activate release
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ env.SERVER_HOST }}
           username: ${{ env.SERVER_USERNAME }}
           password: ${{ env.SERVER_PASSWORD }}
           script: |
-            set -e
-
-            if [ -e "$HOME/TimeCampus/TimeCampus-Backend/.git" ]; then
-              REPO_DIR="$HOME/TimeCampus/TimeCampus-Backend"
-            elif [ -e "$HOME/TimeCampus-Backend/.git" ]; then
-              REPO_DIR="$HOME/TimeCampus-Backend"
-            else
-              echo "Backend repository not found on server"
-              exit 1
-            fi
-
-            cd "$REPO_DIR"
-            git fetch origin
-            git checkout -B "${{ env.DEPLOY_BRANCH }}" "origin/${{ env.DEPLOY_BRANCH }}"
-            chmod +x deploy/scripts/deploy-backend.sh
-
-            DEPLOY_BRANCH="${{ env.DEPLOY_BRANCH }}" \
-            REPO_DIR="$REPO_DIR" \
-            APP_DIR="$HOME/app" \
-            SERVICE_NAME="timecampus-backend" \
-            HEALTH_URL="http://127.0.0.1:8080/api/v1/health" \
-              bash deploy/scripts/deploy-backend.sh
+            set -euo pipefail
+            INCOMING="$HOME/backend-incoming/${{ github.sha }}"
+            chmod +x "$INCOMING/deploy-backend-artifact.sh"
+            "$INCOMING/deploy-backend-artifact.sh" "$INCOMING/timecampus-server.jar"
 
   third-party-smoke:
     name: Third Party Smoke Tests
