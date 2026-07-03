@@ -84,10 +84,12 @@ POI 写工具：
 
 ## RAG 封装
 
-当前 RAG 实现支持两层检索：
+当前 RAG 实现支持两层候选和统一排序：
 
 - 默认：本地词法检索，不依赖 Docker、WSL 或 Qdrant，保证 MCP 和后端可直接启动。
-- 可选增强：Spring AI `VectorStore` + Qdrant 向量检索。
+- 启用向量库：Spring AI `VectorStore` + Qdrant 提供 Dense 候选，与词法候选通过
+  `RRF(k=60)` 融合；候选深度为 `min(maxTopK, topK * 3)`。
+- Qdrant 异常时回退词法检索；词法无命中时保留向量结果。
 
 语料从 MySQL 业务数据构建：
 
@@ -104,7 +106,9 @@ POI 写工具：
 4. 按 `timecampus.rag.chunk-max-chars` 和 `chunk-overlap-chars` 切块。
 5. 写入 Qdrant collection，metadata 保留 `source_id`、`rag_type`、`poiId`、`reviewStatus`、`uri` 等字段。
 
-检索结果会返回 `document.uri`，agent 写入前应再读取对应 resource/tool 获取当前值。
+检索阶段按 `source_id` 合并同一资料的多个 chunk，结果中的 `document.id` 为
+稳定 source ID，`reason` 会给出 qdrant/lexical 排名。结果同时返回
+`document.uri`，agent 写入前应再读取对应 resource/tool 获取当前值。
 
 ### Admin Agent HTTP API
 

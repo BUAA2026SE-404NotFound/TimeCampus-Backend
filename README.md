@@ -125,7 +125,8 @@ TIMECAMPUS_MEDIA_FILE_TOKEN_TTL_SECONDS
 - 本地文件读取必须位于 `storage.local-root-dir` 下，避免路径穿越。
 - `TimeFillAspect` 自动填充 `createTime` 和 `updateTime`。
 - 腾讯地图 SK 存在时后端按腾讯规则生成 `sig`。
-- RAG 默认支持词法检索，启用 Qdrant 后可使用向量检索。
+- RAG 默认支持词法检索；启用 Qdrant 后使用 Dense + Lexical + RRF
+  混合检索，并按 source 去重向量 chunk。
 
 ## MCP 与 RAG
 

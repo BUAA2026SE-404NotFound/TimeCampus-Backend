@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,6 +26,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class TimeCampusRagService {
+
+    private static final int RRF_K = 60;
 
     private final PoiService poiService;
     private final AdminMediaService adminMediaService;
@@ -55,10 +58,22 @@ public class TimeCampusRagService {
         return adminScope.call(() -> {
             List<TimeCampusRagDocument> corpus = buildCorpus(types, poiId, includePending);
             int normalizedLimit = normalizeLimit(limit);
-            List<TimeCampusRagSearchResult.Hit> hits = vectorSearch(query, normalizedLimit, types, poiId, includePending);
-            String retriever = "qdrant";
-            if (hits.isEmpty() && ragProperties.isLexicalFallbackEnabled()) {
-                hits = lexicalSearch(query, normalizedLimit, corpus);
+            int candidateLimit = Math.min(ragProperties.getMaxTopK(), normalizedLimit * 3);
+            List<TimeCampusRagSearchResult.Hit> vectorHits = vectorSearch(
+                    query, candidateLimit, types, poiId, includePending);
+            List<TimeCampusRagSearchResult.Hit> lexicalHits = ragProperties.isLexicalFallbackEnabled()
+                    ? lexicalSearch(query, candidateLimit, corpus)
+                    : List.of();
+            List<TimeCampusRagSearchResult.Hit> hits;
+            String retriever;
+            if (!vectorHits.isEmpty() && !lexicalHits.isEmpty()) {
+                hits = reciprocalRankFusion(vectorHits, lexicalHits, normalizedLimit);
+                retriever = "hybrid-rrf";
+            } else if (!vectorHits.isEmpty()) {
+                hits = vectorHits.stream().limit(normalizedLimit).toList();
+                retriever = "qdrant";
+            } else {
+                hits = lexicalHits.stream().limit(normalizedLimit).toList();
                 retriever = "lexical";
             }
             return new TimeCampusRagSearchResult(
@@ -171,10 +186,11 @@ public class TimeCampusRagService {
             if (!filterExpression.isBlank()) {
                 builder.filterExpression(filterExpression);
             }
-            return vectorStore.similaritySearch(builder.build())
-                    .stream()
+            Map<String, TimeCampusRagSearchResult.Hit> sources = new LinkedHashMap<>();
+            vectorStore.similaritySearch(builder.build()).stream()
                     .map(this::documentHit)
-                    .toList();
+                    .forEach(hit -> sources.putIfAbsent(hit.document().id(), hit));
+            return new ArrayList<>(sources.values());
         } catch (RuntimeException e) {
             if (!ragProperties.isLexicalFallbackEnabled()) {
                 throw e;
@@ -198,7 +214,8 @@ public class TimeCampusRagService {
 
     private TimeCampusRagSearchResult.Hit documentHit(Document document) {
         TimeCampusRagDocument ragDocument = new TimeCampusRagDocument(
-                stringMeta(document, "rag_id", document.getId()),
+                stringMeta(document, "source_id",
+                        stringMeta(document, "rag_id", document.getId())),
                 stringMeta(document, "rag_type", "unknown"),
                 stringMeta(document, "title", ""),
                 document.getText(),
@@ -207,6 +224,42 @@ public class TimeCampusRagService {
         );
         double score = document.getScore() == null ? 0.0 : document.getScore();
         return new TimeCampusRagSearchResult.Hit(score, "qdrant similarity", ragDocument);
+    }
+
+    private List<TimeCampusRagSearchResult.Hit> reciprocalRankFusion(
+            List<TimeCampusRagSearchResult.Hit> vectorHits,
+            List<TimeCampusRagSearchResult.Hit> lexicalHits,
+            int limit) {
+        Map<String, TimeCampusRagDocument> documents = new LinkedHashMap<>();
+        Map<String, Double> scores = new LinkedHashMap<>();
+        Map<String, List<String>> reasons = new LinkedHashMap<>();
+        addRanking("lexical", lexicalHits, documents, scores, reasons);
+        addRanking("qdrant", vectorHits, documents, scores, reasons);
+        return scores.entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed()
+                        .thenComparing(Map.Entry::getKey))
+                .limit(limit)
+                .map(entry -> new TimeCampusRagSearchResult.Hit(
+                        entry.getValue(),
+                        "rrf: " + String.join(", ", reasons.get(entry.getKey())),
+                        documents.get(entry.getKey())))
+                .toList();
+    }
+
+    private void addRanking(String retriever,
+                            List<TimeCampusRagSearchResult.Hit> hits,
+                            Map<String, TimeCampusRagDocument> documents,
+                            Map<String, Double> scores,
+                            Map<String, List<String>> reasons) {
+        for (int index = 0; index < hits.size(); index++) {
+            TimeCampusRagSearchResult.Hit hit = hits.get(index);
+            String id = hit.document().id();
+            int rank = index + 1;
+            documents.putIfAbsent(id, hit.document());
+            scores.merge(id, 1.0 / (RRF_K + rank), Double::sum);
+            reasons.computeIfAbsent(id, ignored -> new ArrayList<>())
+                    .add(retriever + " rank " + rank);
+        }
     }
 
     private String stringMeta(Document document, String key, String fallback) {
@@ -390,7 +443,7 @@ public class TimeCampusRagService {
         if (normalized.isBlank()) {
             return List.of();
         }
-        Set<String> result = new HashSet<>();
+        Set<String> result = new LinkedHashSet<>();
         for (String part : normalized.split("[^\\p{IsAlphabetic}\\p{IsDigit}\\p{IsHan}]+")) {
             if (!part.isBlank()) {
                 result.add(part);
@@ -398,12 +451,13 @@ public class TimeCampusRagService {
         }
         for (int i = 0; i < normalized.length(); i++) {
             char current = normalized.charAt(i);
-            if (isHan(current)) {
-                result.add(String.valueOf(current));
-                if (i + 1 < normalized.length() && isHan(normalized.charAt(i + 1))) {
-                    result.add(normalized.substring(i, i + 2));
-                }
+            if (isHan(current) && i + 1 < normalized.length()
+                    && isHan(normalized.charAt(i + 1))) {
+                result.add(normalized.substring(i, i + 2));
             }
+        }
+        if (normalized.length() == 1 && isHan(normalized.charAt(0))) {
+            result.add(normalized);
         }
         return new ArrayList<>(result);
     }

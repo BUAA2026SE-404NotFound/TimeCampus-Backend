@@ -8,6 +8,8 @@ import com.notfound.timecampusserver.service.AdminMediaService;
 import com.notfound.timecampusserver.service.PoiService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.ObjectProvider;
 
@@ -15,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -130,6 +133,65 @@ class TimeCampusRagServiceTest {
                 .containsEntry("poi", 1L)
                 .containsEntry("media", 1L)
                 .containsEntry("comment", 1L);
+    }
+
+    @Test
+    void searchFusesRanksAndDeduplicatesChunksBySource() {
+        VectorStore vectorStore = mock(VectorStore.class);
+        @SuppressWarnings("unchecked")
+        ObjectProvider<VectorStore> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(vectorStore);
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of(
+                vectorDocument("poi:9042", "北航医院", 0.92),
+                vectorDocument("poi:9003", "晨兴音乐厅", 0.88),
+                vectorDocument("poi:9005", "学院路校门", 0.84),
+                vectorDocument("poi:9005", "学院路校门 duplicate chunk", 0.80)
+        ));
+        when(poiService.list(null, null)).thenReturn(List.of(
+                poi(9005L, "学院路校门", "学院路一侧的校园入口", ""),
+                poi(9042L, "北航医院", "校园医疗服务", ""),
+                poi(9003L, "晨兴音乐厅", "校园音乐演出场所", "")
+        ));
+
+        TimeCampusRagProperties properties = new TimeCampusRagProperties();
+        properties.setVectorEnabled(true);
+        properties.setLexicalFallbackEnabled(true);
+        properties.setDefaultTopK(5);
+        properties.setMaxTopK(20);
+        TimeCampusMcpProperties mcpProperties = new TimeCampusMcpProperties();
+        mcpProperties.setAdminId(99L);
+        mcpProperties.setAdminRole("admin");
+        TimeCampusRagService service = new TimeCampusRagService(
+                poiService,
+                adminMediaService,
+                commentMapper,
+                new TimeCampusMcpAdminScope(mcpProperties),
+                properties,
+                provider
+        );
+
+        TimeCampusRagService.TimeCampusRagSearchResult result = service.search(
+                "学院路校门", 5, List.of("poi"), null, false);
+
+        assertThat(result.usage()).contains("retriever=hybrid-rrf");
+        assertThat(result.hits().get(0).document().id()).isEqualTo("poi:9005");
+        assertThat(result.hits().get(0).reason()).contains("lexical rank 1", "qdrant rank 3");
+        assertThat(result.hits())
+                .extracting(hit -> hit.document().id())
+                .doesNotHaveDuplicates();
+    }
+
+    private Document vectorDocument(String sourceId, String text, double score) {
+        return Document.builder()
+                .id(sourceId + "#vector")
+                .text(text)
+                .metadata("source_id", sourceId)
+                .metadata("rag_id", sourceId + "#chunk:0")
+                .metadata("rag_type", "poi")
+                .metadata("title", text)
+                .metadata("uri", "timecampus://" + sourceId.replace(':', '/'))
+                .score(score)
+                .build();
     }
 
     private PoiVO poi(Long id, String name, String description, String funFact) {
