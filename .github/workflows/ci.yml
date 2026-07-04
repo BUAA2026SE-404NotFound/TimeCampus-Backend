@@ -20,7 +20,7 @@ on:
         default: false
         type: boolean
       deploy:
-        description: "Deploy the tested jar to the production host"
+        description: "Build and deploy the tested commit on the production host"
         required: false
         default: false
         type: boolean
@@ -55,21 +55,8 @@ jobs:
       - name: Package Server Module
         run: mvn -B -pl timecampus-server -am package -DskipTests
 
-      - name: Prepare release artifact
-        run: |
-          mkdir release
-          cp timecampus-server/target/timecampus-server-*.jar release/timecampus-server.jar
-          cp deploy/scripts/deploy-backend-artifact.sh release/
-
-      - name: Upload release artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: timecampus-backend-${{ github.sha }}
-          path: release/
-          if-no-files-found: error
-
   deploy-dev:
-    name: Deploy Backend Artifact
+    name: Build And Deploy Backend On Server
     needs: backend
     runs-on: ubuntu-latest
     if: ${{ (github.event_name == 'push' && github.ref == 'refs/heads/dev') || (github.event_name == 'workflow_dispatch' && inputs.deploy) }}
@@ -79,33 +66,28 @@ jobs:
       SERVER_PASSWORD: ${{ secrets.DEPLOY_PASSWORD }}
 
     steps:
-      - name: Download release artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: timecampus-backend-${{ github.sha }}
-          path: release
-
-      - name: Upload release
-        uses: appleboy/scp-action@v1
-        with:
-          host: ${{ env.SERVER_HOST }}
-          username: ${{ env.SERVER_USERNAME }}
-          password: ${{ env.SERVER_PASSWORD }}
-          source: "release/*"
-          target: "/home/${{ env.SERVER_USERNAME }}/backend-incoming/${{ github.sha }}"
-          strip_components: 1
-
-      - name: Activate release
+      - name: Pull, build and activate release
         uses: appleboy/ssh-action@v1.2.0
         with:
           host: ${{ env.SERVER_HOST }}
           username: ${{ env.SERVER_USERNAME }}
           password: ${{ env.SERVER_PASSWORD }}
+          command_timeout: 20m
           script: |
             set -euo pipefail
-            INCOMING="$HOME/backend-incoming/${{ github.sha }}"
-            chmod +x "$INCOMING/deploy-backend-artifact.sh"
-            "$INCOMING/deploy-backend-artifact.sh" "$INCOMING/timecampus-server.jar"
+            REPO="$HOME/TimeCampus-Backend"
+            URL="https://github.com/${{ github.repository }}.git"
+            if [ ! -d "$REPO/.git" ]; then
+              git clone "$URL" "$REPO"
+            fi
+            test -z "$(git -C "$REPO" status --porcelain --untracked-files=no)"
+            git -C "$REPO" fetch "$URL" "${{ github.sha }}"
+            git -C "$REPO" checkout --detach "${{ github.sha }}"
+            cd "$REPO"
+            mvn -B -pl timecampus-server -am clean package -DskipTests
+            chmod +x deploy/scripts/deploy-backend-artifact.sh
+            deploy/scripts/deploy-backend-artifact.sh \
+              timecampus-server/target/timecampus-server-*.jar
 
   third-party-smoke:
     name: Third Party Smoke Tests
