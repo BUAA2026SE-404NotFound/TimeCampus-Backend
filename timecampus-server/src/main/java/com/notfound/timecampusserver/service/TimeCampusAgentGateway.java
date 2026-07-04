@@ -269,8 +269,12 @@ public class TimeCampusAgentGateway {
                                     "Agent stream returned HTTP " + response.getStatusCode().value()
                             );
                         }
-                        response.getBody().transferTo(output);
-                        output.flush();
+                        byte[] buffer = new byte[8192];
+                        int count;
+                        while ((count = response.getBody().read(buffer)) != -1) {
+                            output.write(buffer, 0, count);
+                            output.flush();
+                        }
                         return null;
                     });
         } catch (RestClientException exception) {

@@ -14,6 +14,7 @@ import com.notfound.timecampusserver.service.TimeCampusAgentGateway;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
@@ -169,7 +170,9 @@ public class AdminAgentController {
     @SecurityRequirement(name = "bearerAuth")
     public StreamingResponseBody streamOperation(
             @PathVariable String sessionId,
-            @Valid @RequestBody AgentOperationRunRequest request) {
+            @Valid @RequestBody AgentOperationRunRequest request,
+            HttpServletResponse response) {
+        prepareStream(response);
         return output -> {
             try {
                 writeEvent(output, "status", Map.of(
@@ -222,7 +225,9 @@ public class AdminAgentController {
     @SecurityRequirement(name = "bearerAuth")
     public StreamingResponseBody streamResumeOperation(
             @PathVariable String threadId,
-            @Valid @RequestBody AgentOperationDecisionRequest request) {
+            @Valid @RequestBody AgentOperationDecisionRequest request,
+            HttpServletResponse response) {
+        prepareStream(response);
         return output -> agentGateway.streamDecisions(threadId, request.decisions(), output);
     }
 
@@ -253,7 +258,10 @@ public class AdminAgentController {
     @PostMapping(value = "/evals/runs/stream", produces = "text/event-stream")
     @Operation(summary = "流式运行 Agent Eval")
     @SecurityRequirement(name = "bearerAuth")
-    public StreamingResponseBody streamEval(@Valid @RequestBody AgentEvalRunRequest request) {
+    public StreamingResponseBody streamEval(
+            @Valid @RequestBody AgentEvalRunRequest request,
+            HttpServletResponse response) {
+        prepareStream(response);
         return output -> agentGateway.streamEval(
                 request.suite(),
                 request.mode(),
@@ -264,6 +272,11 @@ public class AdminAgentController {
                 request.caseIds(),
                 output
         );
+    }
+
+    private void prepareStream(HttpServletResponse response) {
+        response.setHeader("Cache-Control", "no-cache");
+        response.setHeader("X-Accel-Buffering", "no");
     }
 
     @GetMapping("/evals/runs")
