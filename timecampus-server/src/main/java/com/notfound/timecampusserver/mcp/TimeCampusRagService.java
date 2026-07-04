@@ -28,6 +28,9 @@ import java.util.stream.Collectors;
 public class TimeCampusRagService {
 
     private static final int RRF_K = 60;
+    private static final int CANDIDATE_MULTIPLIER = 2;
+    private static final Set<String> LEXICAL_STOP_TERMS = Set.of(
+            "校内", "校园", "地点", "地方", "场所", "位置", "适合", "参观");
 
     private final PoiService poiService;
     private final AdminMediaService adminMediaService;
@@ -58,7 +61,9 @@ public class TimeCampusRagService {
         return adminScope.call(() -> {
             List<TimeCampusRagDocument> corpus = buildCorpus(types, poiId, includePending);
             int normalizedLimit = normalizeLimit(limit);
-            int candidateLimit = Math.min(ragProperties.getMaxTopK(), normalizedLimit * 3);
+            int candidateLimit = Math.min(
+                    ragProperties.getMaxTopK(),
+                    normalizedLimit * CANDIDATE_MULTIPLIER);
             List<TimeCampusRagSearchResult.Hit> vectorHits = vectorSearch(
                     query, candidateLimit, types, poiId, includePending);
             List<TimeCampusRagSearchResult.Hit> lexicalHits = ragProperties.isLexicalFallbackEnabled()
@@ -453,7 +458,10 @@ public class TimeCampusRagService {
             char current = normalized.charAt(i);
             if (isHan(current) && i + 1 < normalized.length()
                     && isHan(normalized.charAt(i + 1))) {
-                result.add(normalized.substring(i, i + 2));
+                String term = normalized.substring(i, i + 2);
+                if (!LEXICAL_STOP_TERMS.contains(term)) {
+                    result.add(term);
+                }
             }
         }
         if (normalized.length() == 1 && isHan(normalized.charAt(0))) {

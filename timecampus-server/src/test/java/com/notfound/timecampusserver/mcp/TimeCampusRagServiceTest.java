@@ -136,21 +136,21 @@ class TimeCampusRagServiceTest {
     }
 
     @Test
-    void searchFusesRanksAndDeduplicatesChunksBySource() {
+    void searchFusesSemanticRanksWithoutGenericCampusTermsAndDeduplicatesSources() {
         VectorStore vectorStore = mock(VectorStore.class);
         @SuppressWarnings("unchecked")
         ObjectProvider<VectorStore> provider = mock(ObjectProvider.class);
         when(provider.getIfAvailable()).thenReturn(vectorStore);
         when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of(
                 vectorDocument("poi:9042", "北航医院", 0.92),
-                vectorDocument("poi:9003", "晨兴音乐厅", 0.88),
+                vectorDocument("poi:9020", "体育馆", 0.88),
                 vectorDocument("poi:9005", "学院路校门", 0.84),
                 vectorDocument("poi:9005", "学院路校门 duplicate chunk", 0.80)
         ));
         when(poiService.list(null, null)).thenReturn(List.of(
                 poi(9005L, "学院路校门", "学院路一侧的校园入口", ""),
-                poi(9042L, "北航医院", "校园医疗服务", ""),
-                poi(9003L, "晨兴音乐厅", "校园音乐演出场所", "")
+                poi(9042L, "北航医院", "同学们看病开假条的地方", ""),
+                poi(9020L, "体育馆", "校内综合性体育场馆", "")
         ));
 
         TimeCampusRagProperties properties = new TimeCampusRagProperties();
@@ -171,11 +171,11 @@ class TimeCampusRagServiceTest {
         );
 
         TimeCampusRagService.TimeCampusRagSearchResult result = service.search(
-                "学院路校门", 5, List.of("poi"), null, false);
+                "校内看病和医疗服务地点", 5, List.of("poi"), null, false);
 
         assertThat(result.usage()).contains("retriever=hybrid-rrf");
-        assertThat(result.hits().get(0).document().id()).isEqualTo("poi:9005");
-        assertThat(result.hits().get(0).reason()).contains("lexical rank 1", "qdrant rank 3");
+        assertThat(result.hits().get(0).document().id()).isEqualTo("poi:9042");
+        assertThat(result.hits().get(0).reason()).contains("lexical rank 1", "qdrant rank 1");
         assertThat(result.hits())
                 .extracting(hit -> hit.document().id())
                 .doesNotHaveDuplicates();
