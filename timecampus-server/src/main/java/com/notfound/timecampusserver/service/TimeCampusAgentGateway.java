@@ -23,8 +23,8 @@ public class TimeCampusAgentGateway {
     private final String token;
 
     public TimeCampusAgentGateway(RestClient.Builder builder,
-                                  @Value("${timecampus.agent.base-url:http://127.0.0.1:8090}") String baseUrl,
-                                  @Value("${timecampus.agent.token:}") String token) {
+                                  @Value("${timecampus.agent.base-url:${TIMECAMPUS_AGENT_BASE_URL:http://127.0.0.1:8090}}") String baseUrl,
+                                  @Value("${timecampus.agent.token:${TIMECAMPUS_AGENT_API_TOKEN:}}") String token) {
         this.restClient = builder.baseUrl(baseUrl).build();
         this.token = token == null ? "" : token.trim();
     }
