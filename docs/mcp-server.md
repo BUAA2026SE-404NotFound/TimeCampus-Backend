@@ -88,7 +88,7 @@ POI 写工具：
 
 - 默认：本地词法检索，不依赖 Docker、WSL 或 Qdrant，保证 MCP 和后端可直接启动。
 - 启用向量库：Spring AI `VectorStore` + Qdrant 提供 Dense 候选，与词法候选通过
-  `RRF(k=60)` 融合；候选深度为 `min(maxTopK, topK * 3)`。
+  `RRF(k=60)` 融合；候选深度为 `min(maxTopK, topK * 2)`。
 - Qdrant 异常时回退词法检索；词法无命中时保留向量结果。
 
 语料从 MySQL 业务数据构建：
