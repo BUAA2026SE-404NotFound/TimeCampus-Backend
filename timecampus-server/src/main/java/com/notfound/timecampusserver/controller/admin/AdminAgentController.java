@@ -151,7 +151,7 @@ public class AdminAgentController {
     @Operation(summary = "创建运营智能体会话")
     @SecurityRequirement(name = "bearerAuth")
     public ApiResponse<JsonNode> createOperationSession(
-            @RequestBody(required = false) AgentSessionCreateRequest request) {
+            @Valid @RequestBody(required = false) AgentSessionCreateRequest request) {
         return ApiResponse.success(agentGateway.createSession(request == null ? null : request.title()));
     }
 
@@ -349,14 +349,14 @@ public class AdminAgentController {
                                     Boolean includePending) {
     }
 
-    public record AgentOperationRunRequest(@NotBlank String task,
+    public record AgentOperationRunRequest(@NotBlank @Size(max = 20_000) String task,
                                            Integer limit,
                                            List<String> types,
                                            Long poiId,
                                            Boolean includePending) {
     }
 
-    public record AgentSessionCreateRequest(String title) {
+    public record AgentSessionCreateRequest(@Size(max = 60) String title) {
     }
 
     public record AgentOperationDecisionRequest(@NotEmpty List<Map<String, Object>> decisions) {

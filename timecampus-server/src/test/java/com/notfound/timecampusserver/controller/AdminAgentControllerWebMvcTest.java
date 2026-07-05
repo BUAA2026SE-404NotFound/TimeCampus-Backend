@@ -181,6 +181,30 @@ class AdminAgentControllerWebMvcTest {
     }
 
     @Test
+    void operationRejectsTaskOverTwentyThousandCharacters() throws Exception {
+        mockMvc.perform(post("/api/v1/admin/agent/operations/runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "task", "校".repeat(20_001)
+                        ))))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(draftService, agentGateway);
+    }
+
+    @Test
+    void sessionRejectsTitleOverSixtyCharacters() throws Exception {
+        mockMvc.perform(post("/api/v1/admin/agent/operations/sessions")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "title", "校".repeat(61)
+                        ))))
+                .andExpect(status().isBadRequest());
+
+        verifyNoInteractions(agentGateway);
+    }
+
+    @Test
     void evalRunForwardsRepeatAndCaseSelection() throws Exception {
         when(agentGateway.runEval(
                 eq("maintenance"),
