@@ -129,7 +129,7 @@ public class AdminAgentController {
                 request.poiId(),
                 request.includePending()
         );
-        if (!preflight.qualityGate().executable()) {
+        if (!preflight.qualityGate().executable() && !Boolean.TRUE.equals(request.forceExecution())) {
             return ApiResponse.success(new AgentOperationRunResult("blocked", preflight, null));
         }
         JsonNode execution = agentGateway.startOperation(request.task());
@@ -186,12 +186,14 @@ public class AdminAgentController {
                         request.poiId(),
                         request.includePending()
                 );
-                String status = preflight.qualityGate().executable() ? "running" : "blocked";
+                boolean executable = preflight.qualityGate().executable()
+                        || Boolean.TRUE.equals(request.forceExecution());
+                String status = executable ? "running" : "blocked";
                 writeEvent(output, "preflight", Map.of(
                         "status", status,
                         "preflight", preflight
                 ));
-                if (!preflight.qualityGate().executable()) {
+                if (!executable) {
                     agentGateway.recordSessionMessage(sessionId, "user", request.task());
                     agentGateway.recordSessionMessage(sessionId, "assistant", preflight.draft());
                     writeEvent(output, "done", Map.of("status", "blocked"));
@@ -353,7 +355,8 @@ public class AdminAgentController {
                                            Integer limit,
                                            List<String> types,
                                            Long poiId,
-                                           Boolean includePending) {
+                                           Boolean includePending,
+                                           Boolean forceExecution) {
     }
 
     public record AgentSessionCreateRequest(@Size(max = 60) String title) {

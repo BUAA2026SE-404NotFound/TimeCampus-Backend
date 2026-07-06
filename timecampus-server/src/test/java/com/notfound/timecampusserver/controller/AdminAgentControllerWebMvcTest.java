@@ -155,6 +155,35 @@ class AdminAgentControllerWebMvcTest {
     }
 
     @Test
+    void administratorCanForceAgentAfterQualityGateBlocks() throws Exception {
+        AgentDraftResult blocked = new AgentDraftResult(
+                "更新主楼",
+                "rule",
+                "低分草案",
+                contextPack("更新主楼"),
+                new AgentQualityScore(20, 60, 45, 20, 38),
+                new AgentQualityGate(false, 85, 80, List.of("overall 低于 85")),
+                List.of("仅草案")
+        );
+        when(draftService.draft(eq("更新主楼"), eq(null), eq(null), eq(null), eq(null)))
+                .thenReturn(blocked);
+        when(agentGateway.startOperation("更新主楼"))
+                .thenReturn(objectMapper.readTree("""
+                        {"threadId":"thread-forced","status":"approval_required"}
+                        """));
+
+        mockMvc.perform(post("/api/v1/admin/agent/operations/runs")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of(
+                                "task", "更新主楼",
+                                "forceExecution", true
+                        ))))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.status").value("approval_required"))
+                .andExpect(jsonPath("$.data.execution.threadId").value("thread-forced"));
+    }
+
+    @Test
     void operationStartsAgentAfterQualityGatePasses() throws Exception {
         AgentDraftResult executable = new AgentDraftResult(
                 "更新主楼简介",
