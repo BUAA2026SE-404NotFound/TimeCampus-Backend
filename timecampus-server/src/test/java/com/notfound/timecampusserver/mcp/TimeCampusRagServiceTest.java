@@ -208,6 +208,45 @@ class TimeCampusRagServiceTest {
                 .doesNotHaveDuplicates();
     }
 
+    @Test
+    void rrfTieBreaksByLexicalRankBeforeSourceId() {
+        VectorStore vectorStore = mock(VectorStore.class);
+        @SuppressWarnings("unchecked")
+        ObjectProvider<VectorStore> provider = mock(ObjectProvider.class);
+        when(provider.getIfAvailable()).thenReturn(vectorStore);
+        when(vectorStore.similaritySearch(any(SearchRequest.class))).thenReturn(List.of(
+                vectorDocument("poi:1", "校史", 0.92),
+                vectorDocument("poi:2", "校史发展", 0.88)
+        ));
+        when(poiService.list(null, null)).thenReturn(List.of(
+                poi(1L, "校史资料", "校史", ""),
+                poi(2L, "发展历程", "校史发展", "")
+        ));
+
+        TimeCampusRagProperties properties = new TimeCampusRagProperties();
+        properties.setVectorEnabled(true);
+        properties.setLexicalFallbackEnabled(true);
+        properties.setDefaultTopK(5);
+        properties.setMaxTopK(20);
+        TimeCampusMcpProperties mcpProperties = new TimeCampusMcpProperties();
+        mcpProperties.setAdminId(99L);
+        mcpProperties.setAdminRole("admin");
+        TimeCampusRagService service = new TimeCampusRagService(
+                poiService,
+                adminMediaService,
+                commentMapper,
+                new TimeCampusMcpAdminScope(mcpProperties),
+                properties,
+                provider
+        );
+
+        TimeCampusRagService.TimeCampusRagSearchResult result = service.search(
+                "校史发展", 5, List.of("poi"), null, false);
+
+        assertThat(result.hits().get(0).document().id()).isEqualTo("poi:2");
+        assertThat(result.hits().get(0).reason()).contains("lexical rank 1", "qdrant rank 2");
+    }
+
     private Document vectorDocument(String sourceId, String text, double score) {
         return Document.builder()
                 .id(sourceId + "#vector")

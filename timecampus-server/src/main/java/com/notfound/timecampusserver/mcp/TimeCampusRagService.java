@@ -260,10 +260,14 @@ public class TimeCampusRagService {
         Map<String, TimeCampusRagDocument> documents = new LinkedHashMap<>();
         Map<String, Double> scores = new LinkedHashMap<>();
         Map<String, List<String>> reasons = new LinkedHashMap<>();
-        addRanking("lexical", lexicalHits, documents, scores, reasons);
-        addRanking("qdrant", vectorHits, documents, scores, reasons);
+        Map<String, Integer> lexicalRanks = new LinkedHashMap<>();
+        Map<String, Integer> vectorRanks = new LinkedHashMap<>();
+        addRanking("lexical", lexicalHits, documents, scores, reasons, lexicalRanks);
+        addRanking("qdrant", vectorHits, documents, scores, reasons, vectorRanks);
         return scores.entrySet().stream()
                 .sorted(Map.Entry.<String, Double>comparingByValue().reversed()
+                        .thenComparing(entry -> lexicalRanks.getOrDefault(entry.getKey(), Integer.MAX_VALUE))
+                        .thenComparing(entry -> vectorRanks.getOrDefault(entry.getKey(), Integer.MAX_VALUE))
                         .thenComparing(Map.Entry::getKey))
                 .limit(limit)
                 .map(entry -> new TimeCampusRagSearchResult.Hit(
@@ -277,13 +281,15 @@ public class TimeCampusRagService {
                             List<TimeCampusRagSearchResult.Hit> hits,
                             Map<String, TimeCampusRagDocument> documents,
                             Map<String, Double> scores,
-                            Map<String, List<String>> reasons) {
+                            Map<String, List<String>> reasons,
+                            Map<String, Integer> ranks) {
         for (int index = 0; index < hits.size(); index++) {
             TimeCampusRagSearchResult.Hit hit = hits.get(index);
             String id = hit.document().id();
             int rank = index + 1;
             documents.putIfAbsent(id, hit.document());
             scores.merge(id, 1.0 / (RRF_K + rank), Double::sum);
+            ranks.putIfAbsent(id, rank);
             reasons.computeIfAbsent(id, ignored -> new ArrayList<>())
                     .add(retriever + " rank " + rank);
         }
