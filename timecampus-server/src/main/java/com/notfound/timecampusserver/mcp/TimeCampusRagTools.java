@@ -24,7 +24,7 @@ public class TimeCampusRagTools {
 
     @McpTool(
             name = "timecampus_rag_search",
-            description = "在 TimeCampus 管理知识库中检索 POI、影像、评论和维护规范，供 agent 写入前做 grounded context。",
+            description = "在 TimeCampus 管理知识库中检索 POI、影像、评论、维护规范和知识文档，供 agent 写入前做 grounded context。",
             annotations = @McpTool.McpAnnotations(
                     title = "Search TimeCampus RAG",
                     readOnlyHint = true,
@@ -36,7 +36,7 @@ public class TimeCampusRagTools {
             String query,
             @McpToolParam(description = "返回条数，默认 8，最大 20", required = false)
             Integer limit,
-            @McpToolParam(description = "限定文档类型，可传 poi/media/comment/guideline，支持逗号分隔", required = false)
+            @McpToolParam(description = "限定文档类型，可传 poi/media/comment/guideline/knowledge，支持逗号分隔", required = false)
             List<String> types,
             @McpToolParam(description = "限定某个 POI ID 的上下文，可为空", required = false)
             Long poiId,
@@ -59,7 +59,7 @@ public class TimeCampusRagTools {
             String task,
             @McpToolParam(description = "返回条数，默认 8，最大 20", required = false)
             Integer limit,
-            @McpToolParam(description = "限定文档类型，可传 poi/media/comment/guideline，支持逗号分隔", required = false)
+            @McpToolParam(description = "限定文档类型，可传 poi/media/comment/guideline/knowledge，支持逗号分隔", required = false)
             List<String> types,
             @McpToolParam(description = "限定某个 POI ID 的上下文，可为空", required = false)
             Long poiId,
@@ -83,7 +83,7 @@ public class TimeCampusRagTools {
 
     @McpTool(
             name = "timecampus_rag_rebuild_vector_index",
-            description = "从 MySQL 抽取 POI、影像、评论和维护规范，切块后写入 Qdrant 向量库。需要配置 Qdrant 与 EmbeddingModel。",
+            description = "抽取 POI、影像、评论、维护规范和知识文档，切块后写入 Qdrant 向量库。需要配置 Qdrant 与 EmbeddingModel。",
             annotations = @McpTool.McpAnnotations(
                     title = "Rebuild TimeCampus RAG Vector Index",
                     readOnlyHint = false,
@@ -91,7 +91,7 @@ public class TimeCampusRagTools {
                     idempotentHint = true,
                     openWorldHint = false))
     public VectorIndexResult rebuildVectorIndex(
-            @McpToolParam(description = "限定文档类型，可传 poi/media/comment/guideline，支持逗号分隔；为空则全部", required = false)
+            @McpToolParam(description = "限定文档类型，可传 poi/media/comment/guideline/knowledge，支持逗号分隔；为空则全部", required = false)
             List<String> types,
             @McpToolParam(description = "限定某个 POI ID 的上下文，可为空", required = false)
             Long poiId,

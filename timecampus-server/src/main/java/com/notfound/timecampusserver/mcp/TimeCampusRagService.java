@@ -10,9 +10,14 @@ import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -31,6 +36,12 @@ public class TimeCampusRagService {
     private static final int CANDIDATE_MULTIPLIER = 2;
     private static final Set<String> LEXICAL_STOP_TERMS = Set.of(
             "校内", "校园", "地点", "地方", "场所", "位置", "适合", "参观");
+    private static final List<KnowledgeSource> KNOWLEDGE_SOURCES = List.of(
+            new KnowledgeSource("buaa-baike", "北京航空航天大学百科", "rag/knowledge/buaa-baike.md"),
+            new KnowledgeSource("buaa-school-song", "北航校歌", "rag/knowledge/buaa-school-song.md"),
+            new KnowledgeSource("buaa-today", "今日北航", "rag/knowledge/buaa-today.md"),
+            new KnowledgeSource("buaa-history", "北京航空航天大学校史", "rag/knowledge/buaa-history.md")
+    );
 
     private final PoiService poiService;
     private final AdminMediaService adminMediaService;
@@ -112,12 +123,15 @@ public class TimeCampusRagService {
             List<TimeCampusRagDocument> corpus = collectDocuments(null, null, true);
             Map<String, Long> countsByType = corpus.stream()
                     .collect(Collectors.groupingBy(TimeCampusRagDocument::type, LinkedHashMap::new, Collectors.counting()));
+            long estimatedTokenCount = corpus.stream().mapToLong(document -> estimatedTokenCount(document.text())).sum();
+            int estimatedChunkCount = corpus.stream().mapToInt(document -> estimatedChunkCount(document.text())).sum();
             return new TimeCampusRagCorpusSummary(corpus.size(), countsByType, List.of(
                     "poi",
                     "media",
                     "comment",
-                    "guideline"
-            ));
+                    "guideline",
+                    "knowledge"
+            ), estimatedTokenCount, estimatedChunkCount);
         });
     }
 
@@ -139,8 +153,16 @@ public class TimeCampusRagService {
         if (matchesType(typeSet, "guideline")) {
             documents.add(guidelineDocument());
         }
+        if (matchesType(typeSet, "knowledge")) {
+            KNOWLEDGE_SOURCES.stream()
+                    .map(this::knowledgeDocument)
+                    .forEach(documents::add);
+        }
 
-        List<PoiVO> pois = poiService.list(null, null);
+        boolean needsMysql = matchesType(typeSet, "poi")
+                || matchesType(typeSet, "media")
+                || matchesType(typeSet, "comment");
+        List<PoiVO> pois = needsMysql ? poiService.list(null, null) : List.of();
         Map<Long, PoiVO> poisById = pois.stream()
                 .collect(Collectors.toMap(PoiVO::getId, poi -> poi, (left, right) -> left, LinkedHashMap::new));
 
@@ -341,6 +363,25 @@ public class TimeCampusRagService {
         );
     }
 
+    private TimeCampusRagDocument knowledgeDocument(KnowledgeSource source) {
+        return new TimeCampusRagDocument(
+                "knowledge:" + source.id(),
+                "knowledge",
+                source.title(),
+                readClasspathText(source.path()),
+                "timecampus://knowledge/" + source.id(),
+                metadata("reviewStatus", "", "source", "knowledge", "file", source.path())
+        );
+    }
+
+    private String readClasspathText(String path) {
+        try (InputStream stream = new ClassPathResource(path).getInputStream()) {
+            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Failed to read RAG knowledge resource: " + path, e);
+        }
+    }
+
     private TimeCampusRagDocument poiDocument(PoiVO poi) {
         return new TimeCampusRagDocument(
                 "poi:" + poi.getId(),
@@ -502,6 +543,47 @@ public class TimeCampusRagService {
         return values;
     }
 
+    private long estimatedTokenCount(String text) {
+        if (text == null || text.isBlank()) {
+            return 0;
+        }
+        int cjk = 0;
+        int latinChars = 0;
+        int words = 0;
+        boolean inWord = false;
+        int nonWhitespace = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char value = text.charAt(i);
+            if (!Character.isWhitespace(value)) {
+                nonWhitespace++;
+            }
+            if (isHan(value)) {
+                cjk++;
+            }
+            if (Character.isLetterOrDigit(value) && !isHan(value)) {
+                latinChars++;
+                if (!inWord) {
+                    words++;
+                    inWord = true;
+                }
+            } else {
+                inWord = false;
+            }
+        }
+        int punctuation = Math.max(0, nonWhitespace - cjk - latinChars);
+        return Math.round(cjk + words + punctuation * 0.2);
+    }
+
+    private int estimatedChunkCount(String text) {
+        int length = text == null ? 0 : text.length();
+        int max = ragProperties.getChunkMaxChars();
+        int overlap = Math.min(ragProperties.getChunkOverlapChars(), Math.max(0, max - 1));
+        if (length <= max) {
+            return 1;
+        }
+        return (int) Math.ceil((length - max) / (double) (max - overlap)) + 1;
+    }
+
     public record TimeCampusRagDocument(String id,
                                         String type,
                                         String title,
@@ -525,6 +607,11 @@ public class TimeCampusRagService {
 
     public record TimeCampusRagCorpusSummary(int documentCount,
                                              Map<String, Long> countsByType,
-                                             List<String> supportedTypes) {
+                                             List<String> supportedTypes,
+                                             long estimatedTokenCount,
+                                             int estimatedChunkCount) {
+    }
+
+    private record KnowledgeSource(String id, String title, String path) {
     }
 }

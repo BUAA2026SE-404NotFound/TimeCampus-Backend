@@ -97,14 +97,23 @@ POI 写工具：
 - `media`：影像关联 POI、类型、年份、说明、图片路径和审核状态。
 - `comment`：已审核评论，或在 `includePending=true` 时包含待审核/驳回评论。
 - `guideline`：内容维护规范和 agent 写入约束。
+- `knowledge`：随 Backend 打包的公开 Markdown 知识文档，当前包含北航百科、校歌、今日北航和校史。
 
 索引流程：
 
 1. 调用 `timecampus_rag_rebuild_vector_index`。
-2. 后端从 MySQL 抽取 `poi`、`media`、`comment` 和内置 guideline。
+2. 后端从 MySQL 抽取 `poi`、`media`、`comment`，并读取内置 `guideline` / `knowledge`。
 3. 将每条业务记录转换为稳定 `source_id` 的 RAG 文档。
 4. 按 `timecampus.rag.chunk-max-chars` 和 `chunk-overlap-chars` 切块。
 5. 写入 Qdrant collection，metadata 保留 `source_id`、`rag_type`、`poiId`、`reviewStatus`、`uri` 等字段。
+
+`knowledge` 文档 URI 固定为 `timecampus://knowledge/buaa-baike`、`timecampus://knowledge/buaa-school-song`、`timecampus://knowledge/buaa-today`、`timecampus://knowledge/buaa-history`。只增量重建这类资料时传：
+
+```json
+{"types":["knowledge"],"includePending":true,"deleteExisting":true}
+```
+
+`timecampus_rag_corpus_summary` 会返回估算 token 数和按当前 chunk 配置估算的 chunk 数，口径为中文字符约 1 token、英文/数字词约 1 token、标点约 0.2 token。
 
 检索阶段按 `source_id` 合并同一资料的多个 chunk，结果中的 `document.id` 为
 稳定 source ID，`reason` 会给出 qdrant/lexical 排名。结果同时返回

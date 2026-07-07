@@ -127,12 +127,39 @@ class TimeCampusRagServiceTest {
 
         TimeCampusRagService.TimeCampusRagCorpusSummary summary = ragService.corpusSummary();
 
-        assertThat(summary.documentCount()).isEqualTo(4);
+        assertThat(summary.documentCount()).isEqualTo(8);
         assertThat(summary.countsByType())
                 .containsEntry("guideline", 1L)
+                .containsEntry("knowledge", 4L)
                 .containsEntry("poi", 1L)
                 .containsEntry("media", 1L)
                 .containsEntry("comment", 1L);
+        assertThat(summary.supportedTypes()).contains("knowledge");
+        assertThat(summary.estimatedTokenCount()).isGreaterThan(22_000);
+        assertThat(summary.estimatedChunkCount()).isGreaterThanOrEqualTo(30);
+    }
+
+    @Test
+    void collectDocumentsLoadsKnowledgeResourcesWithoutMysql() {
+        List<TimeCampusRagService.TimeCampusRagDocument> documents = ragService.collectDocuments(
+                List.of("knowledge"),
+                null,
+                false
+        );
+
+        assertThat(documents)
+                .extracting(TimeCampusRagService.TimeCampusRagDocument::uri)
+                .containsExactly(
+                        "timecampus://knowledge/buaa-baike",
+                        "timecampus://knowledge/buaa-school-song",
+                        "timecampus://knowledge/buaa-today",
+                        "timecampus://knowledge/buaa-history"
+                );
+        assertThat(documents)
+                .extracting(TimeCampusRagService.TimeCampusRagDocument::type)
+                .containsOnly("knowledge");
+        assertThat(documents.stream().mapToInt(document -> document.text().length()).sum())
+                .isEqualTo(27_149);
     }
 
     @Test
