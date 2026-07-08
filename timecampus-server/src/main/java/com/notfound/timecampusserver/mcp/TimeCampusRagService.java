@@ -34,6 +34,9 @@ public class TimeCampusRagService {
 
     private static final int RRF_K = 60;
     private static final int CANDIDATE_MULTIPLIER = 2;
+    private static final double BM25_K1 = 1.2;
+    private static final double BM25_B = 0.75;
+    private static final int BM25_TITLE_BOOST = 3;
     private static final Set<String> LEXICAL_STOP_TERMS = Set.of(
             "校内", "校园", "地点", "地方", "场所", "位置", "适合", "参观");
     private static final List<KnowledgeSource> KNOWLEDGE_SOURCES = List.of(
@@ -234,8 +237,35 @@ public class TimeCampusRagService {
                                                              int limit,
                                                              List<TimeCampusRagDocument> corpus) {
         List<String> queryTerms = terms(query);
+        if (query == null || query.isBlank()) {
+            return corpus.stream()
+                    .map(document -> new TimeCampusRagSearchResult.Hit(0.1, "empty query fallback", document))
+                    .limit(limit)
+                    .toList();
+        }
+        double averageDocumentLength = corpus.stream()
+                .mapToInt(document -> Math.max(1, terms(document.text()).size()))
+                .average()
+                .orElse(1.0);
+        double averageTitleLength = corpus.stream()
+                .mapToInt(document -> Math.max(1, terms(document.title()).size()))
+                .average()
+                .orElse(1.0);
+        Map<String, Integer> documentFrequencies = queryTerms.stream()
+                .collect(Collectors.toMap(
+                        term -> term,
+                        term -> documentFrequency(term, corpus),
+                        (left, right) -> left,
+                        LinkedHashMap::new
+                ));
         return corpus.stream()
-                .map(document -> score(document, query, queryTerms))
+                .map(document -> bm25Score(
+                        document,
+                        queryTerms,
+                        documentFrequencies,
+                        corpus.size(),
+                        averageDocumentLength,
+                        averageTitleLength))
                 .filter(hit -> hit.score() > 0)
                 .sorted(Comparator.comparingDouble(TimeCampusRagSearchResult.Hit::score).reversed()
                         .thenComparing(hit -> hit.document().id()))
@@ -322,41 +352,29 @@ public class TimeCampusRagService {
         return String.join(" && ", expressions);
     }
 
-    private TimeCampusRagSearchResult.Hit score(TimeCampusRagDocument document, String query, List<String> queryTerms) {
-        if (query == null || query.isBlank()) {
-            return new TimeCampusRagSearchResult.Hit(0.1, "empty query fallback", document);
-        }
-        String normalizedQuery = normalize(query);
+    private TimeCampusRagSearchResult.Hit bm25Score(TimeCampusRagDocument document,
+                                                    List<String> queryTerms,
+                                                    Map<String, Integer> documentFrequencies,
+                                                    int corpusSize,
+                                                    double averageDocumentLength,
+                                                    double averageTitleLength) {
         String title = normalize(document.title());
         String text = normalize(document.text());
         double score = 0;
-        List<String> reasons = new ArrayList<>();
-
-        if (title.contains(normalizedQuery)) {
-            score += 12;
-            reasons.add("title contains query");
-        }
-        if (text.contains(normalizedQuery)) {
-            score += 8;
-            reasons.add("text contains query");
-        }
+        int documentLength = Math.max(1, terms(document.text()).size());
+        int titleLength = Math.max(1, terms(document.title()).size());
 
         for (String term : queryTerms) {
             if (term.length() <= 1 && !isHan(term.charAt(0))) {
                 continue;
             }
-            if (title.contains(term)) {
-                score += 4;
-            }
-            if (text.contains(term)) {
-                score += 1;
-            }
+            int documentFrequency = Math.max(1, documentFrequencies.getOrDefault(term, 0));
+            double idf = Math.log(1.0 + (corpusSize - documentFrequency + 0.5) / (documentFrequency + 0.5));
+            score += idf * bm25TermScore(countOccurrences(text, term), documentLength, averageDocumentLength);
+            score += BM25_TITLE_BOOST * idf * bm25TermScore(countOccurrences(title, term), titleLength, averageTitleLength);
         }
 
-        if (score > 0 && reasons.isEmpty()) {
-            reasons.add("matched query terms");
-        }
-        return new TimeCampusRagSearchResult.Hit(score, String.join(", ", reasons), document);
+        return new TimeCampusRagSearchResult.Hit(score, score > 0 ? "bm25 lexical match" : "", document);
     }
 
     private TimeCampusRagDocument guidelineDocument() {
@@ -524,6 +542,35 @@ public class TimeCampusRagService {
             result.add(normalized);
         }
         return new ArrayList<>(result);
+    }
+
+    private int documentFrequency(String term, List<TimeCampusRagDocument> corpus) {
+        return (int) corpus.stream()
+                .filter(document -> normalize(document.title()).contains(term)
+                        || normalize(document.text()).contains(term))
+                .count();
+    }
+
+    private int countOccurrences(String value, String term) {
+        if (value.isBlank() || term.isBlank()) {
+            return 0;
+        }
+        int count = 0;
+        int index = value.indexOf(term);
+        while (index >= 0) {
+            count++;
+            index = value.indexOf(term, index + 1);
+        }
+        return count;
+    }
+
+    private double bm25TermScore(int termFrequency, int fieldLength, double averageFieldLength) {
+        if (termFrequency <= 0) {
+            return 0;
+        }
+        double denominator = termFrequency
+                + BM25_K1 * (1.0 - BM25_B + BM25_B * fieldLength / averageFieldLength);
+        return (termFrequency * (BM25_K1 + 1.0)) / denominator;
     }
 
     private String normalize(String value) {

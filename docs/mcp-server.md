@@ -86,8 +86,9 @@ POI 写工具：
 
 当前 RAG 实现支持两层候选和统一排序：
 
-- 默认：本地词法检索，不依赖 Docker、WSL 或 Qdrant，保证 MCP 和后端可直接启动。
-- 启用向量库：Spring AI `VectorStore` + Qdrant 提供 Dense 候选，与词法候选通过
+- 默认：本地 BM25 词法检索，不依赖 Docker、WSL 或 Qdrant，保证 MCP 和后端可直接启动。
+- BM25 使用现有中文切词结果，按正文和标题分别计算，标题字段加权。
+- 启用向量库：Spring AI `VectorStore` + Qdrant 提供 Dense 候选，与 BM25 候选通过
   `RRF(k=60)` 融合；候选深度为 `min(maxTopK, topK * 2)`。
 - Qdrant 异常时回退词法检索；词法无命中时保留向量结果。
 

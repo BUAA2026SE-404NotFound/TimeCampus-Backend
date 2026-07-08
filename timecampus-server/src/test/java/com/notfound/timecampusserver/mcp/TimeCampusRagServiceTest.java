@@ -78,6 +78,7 @@ class TimeCampusRagServiceTest {
         assertThat(result.usage()).contains("retriever=lexical");
         assertThat(result.corpusSize()).isEqualTo(3);
         assertThat(result.hits()).isNotEmpty();
+        assertThat(result.hits().get(0).reason()).contains("bm25");
         assertThat(result.hits().get(0).document().uri()).isEqualTo("timecampus://media/10");
         assertThat(result.hits())
                 .extracting(hit -> hit.document().id())
