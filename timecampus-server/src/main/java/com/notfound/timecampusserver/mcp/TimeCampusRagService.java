@@ -37,10 +37,14 @@ public class TimeCampusRagService {
     private static final Set<String> LEXICAL_STOP_TERMS = Set.of(
             "校内", "校园", "地点", "地方", "场所", "位置", "适合", "参观");
     private static final List<KnowledgeSource> KNOWLEDGE_SOURCES = List.of(
-            new KnowledgeSource("buaa-baike", "北京航空航天大学百科", "rag/knowledge/buaa-baike.md"),
-            new KnowledgeSource("buaa-school-song", "北航校歌", "rag/knowledge/buaa-school-song.md"),
-            new KnowledgeSource("buaa-today", "今日北航", "rag/knowledge/buaa-today.md"),
-            new KnowledgeSource("buaa-history", "北京航空航天大学校史", "rag/knowledge/buaa-history.md")
+            new KnowledgeSource("buaa-baike", "北京航空航天大学百科", "rag/knowledge/buaa-baike.md",
+                    "北航 北京航空航天大学 学校概况 简称 属性 双一流 985 211"),
+            new KnowledgeSource("buaa-school-song", "北航校歌", "rag/knowledge/buaa-school-song.md",
+                    "北航校歌 校歌 精神传统 总理诗作 精神华章"),
+            new KnowledgeSource("buaa-today", "今日北航", "rag/knowledge/buaa-today.md",
+                    "今日北航 办学概况 人才培养 学科建设 学校现状"),
+            new KnowledgeSource("buaa-history", "北京航空航天大学校史 / 北航历史沿革", "rag/knowledge/buaa-history.md",
+                    "北航历史 历史沿革 校史 建校 院系调整 北京航空学院 更名 发展历程")
     );
 
     private final PoiService poiService;
@@ -374,9 +378,14 @@ public class TimeCampusRagService {
                 "knowledge:" + source.id(),
                 "knowledge",
                 source.title(),
-                readClasspathText(source.path()),
+                joinLines("keywords: " + source.keywords(), readClasspathText(source.path())),
                 "timecampus://knowledge/" + source.id(),
-                metadata("reviewStatus", "", "source", "knowledge", "file", source.path())
+                metadata(
+                        "reviewStatus", "",
+                        "source", "knowledge",
+                        "file", source.path(),
+                        "keywords", source.keywords()
+                )
         );
     }
 
@@ -618,6 +627,6 @@ public class TimeCampusRagService {
                                              int estimatedChunkCount) {
     }
 
-    private record KnowledgeSource(String id, String title, String path) {
+    private record KnowledgeSource(String id, String title, String path, String keywords) {
     }
 }

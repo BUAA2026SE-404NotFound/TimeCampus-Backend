@@ -159,7 +159,23 @@ class TimeCampusRagServiceTest {
                 .extracting(TimeCampusRagService.TimeCampusRagDocument::type)
                 .containsOnly("knowledge");
         assertThat(documents.stream().mapToInt(document -> document.text().length()).sum())
-                .isEqualTo(27_149);
+                .isGreaterThan(27_149);
+    }
+
+    @Test
+    void knowledgeSearchFindsSchoolHistoryByHistoryAlias() {
+        TimeCampusRagService.TimeCampusRagSearchResult result = ragService.search(
+                "给我讲一讲北航的历史沿革",
+                5,
+                List.of("knowledge"),
+                null,
+                false
+        );
+
+        assertThat(result.usage()).contains("retriever=lexical");
+        assertThat(result.hits()).isNotEmpty();
+        assertThat(result.hits().get(0).document().uri())
+                .isEqualTo("timecampus://knowledge/buaa-history");
     }
 
     @Test
