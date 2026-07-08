@@ -43,12 +43,6 @@ http://localhost:8080
 http://localhost:8080/swagger-ui/index.html
 ```
 
-根仓库也提供后端 + MCP 本地联调脚本：
-
-```powershell
-..\tools\start-backend-mcp.ps1
-```
-
 ## API 分组
 
 统一前缀为 `/api/v1`，统一响应格式为：
@@ -73,8 +67,6 @@ http://localhost:8080/swagger-ui/index.html
 | 管理端内容 | `/admin/pois`、`/admin/contents`、`/admin/media` |
 | 管理端审核/运营 | `/admin/ugc`、`/admin/comments`、`/admin/dashboard`、`/admin/map`、`/admin/logs` |
 | 管理端 Agent | `/admin/agent/**` |
-
-详细接口边界见 [../docs/technical-spec.md](../docs/technical-spec.md)。开发期可使用 Swagger UI，团队 API 管理以 ApiFox 为主。
 
 ## 配置
 
@@ -144,7 +136,7 @@ TIMECAMPUS_MCP_AUTH_REQUIRED=true
 TIMECAMPUS_MCP_TOKEN=<long-random-token>
 ```
 
-MCP 提供 POI、影像、RAG、文案维护相关 Tools、Resources 和 Prompts。完整说明见 [docs/mcp-server.md](docs/mcp-server.md)。
+MCP 提供 POI、影像、RAG、文案维护相关 Tools、Resources 和 Prompts。
 
 ## 数据库
 
@@ -174,18 +166,3 @@ mvn -pl timecampus-server -am test
 ```
 
 第三方真实冒烟测试默认跳过，需要显式配置环境变量和真实 key 后运行。测试覆盖统一响应、异常、请求 ID、用户登录、评论、收藏、UGC、文件路径安全、媒体短期 URL、AOP 时间填充、控制器映射、管理端接口、腾讯地图签名和微信响应兼容。
-
-## 部署
-
-生产部署由根仓库 `compose.yaml` 编排，Backend 使用 `prod` profile，在 Compose 网络中连接 Valkey、Qdrant、Ollama、Cap 和挂载存储。完整部署流程见 [../docs/deploy.md](../docs/deploy.md)。
-
-## 相关文档
-
-- 项目功能规格：[../docs/functional-spec.md](../docs/functional-spec.md)
-- 项目技术规格：[../docs/technical-spec.md](../docs/technical-spec.md)
-- 文档维护指南：[../docs/documentation-maintenance.md](../docs/documentation-maintenance.md)
-- MCP Server：[docs/mcp-server.md](docs/mcp-server.md)
-- Seedream Image Agent：[docs/seedream-agent.md](docs/seedream-agent.md)
-- 数据库设计：[docs/database.md](docs/database.md)
-- Alpha Release Notes：[docs/alpha-release-notes.md](docs/alpha-release-notes.md)
-- Alpha Test Report：[docs/alpha-test-report.md](docs/alpha-test-report.md)

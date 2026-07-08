@@ -40,4 +40,9 @@ openapi-alpha.yaml
 
 storage
 
-timecampus-portal
+Dockerfile
+.dockerignore
+
+*.md
+!README.md
+!database.md
